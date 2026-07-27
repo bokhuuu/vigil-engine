@@ -72,7 +72,11 @@ class EveningActAlertCommand extends Command
                 $message .= "📋 <b>აქტი {$number}</b>\n";
                 $message .= "   სექტ: {$sector} | მიღ: {$received}\n";
                 $message .= "   მესაკუთრე: {$contact}\n";
-                $message .= "   ❌ აკლია: {$missing}\n\n";
+                $soceco = $fields['📊 სოც-ეკონომიკური კვლევა'] ?? null;
+                $socecoLine = $soceco ? "   📊 სოც-ეკონომიკური: {$soceco}\n" : "   📊 სოც-ეკონომიკური: ⚠️ შეუვსებელია\n";
+
+                $message .= "   ❌ აკლია: {$missing}\n";
+                $message .= $socecoLine."\n";
 
                 $airtable->logNotification(
                     "აქტი {$number} — {$teamName}",
@@ -109,7 +113,11 @@ class EveningActAlertCommand extends Command
                 $received = $fields['📅 აქტის მიღების თარიღი'] ?? '—';
 
                 $groupMessage .= "  📋 <b>{$number}</b> | სექტ: {$sector} | მიღ: {$received}\n";
-                $groupMessage .= "     ❌ {$missing}\n\n";
+                $soceco = $fields['📊 სოც-ეკონომიკური კვლევა'] ?? null;
+                $socecoLine = $soceco ? "     📊 სოც-ეკონომიკური: {$soceco}\n" : "     📊 სოც-ეკონომიკური: ⚠️ შეუვსებელია\n";
+
+                $groupMessage .= "     ❌ {$missing}\n";
+                $groupMessage .= $socecoLine."\n";
             }
         }
 
