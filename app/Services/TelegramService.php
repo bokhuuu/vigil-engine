@@ -8,12 +8,13 @@ use Illuminate\Support\Facades\Log;
 class TelegramService
 {
     private string $botToken;
+
     private string $apiUrl;
 
     public function __construct()
     {
         $this->botToken = config('vigil.telegram.bot_token');
-        $this->apiUrl   = "https://api.telegram.org/bot{$this->botToken}";
+        $this->apiUrl = "https://api.telegram.org/bot{$this->botToken}";
     }
 
     /**
@@ -22,17 +23,18 @@ class TelegramService
     public function send(string $chatId, string $message): bool
     {
         $response = Http::post("{$this->apiUrl}/sendMessage", [
-            'chat_id'    => $chatId,
-            'text'       => $message,
+            'chat_id' => $chatId,
+            'text' => $message,
             'parse_mode' => 'HTML',
         ]);
 
         if ($response->failed()) {
             Log::error('Telegram send failed', [
                 'chat_id' => $chatId,
-                'status'  => $response->status(),
-                'body'    => $response->body(),
+                'status' => $response->status(),
+                'body' => $response->body(),
             ]);
+
             return false;
         }
 

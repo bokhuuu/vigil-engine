@@ -82,8 +82,8 @@ class AirtableService
     {
         $data = [
             '📋 საკითხი' => $subject,
-            '📅 თარიღი'  => Carbon::now()->toDateString(),
-            '📡 არხი'    => [$channel],
+            '📅 თარიღი' => Carbon::now()->toDateString(),
+            '📡 არხი' => [$channel],
         ];
 
         if ($actRecordId) {
@@ -105,14 +105,14 @@ class AirtableService
 
     public function getSummaryCounts(): array
     {
-        $allActs    = $this->client->get(config('vigil.airtable.tables.acts'));
-        $incomplete = array_filter($allActs, fn($a) => ($a['fields']['🚦სტატუსი'] ?? '') === '⏳ მიმდინარე');
-        $done       = array_filter($allActs, fn($a) => ($a['fields']['🚦სტატუსი'] ?? '') === '✅ დასრულებული');
+        $allActs = $this->client->get(config('vigil.airtable.tables.acts'));
+        $incomplete = array_filter($allActs, fn ($a) => ($a['fields']['🚦სტატუსი'] ?? '') === '⏳ მიმდინარე');
+        $done = array_filter($allActs, fn ($a) => ($a['fields']['🚦სტატუსი'] ?? '') === '✅ დასრულებული');
 
         $byTeam = [
-            'ინსპექტორები'     => 0,
-            'ამზომველები'       => 0,
-            'აგრონომები'        => 0,
+            'ინსპექტორები' => 0,
+            'ამზომველები' => 0,
+            'აგრონომები' => 0,
             'ხარჯთაღმრიცხველი' => 0,
         ];
 
@@ -126,10 +126,10 @@ class AirtableService
         }
 
         return [
-            'total'        => count($allActs),
-            'done'         => count($done),
-            'incomplete'   => count($incomplete),
-            'by_team'      => $byTeam,
+            'total' => count($allActs),
+            'done' => count($done),
+            'incomplete' => count($incomplete),
+            'by_team' => $byTeam,
             'corr_overdue' => count($this->getOverdueCorrespondence()),
         ];
     }
@@ -143,11 +143,11 @@ class AirtableService
     public function getAllForBackup(): array
     {
         return [
-            'acts'           => $this->client->get(config('vigil.airtable.tables.acts')),
+            'acts' => $this->client->get(config('vigil.airtable.tables.acts')),
             'correspondence' => $this->client->get(config('vigil.airtable.tables.correspondence')),
-            'teams'          => $this->client->get(config('vigil.airtable.tables.teams')),
-            'notifications'  => $this->client->get(config('vigil.airtable.tables.notifications')),
-            'businesses'     => $this->client->get(config('vigil.airtable.tables.businesses')),
+            'teams' => $this->client->get(config('vigil.airtable.tables.teams')),
+            'notifications' => $this->client->get(config('vigil.airtable.tables.notifications')),
+            'businesses' => $this->client->get(config('vigil.airtable.tables.businesses')),
         ];
     }
 }

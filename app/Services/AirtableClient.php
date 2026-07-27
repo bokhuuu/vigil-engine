@@ -8,13 +8,15 @@ use Illuminate\Support\Facades\Log;
 class AirtableClient
 {
     private string $baseUrl;
+
     private string $baseId;
+
     private string $token;
 
     public function __construct()
     {
-        $this->token   = config('vigil.airtable.token');
-        $this->baseId  = config('vigil.airtable.base_id');
+        $this->token = config('vigil.airtable.token');
+        $this->baseId = config('vigil.airtable.base_id');
         $this->baseUrl = config('vigil.airtable.base_url');
     }
 
@@ -24,7 +26,7 @@ class AirtableClient
     public function get(string $tableId, array $params = []): array
     {
         $records = [];
-        $offset  = null;
+        $offset = null;
 
         do {
             if ($offset) {
@@ -36,18 +38,18 @@ class AirtableClient
 
             if ($response->failed()) {
                 Log::error('Airtable GET failed', [
-                    'table'  => $tableId,
+                    'table' => $tableId,
                     'status' => $response->status(),
-                    'body'   => $response->body(),
+                    'body' => $response->body(),
                 ]);
 
                 $this->notifyFailure('GET', $tableId, $response->status());
                 break;
             }
 
-            $data    = $response->json();
+            $data = $response->json();
             $records = array_merge($records, $data['records'] ?? []);
-            $offset  = $data['offset'] ?? null;
+            $offset = $data['offset'] ?? null;
         } while ($offset);
 
         return $records;
@@ -65,10 +67,10 @@ class AirtableClient
 
         if ($response->failed()) {
             Log::error('Airtable PATCH failed', [
-                'table'  => $tableId,
+                'table' => $tableId,
                 'record' => $recordId,
                 'status' => $response->status(),
-                'body'   => $response->body(),
+                'body' => $response->body(),
             ]);
 
             $this->notifyFailure('PATCH', $tableId, $response->status());
@@ -91,9 +93,9 @@ class AirtableClient
 
         if ($response->failed()) {
             Log::error('Airtable POST failed', [
-                'table'  => $tableId,
+                'table' => $tableId,
                 'status' => $response->status(),
-                'body'   => $response->body(),
+                'body' => $response->body(),
             ]);
 
             $this->notifyFailure('POST', $tableId, $response->status());
@@ -108,12 +110,12 @@ class AirtableClient
     private function notifyFailure(string $method, string $tableId, int $status): void
     {
         try {
-            (new TelegramService())->sendToMe(
+            (new TelegramService)->sendToMe(
                 "⚠️ <b>Vigil — Airtable შეცდომა</b>\n"
-                    . "მეთოდი: {$method}\n"
-                    . "ტაბელი: {$tableId}\n"
-                    . "სტატუსი: {$status}\n"
-                    . "დრო: " . now()->format('d.m.Y H:i')
+                    ."მეთოდი: {$method}\n"
+                    ."ტაბელი: {$tableId}\n"
+                    ."სტატუსი: {$status}\n"
+                    .'დრო: '.now()->format('d.m.Y H:i')
             );
         } catch (\Throwable $e) {
             Log::error('Telegram failure alert failed', ['error' => $e->getMessage()]);
