@@ -1,0 +1,153 @@
+<?php
+
+namespace App\Services;
+
+use Carbon\Carbon;
+
+class AirtableService
+{
+    public function __construct(
+        private AirtableClient $client
+    ) {}
+
+    /*
+    |--------------------------------------------------------------------------
+    | ACTS
+    |--------------------------------------------------------------------------
+    */
+
+    public function getIncompleteActs(): array
+    {
+        return $this->client->get(config('vigil.airtable.tables.acts'), [
+            'filterByFormula' => "{🚦სტატუსი} = '⏳ მიმდინარე'",
+        ]);
+    }
+
+    public function getOverdueActs(): array
+    {
+        $cutoff = Carbon::now()->subDays(config('vigil.overdue_days'))->toDateString();
+
+        return $this->client->get(config('vigil.airtable.tables.acts'), [
+            'filterByFormula' => "AND({🚦სტატუსი} = '⏳ მიმდინარე', {📅 აქტის მიღების თარიღი} <= '{$cutoff}')",
+        ]);
+    }
+
+    public function markActNotified(string $recordId): void
+    {
+        $this->client->patch(config('vigil.airtable.tables.acts'), $recordId, [
+            '📣 შეტყობინდა' => Carbon::now()->toDateString(),
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CORRESPONDENCE
+    |--------------------------------------------------------------------------
+    */
+
+    public function getOverdueCorrespondence(): array
+    {
+        $today = Carbon::now()->toDateString();
+
+        return $this->client->get(config('vigil.airtable.tables.correspondence'), [
+            'filterByFormula' => "AND({⏰ ვადა} < '{$today}', {🚦სტატუსი} != '📤 პასუხი გაგზავნილი', {🚦სტატუსი} != '🔴 ვადაგადაცილებული')",
+        ]);
+    }
+
+    public function markCorrespondenceOverdue(string $recordId): void
+    {
+        $this->client->patch(config('vigil.airtable.tables.correspondence'), $recordId, [
+            '🚦სტატუსი' => '🔴 ვადაგადაცილებული',
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | TEAMS
+    |--------------------------------------------------------------------------
+    */
+
+    public function getTeams(): array
+    {
+        return $this->client->get(config('vigil.airtable.tables.teams'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | NOTIFICATIONS
+    |--------------------------------------------------------------------------
+    */
+
+    public function logNotification(string $subject, string $channel, ?string $actRecordId = null, ?string $teamRecordId = null): void
+    {
+        $data = [
+            '📋 საკითხი' => $subject,
+            '📅 თარიღი'  => Carbon::now()->toDateString(),
+            '📡 არხი'    => [$channel],
+        ];
+
+        if ($actRecordId) {
+            $data['🗂️ აქტი'] = [$actRecordId];
+        }
+
+        if ($teamRecordId) {
+            $data['👥 გუნდი'] = [$teamRecordId];
+        }
+
+        $this->client->post(config('vigil.airtable.tables.notifications'), $data);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SUMMARY COUNTS
+    |--------------------------------------------------------------------------
+    */
+
+    public function getSummaryCounts(): array
+    {
+        $allActs    = $this->client->get(config('vigil.airtable.tables.acts'));
+        $incomplete = array_filter($allActs, fn($a) => ($a['fields']['🚦სტატუსი'] ?? '') === '⏳ მიმდინარე');
+        $done       = array_filter($allActs, fn($a) => ($a['fields']['🚦სტატუსი'] ?? '') === '✅ დასრულებული');
+
+        $byTeam = [
+            'ინსპექტორები'     => 0,
+            'ამზომველები'       => 0,
+            'აგრონომები'        => 0,
+            'ხარჯთაღმრიცხველი' => 0,
+        ];
+
+        foreach ($incomplete as $act) {
+            $responsible = $act['fields']['👤პასუხისმგებელი აქტზე'] ?? [];
+            foreach ($responsible as $team) {
+                if (isset($byTeam[$team])) {
+                    $byTeam[$team]++;
+                }
+            }
+        }
+
+        return [
+            'total'        => count($allActs),
+            'done'         => count($done),
+            'incomplete'   => count($incomplete),
+            'by_team'      => $byTeam,
+            'corr_overdue' => count($this->getOverdueCorrespondence()),
+        ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | BACKUP
+    |--------------------------------------------------------------------------
+    */
+
+    public function getAllForBackup(): array
+    {
+        return [
+            'acts'           => $this->client->get(config('vigil.airtable.tables.acts')),
+            'correspondence' => $this->client->get(config('vigil.airtable.tables.correspondence')),
+            'teams'          => $this->client->get(config('vigil.airtable.tables.teams')),
+            'notifications'  => $this->client->get(config('vigil.airtable.tables.notifications')),
+            'businesses'     => $this->client->get(config('vigil.airtable.tables.businesses')),
+        ];
+    }
+}
