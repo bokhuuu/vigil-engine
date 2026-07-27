@@ -13,7 +13,7 @@ test('get returns records from airtable', function () {
         ], 200),
     ]);
 
-    $client  = new AirtableClient();
+    $client = new AirtableClient;
     $records = $client->get('tblqVYQxgMXwgyY6r');
 
     expect($records)->toHaveCount(2);
@@ -36,7 +36,7 @@ test('get handles pagination automatically', function () {
             ], 200),
     ]);
 
-    $client  = new AirtableClient();
+    $client = new AirtableClient;
     $records = $client->get('tblqVYQxgMXwgyY6r');
 
     expect($records)->toHaveCount(2);
@@ -49,7 +49,7 @@ test('get returns empty array on failure', function () {
         '*' => Http::response([], 401),
     ]);
 
-    $client  = new AirtableClient();
+    $client = new AirtableClient;
     $records = $client->get('tblqVYQxgMXwgyY6r');
 
     expect($records)->toBeArray()->toBeEmpty();
@@ -60,11 +60,11 @@ test('patch sends correct data', function () {
         '*' => Http::response(['id' => 'rec123', 'fields' => []], 200),
     ]);
 
-    $client = new AirtableClient();
+    $client = new AirtableClient;
     $result = $client->patch('tblqVYQxgMXwgyY6r', 'rec123', ['🚦სტატუსი' => '✅ დასრულებული']);
 
     expect($result)->toHaveKey('id');
-    Http::assertSent(fn($request) => $request->method() === 'PATCH');
+    Http::assertSent(fn ($request) => $request->method() === 'PATCH');
 });
 
 test('post creates new record', function () {
@@ -74,9 +74,9 @@ test('post creates new record', function () {
         ], 200),
     ]);
 
-    $client = new AirtableClient();
+    $client = new AirtableClient;
     $result = $client->post('tbluQf2BlZvzHVDhu', ['📋 საკითხი' => 'ტესტი']);
 
     expect($result)->toHaveKey('records');
-    Http::assertSent(fn($request) => $request->method() === 'POST');
+    Http::assertSent(fn ($request) => $request->method() === 'POST');
 });
