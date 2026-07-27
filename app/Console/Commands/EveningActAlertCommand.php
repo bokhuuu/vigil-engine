@@ -2,21 +2,22 @@
 
 namespace App\Console\Commands;
 
-use App\Services\AirtableService;
 use App\Services\AirtableClient;
+use App\Services\AirtableService;
 use App\Services\TelegramService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class EveningActAlertCommand extends Command
 {
-    protected $signature   = 'vigil:act-alert';
+    protected $signature = 'vigil:act-alert';
+
     protected $description = 'Send incomplete ACT alerts to responsible teams';
 
     public function handle(): void
     {
-        $airtable = new AirtableService(new AirtableClient());
-        $telegram = new TelegramService();
+        $airtable = new AirtableService(new AirtableClient);
+        $telegram = new TelegramService;
 
         $this->info('Fetching incomplete ACTs...');
         $incomplete = $airtable->getIncompleteActs();
@@ -25,14 +26,15 @@ class EveningActAlertCommand extends Command
             $this->info('No incomplete ACTs.');
             $telegram->sendToMe('✅ არასრული აქტი არ არის.');
             $telegram->sendToGroup('✅ არასრული აქტი არ არის.');
+
             return;
         }
 
-        $date  = Carbon::now()->format('d.m.Y');
+        $date = Carbon::now()->format('d.m.Y');
         $count = count($incomplete);
 
         // Load teams
-        $teams      = $airtable->getTeams();
+        $teams = $airtable->getTeams();
         $teamByName = [];
         foreach ($teams as $team) {
             $name = $team['fields']['👤 სახელი'] ?? null;
@@ -56,15 +58,15 @@ class EveningActAlertCommand extends Command
             $telegramId = $teamRecord['fields']['✈️ Telegram'] ?? null;
 
             $message = "🛡️ <b>Vigil Alert — {$date}</b>\n"
-                . "გუნდი: <b>{$teamName}</b>\n"
-                . "არასრული: " . count($acts) . " აქტი\n\n";
+                ."გუნდი: <b>{$teamName}</b>\n"
+                .'არასრული: '.count($acts)." აქტი\n\n";
 
             foreach ($acts as $act) {
-                $fields   = $act['fields'];
-                $number   = $fields['🔖 აქტის ნომერი']         ?? '—';
-                $sector   = implode(', ', $fields['📍სექტორი'] ?? []);
-                $missing  = $fields['❗რა აკლია აქტს']          ?? '—';
-                $contact  = $fields['📞 მესაკუთრის კონტაქტი']  ?? '—';
+                $fields = $act['fields'];
+                $number = $fields['🔖 აქტის ნომერი'] ?? '—';
+                $sector = implode(', ', $fields['📍სექტორი'] ?? []);
+                $missing = $fields['❗რა აკლია აქტს'] ?? '—';
+                $contact = $fields['📞 მესაკუთრის კონტაქტი'] ?? '—';
                 $received = $fields['📅 აქტის მიღების თარიღი'] ?? '—';
 
                 $message .= "📋 <b>აქტი {$number}</b>\n";
@@ -88,22 +90,22 @@ class EveningActAlertCommand extends Command
                 $telegram->send($telegramId, $message);
                 $this->info("Sent to {$teamName} ({$telegramId})");
             } else {
-                $telegram->sendToMe("⚠️ {$teamName} — Telegram არ აქვს.\n\n" . $message);
+                $telegram->sendToMe("⚠️ {$teamName} — Telegram არ აქვს.\n\n".$message);
                 $this->warn("No Telegram for {$teamName} — forwarded to Zura");
             }
         }
 
         // Group chat
         $groupMessage = "🛡️ <b>Vigil — არასრული აქტები {$date}</b>\n"
-            . "სულ: {$count}\n\n";
+            ."სულ: {$count}\n\n";
 
         foreach ($byTeam as $teamName => $acts) {
-            $groupMessage .= "👤 <b>{$teamName}</b> (" . count($acts) . "):\n";
+            $groupMessage .= "👤 <b>{$teamName}</b> (".count($acts)."):\n";
             foreach ($acts as $act) {
-                $fields   = $act['fields'];
-                $number   = $fields['🔖 აქტის ნომერი']         ?? '—';
-                $sector   = implode(', ', $fields['📍სექტორი'] ?? []);
-                $missing  = $fields['❗რა აკლია აქტს']          ?? '—';
+                $fields = $act['fields'];
+                $number = $fields['🔖 აქტის ნომერი'] ?? '—';
+                $sector = implode(', ', $fields['📍სექტორი'] ?? []);
+                $missing = $fields['❗რა აკლია აქტს'] ?? '—';
                 $received = $fields['📅 აქტის მიღების თარიღი'] ?? '—';
 
                 $groupMessage .= "  📋 <b>{$number}</b> | სექტ: {$sector} | მიღ: {$received}\n";
