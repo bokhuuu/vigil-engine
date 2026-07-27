@@ -28,6 +28,7 @@ class WeeklyBackupCommand extends Command
         $filename = "backup-{$date}.json";
         $path = storage_path("backups/{$filename}");
 
+        File::ensureDirectoryExists(storage_path('backups'));
         File::put($path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
         $counts = [
