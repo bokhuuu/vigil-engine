@@ -8,6 +8,8 @@ use App\Services\TelegramService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class WeeklyBackupCommand extends Command
 {
@@ -31,8 +33,18 @@ class WeeklyBackupCommand extends Command
         File::ensureDirectoryExists(storage_path('backups'));
         File::put($path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
+        // Upload to Backblaze B2
+        try {
+            Storage::disk('b2_backups')->put($filename, File::get($path));
+            $this->info('Backup uploaded to B2.');
+        } catch (\Throwable $e) {
+            Log::error('B2 backup upload failed', ['error' => $e->getMessage()]);
+            $telegram->sendToMe('⚠️ B2 backup upload failed: '.$e->getMessage());
+        }
+
         $counts = [
             'acts' => count($data['acts']),
+            'deadlines' => count($data['deadlines']),
             'correspondence' => count($data['correspondence']),
             'teams' => count($data['teams']),
             'notifications' => count($data['notifications']),
@@ -40,8 +52,10 @@ class WeeklyBackupCommand extends Command
         ];
 
         $message = "💾 <b>Vigil Weekly Backup</b>\n\n"
-            ."✅ შენახულია: {$filename}\n\n"
+            ."✅ შენახულია: {$filename}\n"
+            ."✅ B2-ზე ატვირთულია\n\n"
             ."აქტები: {$counts['acts']}\n"
+            ."ვადები: {$counts['deadlines']}\n"
             ."კორესპონდენცია: {$counts['correspondence']}\n"
             ."გუნდები: {$counts['teams']}\n"
             ."შეტყობინებები: {$counts['notifications']}\n"

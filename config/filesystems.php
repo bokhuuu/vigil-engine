@@ -59,6 +59,15 @@ return [
             'throw' => false,
             'report' => false,
         ],
+        'b2_backups' => [
+            'driver' => 's3',
+            'key' => env('B2_KEY_ID'),
+            'secret' => env('B2_APPLICATION_KEY'),
+            'region' => env('B2_REGION', 'eu-central-003'),
+            'bucket' => env('B2_BUCKET'),
+            'endpoint' => env('B2_ENDPOINT'),
+            'root' => 'vigil-backups',
+        ],
 
     ],
 
