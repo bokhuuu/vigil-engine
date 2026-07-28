@@ -50,6 +50,20 @@ class DeadlineWarningCommand extends Command
             } elseif ($daysLeft === 2) {
                 $warnings[] = "⚠️ <b>2 დღე რჩება:</b> {$title}\n   ვადა: {$promised->format('d.m.Y')}\n   {$notes}";
             }
+
+            // Send directly to responsible team
+            $teamRecordIds = $fields['👥 გუნდი'] ?? [];
+            if (! empty($teamRecordIds) && ! empty($warnings)) {
+                $teams = $airtable->getTeams();
+                foreach ($teams as $team) {
+                    if (in_array($team['id'], $teamRecordIds)) {
+                        $telegramId = $team['fields']['✈️ Telegram'] ?? null;
+                        if ($telegramId) {
+                            $telegram->send($telegramId, end($warnings));
+                        }
+                    }
+                }
+            }
         }
 
         // ── Correspondence promised dates ─────────────────────────────────
@@ -80,16 +94,26 @@ class DeadlineWarningCommand extends Command
 
         // ── Send to Zura ──────────────────────────────────────────────────
         if (empty($warnings)) {
-            $telegram->sendToMe("✅ ვადები — {$date} — პრობლემა არ არის.");
+            $telegram->sendToMe('✅ ვადები — პრობლემა არ არის.');
             $this->info('No deadline warnings.');
 
             return;
         }
 
-        $message = "⏰ <b>ვადების შეხსენება — {$date}</b>\n\n"
+        $message = "⏰ <b>ვადების შეხსენება</b>\n\n"
             .implode("\n\n", $warnings);
 
         $telegram->sendToMe($message);
+
+        // Send correspondence warnings to managers
+        $managers = $airtable->getManagers();
+        foreach ($managers as $manager) {
+            $telegramId = $manager['fields']['✈️ Telegram'] ?? null;
+            if ($telegramId) {
+                $telegram->send($telegramId, $message);
+            }
+        }
+
         $this->info('Deadline warnings sent: '.count($warnings));
     }
 }

@@ -72,6 +72,19 @@ class AirtableService
         return $this->client->get(config('vigil.airtable.tables.teams'));
     }
 
+    /**
+     * Get all manager contacts for correspondence alerts.
+     */
+    public function getManagers(): array
+    {
+        $teams = $this->getTeams();
+
+        return array_filter(
+            $teams,
+            fn ($team) => ($team['fields']['🏷️ როლი'] ?? '') === 'მენეჯერი'
+        );
+    }
+
     /*
     |--------------------------------------------------------------------------
     | DEADLINES (ვადები)

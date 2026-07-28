@@ -43,7 +43,7 @@ class CorrespondenceOverdueCommand extends Command
         }
 
         $date = Carbon::now()->format('d.m.Y');
-        $message = "🔴 <b>ვადაგადაცილებული კორესპონდენცია — {$date}</b>\n\n"
+        $message = "🔴 <b>ვადაგადაცილებული კორესპონდენცია</b>\n\n"
             ."სულ: {$updated}\n\n";
 
         foreach ($overdue as $record) {
@@ -55,6 +55,15 @@ class CorrespondenceOverdueCommand extends Command
         $message .= 'გთხოვთ დაუყოვნებლივ უპასუხოთ.';
 
         $telegram->sendToMe($message);
+
+        // Send to all managers
+        $managers = $airtable->getManagers();
+        foreach ($managers as $manager) {
+            $telegramId = $manager['fields']['✈️ Telegram'] ?? null;
+            if ($telegramId) {
+                $telegram->send($telegramId, $message);
+            }
+        }
 
         $this->info("Done. {$updated} records marked overdue.");
     }
