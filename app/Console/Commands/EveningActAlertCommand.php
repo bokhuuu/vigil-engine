@@ -57,7 +57,7 @@ class EveningActAlertCommand extends Command
             $teamRecord = $teamByName[$teamName] ?? null;
             $telegramId = $teamRecord['fields']['✈️ Telegram'] ?? null;
 
-            $message = "🛡️ <b>Vigil Alert — {$date}</b>\n"
+            $message = "🛡️ <b>Vigil Alert</b>\n"
                 ."გუნდი: <b>{$teamName}</b>\n"
                 .'არასრული: '.count($acts)." აქტი\n\n";
 
@@ -100,7 +100,7 @@ class EveningActAlertCommand extends Command
         }
 
         // Group chat
-        $groupMessage = "🛡️ <b>Vigil — არასრული აქტები {$date}</b>\n"
+        $groupMessage = "🛡️ <b>Vigil — არასრული აქტები</b>\n"
             ."სულ: {$count}\n\n";
 
         foreach ($byTeam as $teamName => $acts) {
@@ -125,7 +125,7 @@ class EveningActAlertCommand extends Command
         $telegram->sendToGroup($groupMessage);
 
         // Summary to Zura
-        $telegram->sendToMe("🛡️ <b>Act Alert გაგზავნილია — {$date}</b>\nსულ არასრული: {$count}");
+        $telegram->sendToMe("🛡️ <b>Act Alert გაგზავნილია</b>\nსულ არასრული: {$count}");
 
         $this->info("Done. {$count} incomplete ACTs processed.");
     }

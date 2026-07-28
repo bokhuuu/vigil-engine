@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Services\AirtableClient;
 use App\Services\AirtableService;
 use App\Services\TelegramService;
-use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class DailySummaryCommand extends Command
@@ -22,8 +21,7 @@ class DailySummaryCommand extends Command
         $this->info('Fetching counts from Airtable...');
         $counts = $airtable->getSummaryCounts();
 
-        $date = Carbon::now()->format('d.m.Y');
-        $message = "🛡️ <b>Vigil Daily Summary — {$date}</b>\n\n"
+        $message = "🛡️ <b>Vigil Daily Summary</b>\n\n"
             ."სულ მიღებული: {$counts['total']}\n"
             ."დასრულებული ✅: {$counts['done']}\n"
             ."არასრული ❌: {$counts['incomplete']}\n\n"
