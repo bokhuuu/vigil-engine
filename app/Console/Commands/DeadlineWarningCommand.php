@@ -41,15 +41,14 @@ class DeadlineWarningCommand extends Command
             $notes = $fields['📝 შენიშვნა'] ?? '';
 
             if ($daysLeft < 0) {
-                // Overdue - mark in Airtable
                 $airtable->markDeadlineOverdue($record['id']);
                 $warnings[] = "❌ <b>ვადა გავიდა:</b> {$title}\n   ვადა იყო: {$promised->format('d.m.Y')}\n   {$notes}";
             } elseif ($daysLeft === 0) {
-                $warnings[] = "🚨 <b>დღეს ვადა:</b> {$title}\n   {$notes}";
+                $warnings[] = "🚨 <b>დღეს ვადა:</b> {$title}\n   ვადა: {$promised->format('d.m.Y')}\n   {$notes}";
             } elseif ($daysLeft === 1) {
-                $warnings[] = "🔴 <b>ხვალ ვადა:</b> {$title}\n   {$notes}";
+                $warnings[] = "🔴 <b>ხვალ ვადა:</b> {$title}\n   ვადა: {$promised->format('d.m.Y')} (1 დღე)\n   {$notes}";
             } elseif ($daysLeft === 2) {
-                $warnings[] = "⚠️ <b>2 დღე რჩება:</b> {$title}\n   {$notes}";
+                $warnings[] = "⚠️ <b>2 დღე რჩება:</b> {$title}\n   ვადა: {$promised->format('d.m.Y')}\n   {$notes}";
             }
         }
 
@@ -71,11 +70,11 @@ class DeadlineWarningCommand extends Command
             if ($daysLeft < 0) {
                 $warnings[] = "❌ <b>კორ. ვადა გავიდა:</b> {$subject}\n   ვადა იყო: {$promised->format('d.m.Y')}";
             } elseif ($daysLeft === 0) {
-                $warnings[] = "🚨 <b>კორ. დღეს ვადა:</b> {$subject}";
+                $warnings[] = "🚨 <b>კორ. დღეს ვადა:</b> {$subject}\n   ვადა: {$promised->format('d.m.Y')}";
             } elseif ($daysLeft === 1) {
-                $warnings[] = "🔴 <b>კორ. ხვალ ვადა:</b> {$subject}";
+                $warnings[] = "🔴 <b>კორ. ხვალ ვადა:</b> {$subject}\n   ვადა: {$promised->format('d.m.Y')} (1 დღე)";
             } elseif ($daysLeft === 2) {
-                $warnings[] = "⚠️ <b>კორ. 2 დღე რჩება:</b> {$subject}";
+                $warnings[] = "⚠️ <b>კორ. 2 დღე რჩება:</b> {$subject}\n   ვადა: {$promised->format('d.m.Y')}";
             }
         }
 
