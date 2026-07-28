@@ -74,6 +74,42 @@ class AirtableService
 
     /*
     |--------------------------------------------------------------------------
+    | DEADLINES (ვადები)
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Get all pending deadlines that are approaching or overdue.
+     */
+    public function getUpcomingDeadlines(): array
+    {
+        return $this->client->get(config('vigil.airtable.tables.deadlines'), [
+            'filterByFormula' => "{🚦 სტატუსი} = '⏳ მომლოდინე'",
+        ]);
+    }
+
+    /**
+     * Mark a deadline as overdue.
+     */
+    public function markDeadlineOverdue(string $recordId): void
+    {
+        $this->client->patch(config('vigil.airtable.tables.deadlines'), $recordId, [
+            '🚦 სტატუსი' => '🔴 გადაცილებული',
+        ]);
+    }
+
+    /**
+     * Get correspondence with approaching promised dates.
+     */
+    public function getCorrespondenceWithPromisedDates(): array
+    {
+        return $this->client->get(config('vigil.airtable.tables.correspondence'), [
+            'filterByFormula' => "AND({📅 დაპირებული თარიღი} != '', {🚦სტატუსი} != '📤 პასუხი გაგზავნილი')",
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | NOTIFICATIONS
     |--------------------------------------------------------------------------
     */
@@ -144,6 +180,7 @@ class AirtableService
     {
         return [
             'acts' => $this->client->get(config('vigil.airtable.tables.acts')),
+            'deadlines' => $this->client->get(config('vigil.airtable.tables.deadlines')),
             'correspondence' => $this->client->get(config('vigil.airtable.tables.correspondence')),
             'teams' => $this->client->get(config('vigil.airtable.tables.teams')),
             'notifications' => $this->client->get(config('vigil.airtable.tables.notifications')),

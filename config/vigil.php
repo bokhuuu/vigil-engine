@@ -14,6 +14,7 @@ return [
 
         'tables' => [
             'acts' => 'tblqVYQxgMXwgyY6r',
+            'deadlines' => 'tbldJL7NHV91IHqQP',
             'correspondence' => 'tblM1b0aw2lbvTC2A',
             'teams' => 'tbly6CXuhsuITExqg',
             'notifications' => 'tbluQf2BlZvzHVDhu',
@@ -56,10 +57,20 @@ return [
                 'folder' => 'fld1jy2Zp22rO8Fde',
             ],
 
+            'deadlines' => [
+                'title' => 'fldnjrR7iScGTPi8C',
+                'date' => 'flduJXUewzemlB9R4',
+                'status' => 'flda2zMml6UU6VvCE',
+                'act' => 'fldPdQMFxWf9iJgfM',
+                'team' => 'fldbwybxmNBB1ocbS',
+                'notes' => 'fldmh21ciQFRNnyh0',
+            ],
+
             'correspondence' => [
                 'subject' => 'fldpLrKzlnfYD9J8j',
                 'date_received' => 'fldDuNz2fHZ7shvyV',
                 'deadline' => 'fldFSuqBFvSfGb6Ez',
+                'promised_date' => 'fldgQFLLup2VOfZz4',
                 'status' => 'fld8hXaOCAk0nNv0k',
                 'date_replied' => 'fldjYQ15CuOP1xtDs',
                 'direction' => 'fldAuftCT6Kqn72Qu',
@@ -115,6 +126,9 @@ return [
             'corr_replied' => '📤 პასუხი გაგზავნილი',
             'soceco_done' => '✅ შესრულებული',
             'soceco_pending' => '⏳ მომლოდინე',
+            'deadline_pending' => '⏳ მომლოდინე',
+            'deadline_overdue' => '🔴 გადაცილებული',
+            'deadline_done' => '✅ შესრულებული',
         ],
     ],
 
