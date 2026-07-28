@@ -36,7 +36,7 @@ class DeadlineWarningCommand extends Command
             }
 
             $promised = Carbon::parse($promisedRaw)->startOfDay();
-            $daysLeft = $today->diffInDays($promised, false);
+            $daysLeft = (int) $today->diffInDays($promised, false);
             $title = $fields['🔖 სათაური'] ?? '—';
             $notes = $fields['📝 შენიშვნა'] ?? '';
 
@@ -65,7 +65,7 @@ class DeadlineWarningCommand extends Command
             }
 
             $promised = Carbon::parse($promisedRaw)->startOfDay();
-            $daysLeft = $today->diffInDays($promised, false);
+            $daysLeft = (int) $today->diffInDays($promised, false);
             $subject = $fields['📋 საკითხი'] ?? '—';
 
             if ($daysLeft < 0) {
