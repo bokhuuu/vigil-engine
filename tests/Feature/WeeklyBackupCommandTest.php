@@ -55,6 +55,5 @@ test('backup command fetches all 5 tables', function () {
     $this->artisan('vigil:backup')
         ->assertSuccessful();
 
-    // 6 tables fetched
     Http::assertSentCount(7); // 6 Airtable GETs + 1 Telegram
 });
