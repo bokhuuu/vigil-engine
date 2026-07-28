@@ -10,6 +10,16 @@ class AirtableService
         private AirtableClient $client
     ) {}
 
+    /**
+     * Build a direct Airtable record URL.
+     */
+    public function recordUrl(string $tableId, string $recordId): string
+    {
+        $baseId = config('vigil.airtable.base_id');
+
+        return "https://airtable.com/{$baseId}/{$tableId}/{$recordId}";
+    }
+
     /*
     |--------------------------------------------------------------------------
     | ACTS

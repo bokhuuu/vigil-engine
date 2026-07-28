@@ -69,7 +69,8 @@ class EveningActAlertCommand extends Command
                 $contact = $fields['📞 მესაკუთრის კონტაქტი'] ?? '—';
                 $received = $fields['📅 აქტის მიღების თარიღი'] ?? '—';
 
-                $message .= "📋 <b>აქტი {$number}</b>\n";
+                $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $act['id']);
+                $message .= "📋 <b><a href=\"{$actUrl}\">აქტი {$number}</a></b>\n";
                 $message .= "   სექტ: {$sector} | მიღ: {$received}\n";
                 $message .= "   მესაკუთრე: {$contact}\n";
                 $soceco = $fields['📊 სოც-ეკონომიკური კვლევა'] ?? null;
@@ -112,7 +113,8 @@ class EveningActAlertCommand extends Command
                 $missing = $fields['❗რა აკლია აქტს'] ?? '—';
                 $received = $fields['📅 აქტის მიღების თარიღი'] ?? '—';
 
-                $groupMessage .= "  📋 <b>{$number}</b> | სექტ: {$sector} | მიღ: {$received}\n";
+                $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $act['id']);
+                $groupMessage .= "  📋 <b><a href=\"{$actUrl}\">{$number}</a></b> | სექტ: {$sector} | მიღ: {$received}\n";
                 $soceco = $fields['📊 სოც-ეკონომიკური კვლევა'] ?? null;
                 $socecoLine = $soceco ? "     📊 სოც-ეკონომიკური: {$soceco}\n" : "     📊 სოც-ეკონომიკური: ⚠️ შეუვსებელია\n";
 

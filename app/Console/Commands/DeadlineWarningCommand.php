@@ -19,7 +19,6 @@ class DeadlineWarningCommand extends Command
         $airtable = new AirtableService(new AirtableClient);
         $telegram = new TelegramService;
         $today = Carbon::now()->startOfDay();
-        $date = $today->format('d.m.Y');
 
         $this->info('Checking deadlines...');
 
@@ -39,16 +38,17 @@ class DeadlineWarningCommand extends Command
             $daysLeft = (int) $today->diffInDays($promised, false);
             $title = $fields['🔖 სათაური'] ?? '—';
             $notes = $fields['📝 შენიშვნა'] ?? '';
+            $url = $airtable->recordUrl(config('vigil.airtable.tables.deadlines'), $record['id']);
 
             if ($daysLeft < 0) {
                 $airtable->markDeadlineOverdue($record['id']);
-                $warnings[] = "❌ <b>ვადა გავიდა:</b> {$title}\n   ვადა იყო: {$promised->format('d.m.Y')}\n   {$notes}";
+                $warnings[] = "❌ <b>ვადა გავიდა:</b> <a href=\"{$url}\">{$title}</a>\n   {$notes}";
             } elseif ($daysLeft === 0) {
-                $warnings[] = "🚨 <b>დღეს ვადა:</b> {$title}\n   ვადა: {$promised->format('d.m.Y')}\n   {$notes}";
+                $warnings[] = "🚨 <b>დღეს ვადა:</b> <a href=\"{$url}\">{$title}</a>\n   {$notes}";
             } elseif ($daysLeft === 1) {
-                $warnings[] = "🔴 <b>ხვალ ვადა:</b> {$title}\n   ვადა: {$promised->format('d.m.Y')} (1 დღე)\n   {$notes}";
+                $warnings[] = "🔴 <b>ხვალ ვადა:</b> <a href=\"{$url}\">{$title}</a>\n   {$notes}";
             } elseif ($daysLeft === 2) {
-                $warnings[] = "⚠️ <b>2 დღე რჩება:</b> {$title}\n   ვადა: {$promised->format('d.m.Y')}\n   {$notes}";
+                $warnings[] = "⚠️ <b>2 დღე რჩება:</b> <a href=\"{$url}\">{$title}</a>\n   {$notes}";
             }
 
             // Send directly to responsible team
@@ -80,15 +80,16 @@ class DeadlineWarningCommand extends Command
             $promised = Carbon::parse($promisedRaw)->startOfDay();
             $daysLeft = (int) $today->diffInDays($promised, false);
             $subject = $fields['📋 საკითხი'] ?? '—';
+            $url = $airtable->recordUrl(config('vigil.airtable.tables.correspondence'), $record['id']);
 
             if ($daysLeft < 0) {
-                $warnings[] = "❌ <b>კორ. ვადა გავიდა:</b> {$subject}\n   ვადა იყო: {$promised->format('d.m.Y')}";
+                $warnings[] = "❌ <b>კორ. ვადა გავიდა:</b> <a href=\"{$url}\">{$subject}</a>";
             } elseif ($daysLeft === 0) {
-                $warnings[] = "🚨 <b>კორ. დღეს ვადა:</b> {$subject}\n   ვადა: {$promised->format('d.m.Y')}";
+                $warnings[] = "🚨 <b>კორ. დღეს ვადა:</b> <a href=\"{$url}\">{$subject}</a>";
             } elseif ($daysLeft === 1) {
-                $warnings[] = "🔴 <b>კორ. ხვალ ვადა:</b> {$subject}\n   ვადა: {$promised->format('d.m.Y')} (1 დღე)";
+                $warnings[] = "🔴 <b>კორ. ხვალ ვადა:</b> <a href=\"{$url}\">{$subject}</a>";
             } elseif ($daysLeft === 2) {
-                $warnings[] = "⚠️ <b>კორ. 2 დღე რჩება:</b> {$subject}\n   ვადა: {$promised->format('d.m.Y')}";
+                $warnings[] = "⚠️ <b>კორ. 2 დღე რჩება:</b> <a href=\"{$url}\">{$subject}</a>";
             }
         }
 
