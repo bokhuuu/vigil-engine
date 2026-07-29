@@ -44,7 +44,7 @@ test('backup command sends telegram confirmation', function () {
 
     Http::assertSent(
         fn ($request) => str_contains($request->url(), 'api.telegram.org') &&
-            str_contains($request['text'], 'Backup')
+            str_contains($request['text'], 'სარეზერვო')
     );
 });
 
