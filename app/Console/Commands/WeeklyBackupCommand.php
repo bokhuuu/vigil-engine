@@ -25,7 +25,6 @@ class WeeklyBackupCommand extends Command
         $this->info('Starting weekly backup...');
 
         $data = $airtable->getAllForBackup();
-
         $date = Carbon::now()->format('Y-m-d');
         $filename = "backup-{$date}.json";
         $path = storage_path("backups/{$filename}");
@@ -39,23 +38,24 @@ class WeeklyBackupCommand extends Command
             $this->info('Backup uploaded to B2.');
         } catch (\Throwable $e) {
             Log::error('B2 backup upload failed', ['error' => $e->getMessage()]);
-            $telegram->sendToMe('⚠️ B2 backup upload failed: '.$e->getMessage());
+            $telegram->sendToMe('⚠️ B2 სარეზერვო ასლის ატვირთვა ვერ მოხდა: '.$e->getMessage());
         }
 
         $counts = [
             'acts' => count($data['acts']),
             'deadlines' => count($data['deadlines']),
+            'sectors' => count($data['sectors']),
             'correspondence' => count($data['correspondence']),
             'teams' => count($data['teams']),
             'notifications' => count($data['notifications']),
             'businesses' => count($data['businesses']),
         ];
 
-        $message = "💾 <b>Vigil Weekly Backup</b>\n\n"
-            ."✅ შენახულია: {$filename}\n"
-            ."✅ B2-ზე ატვირთულია\n\n"
+        $message = "💾 <b>Vigil — კვირის სარეზერვო ასლი</b>\n\n"
+            ."✅ შენახულია და B2-ზე ატვირთულია\n\n"
             ."აქტები: {$counts['acts']}\n"
             ."ვადები: {$counts['deadlines']}\n"
+            ."სექტორები: {$counts['sectors']}\n"
             ."კორესპონდენცია: {$counts['correspondence']}\n"
             ."გუნდები: {$counts['teams']}\n"
             ."შეტყობინებები: {$counts['notifications']}\n"

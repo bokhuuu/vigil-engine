@@ -21,15 +21,18 @@ class DailySummaryCommand extends Command
         $this->info('Fetching counts from Airtable...');
         $counts = $airtable->getSummaryCounts();
 
-        $message = "🛡️ <b>Vigil Daily Summary</b>\n\n"
-            ."სულ მიღებული: {$counts['total']}\n"
-            ."დასრულებული ✅: {$counts['done']}\n"
-            ."არასრული ❌: {$counts['incomplete']}\n\n"
-            ."ინსპექტორების მლოდინი: {$counts['by_team']['ინსპექტორები']}\n"
-            ."ამზომველების მლოდინი: {$counts['by_team']['ამზომველები']}\n"
-            ."ხარჯთაღმრიცხველების მლოდინი: {$counts['by_team']['ხარჯთაღმრიცხველი']}\n"
-            ."აგრონომების მლოდინი: {$counts['by_team']['აგრონომები']}\n\n"
-            ."კორესპონდენცია ვადაგადაცილებული: {$counts['corr_overdue']}";
+        $corrStatus = $counts['corr_overdue'] > 0
+            ? "⚠️ ვადაგადაცილებული: {$counts['corr_overdue']}"
+            : '✅ ყველა დროულია';
+
+        $message = "🛡️ <b>Vigil — დღის შეჯამება</b>\n\n"
+            ."აქტები: {$counts['total']} სულ | ✅ {$counts['done']} | ❌ {$counts['incomplete']}\n\n"
+            ."<b>გუნდების მოლოდინი:</b>\n"
+            ."ინსპექტორები: {$counts['by_team']['ინსპექტორები']}\n"
+            ."ამზომველები: {$counts['by_team']['ამზომველები']}\n"
+            ."ხარჯთაღმრიცხველები: {$counts['by_team']['ხარჯთაღმრიცხველი']}\n"
+            ."აგრონომები: {$counts['by_team']['აგრონომები']}\n\n"
+            ."📨 კორესპონდენცია: {$corrStatus}";
 
         $telegram->sendToMe($message);
 

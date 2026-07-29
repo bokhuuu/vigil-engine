@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Services\AirtableClient;
 use App\Services\AirtableService;
 use App\Services\TelegramService;
-use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class EveningActAlertCommand extends Command
@@ -30,7 +29,6 @@ class EveningActAlertCommand extends Command
             return;
         }
 
-        $date = Carbon::now()->format('d.m.Y');
         $count = count($incomplete);
 
         // Load teams
@@ -58,26 +56,15 @@ class EveningActAlertCommand extends Command
             $telegramId = $teamRecord['fields']['✈️ Telegram'] ?? null;
 
             $message = "🛡️ <b>Vigil Alert</b>\n"
-                ."გუნდი: <b>{$teamName}</b>\n"
-                .'არასრული: '.count($acts)." აქტი\n\n";
+                ."გუნდი: <b>{$teamName}</b> | ".count($acts)." აქტი\n\n";
 
             foreach ($acts as $act) {
                 $fields = $act['fields'];
                 $number = $fields['🔖 აქტის ნომერი'] ?? '—';
                 $sector = implode(', ', $fields['📍სექტორი'] ?? []);
-                $missing = $fields['❗რა აკლია აქტს'] ?? '—';
-                $contact = $fields['📞 მესაკუთრის კონტაქტი'] ?? '—';
-                $received = $fields['📅 აქტის მიღების თარიღი'] ?? '—';
-
                 $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $act['id']);
-                $message .= "📋 <b><a href=\"{$actUrl}\">აქტი {$number}</a></b>\n";
-                $message .= "   სექტ: {$sector} | მიღ: {$received}\n";
-                $message .= "   მესაკუთრე: {$contact}\n";
-                $soceco = $fields['📊 სოც-ეკონომიკური კვლევა'] ?? null;
-                $socecoLine = $soceco ? "   📊 სოც-ეკონომიკური: {$soceco}\n" : "   📊 სოც-ეკონომიკური: ⚠️ შეუვსებელია\n";
 
-                $message .= "   ❌ აკლია: {$missing}\n";
-                $message .= $socecoLine."\n";
+                $message .= "📋 <b><a href=\"{$actUrl}\">აქტი {$number}</a></b> | სექტ: {$sector}\n\n";
 
                 $airtable->logNotification(
                     "აქტი {$number} — {$teamName}",
@@ -100,30 +87,33 @@ class EveningActAlertCommand extends Command
             }
         }
 
-        // Group chat
-        $groupMessage = "🛡️ <b>Vigil — არასრული აქტები</b>\n"
-            ."სულ: {$count}\n\n";
+        // Group chat — per ACT with responsible teams
+        $groupMessage = "🛡️ <b>Vigil — არასრული აქტები</b>\n\n";
 
-        foreach ($byTeam as $teamName => $acts) {
-            $groupMessage .= "👤 <b>{$teamName}</b> (".count($acts)."):\n";
-            foreach ($acts as $act) {
-                $fields = $act['fields'];
-                $number = $fields['🔖 აქტის ნომერი'] ?? '—';
-                $sector = implode(', ', $fields['📍სექტორი'] ?? []);
-                $missing = $fields['❗რა აკლია აქტს'] ?? '—';
-                $received = $fields['📅 აქტის მიღების თარიღი'] ?? '—';
-
-                $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $act['id']);
-                $groupMessage .= "  📋 <b><a href=\"{$actUrl}\">{$number}</a></b> | სექტ: {$sector} | მიღ: {$received}\n";
-                $soceco = $fields['📊 სოც-ეკონომიკური კვლევა'] ?? null;
-                $socecoLine = $soceco ? "     📊 სოც-ეკონომიკური: {$soceco}\n" : "     📊 სოც-ეკონომიკური: ⚠️ შეუვსებელია\n";
-
-                $groupMessage .= "     ❌ {$missing}\n";
-                $groupMessage .= $socecoLine."\n";
+        $actTeams = [];
+        foreach ($incomplete as $act) {
+            $responsible = $act['fields']['👤პასუხისმგებელი აქტზე'] ?? [];
+            if (! empty($responsible)) {
+                $actTeams[] = [
+                    'act' => $act,
+                    'teams' => $responsible,
+                ];
             }
         }
 
-        $groupMessage .= '⚠️ გთხოვთ შეავსოთ და წარადგინოთ.';
+        foreach ($actTeams as $data) {
+            $act = $data['act'];
+            $fields = $act['fields'];
+            $number = $fields['🔖 აქტის ნომერი'] ?? '—';
+            $sector = implode(', ', $fields['📍სექტორი'] ?? []);
+            $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $act['id']);
+            $teams = implode(', ', $data['teams']);
+
+            $groupMessage .= "📋 <a href=\"{$actUrl}\">{$number}</a> | სექტ: {$sector}\n";
+            $groupMessage .= "👤 {$teams}\n\n";
+        }
+
+        $groupMessage .= "სულ: {$count}";
         $telegram->sendToGroup($groupMessage);
 
         // Summary to Zura
