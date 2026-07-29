@@ -15,6 +15,7 @@ return [
         'tables' => [
             'acts' => 'tblqVYQxgMXwgyY6r',
             'deadlines' => 'tbldJL7NHV91IHqQP',
+            'sectors' => 'tblFMU2Zj3VCRdL2M',
             'correspondence' => 'tblM1b0aw2lbvTC2A',
             'teams' => 'tbly6CXuhsuITExqg',
             'notifications' => 'tbluQf2BlZvzHVDhu',
@@ -34,16 +35,19 @@ return [
                 'photos' => 'fldu9t0onXDuenc95',
                 'signatures' => 'fldjD8AUmU9kYsr78',
                 'land' => 'fldNxuCevwk2CWqBY',
+                'split_land' => 'fldbvG6dJfRml0Kk0',
                 'building' => 'fldVMgLQuTvKqrTaZ',
                 'fence' => 'fldu3xZ1U8DZSJz3U',
                 'gate' => 'fldVvIWJSABft3rCM',
                 'movable' => 'fld0LIPK22B9eYrNf',
                 'perennial' => 'fld60NiIhfcxeiKf0',
+                'decorative' => 'fld1wbingVBMUaitP',
                 'annual' => 'fldmGbmaypy8IpsdU',
                 'business' => 'fld6vhkerEPc8qsvY',
                 'soceco' => 'fldvsEwhxS1ZQkOA2',
                 // Technical docs
                 'doc_cost' => 'fldgsS8iWmw4ksaEd',
+                'doc_cost_small' => 'fldsidahHfa8qG8QZ',
                 'doc_boundary' => 'fldnaKdrr0fr94cL2',
                 'doc_drawings' => 'fldxY6hAVxTyCbM2v',
                 'doc_ortho' => 'fldZvDdM2CeP0oTWJ',
@@ -64,6 +68,15 @@ return [
                 'act' => 'fldPdQMFxWf9iJgfM',
                 'team' => 'fldbwybxmNBB1ocbS',
                 'notes' => 'fldmh21ciQFRNnyh0',
+            ],
+
+            'sectors' => [
+                'name' => 'fldgFPrINTkJbXjgO',
+                'sector' => 'fldpxgwM9XtZxMlXT',
+                'team' => 'fldLMrOmu98zOUrqV',
+                'total_acts' => 'fldlYFCxy2ltqsM2e',
+                'celebrated' => 'fldaJj0vHAWHBcoNH',
+                'notes' => 'fldwqOjN1XW1kSkpb',
             ],
 
             'correspondence' => [
