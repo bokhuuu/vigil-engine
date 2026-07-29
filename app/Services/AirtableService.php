@@ -83,6 +83,14 @@ class AirtableService
     }
 
     /**
+     * Get all ACTs regardless of status.
+     */
+    public function getAllActs(): array
+    {
+        return $this->client->get(config('vigil.airtable.tables.acts'));
+    }
+
+    /**
      * Get all manager contacts for correspondence alerts.
      */
     public function getManagers(): array
@@ -204,10 +212,29 @@ class AirtableService
         return [
             'acts' => $this->client->get(config('vigil.airtable.tables.acts')),
             'deadlines' => $this->client->get(config('vigil.airtable.tables.deadlines')),
+            'sectors' => $this->client->get(config('vigil.airtable.tables.sectors')),
             'correspondence' => $this->client->get(config('vigil.airtable.tables.correspondence')),
             'teams' => $this->client->get(config('vigil.airtable.tables.teams')),
             'notifications' => $this->client->get(config('vigil.airtable.tables.notifications')),
             'businesses' => $this->client->get(config('vigil.airtable.tables.businesses')),
         ];
+    }
+
+    /**
+     * Get all sectors.
+     */
+    public function getSectors(): array
+    {
+        return $this->client->get(config('vigil.airtable.tables.sectors'));
+    }
+
+    /**
+     * Mark sector as celebrated.
+     */
+    public function markSectorCelebrated(string $recordId): void
+    {
+        $this->client->patch(config('vigil.airtable.tables.sectors'), $recordId, [
+            '🎉 აღინიშნა' => true,
+        ]);
     }
 }
