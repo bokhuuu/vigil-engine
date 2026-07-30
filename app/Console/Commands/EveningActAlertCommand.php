@@ -99,7 +99,6 @@ class EveningActAlertCommand extends Command
             $groupMessage .= "{$teamName}: ".count($acts)."\n";
         }
 
-        $groupMessage .= "\nსულ: {$count}";
         $telegram->sendToGroup($groupMessage);
 
         $this->info("Done. {$count} incomplete ACTs processed.");
