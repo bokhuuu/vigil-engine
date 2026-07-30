@@ -21,18 +21,31 @@ class DailySummaryCommand extends Command
         $this->info('Fetching counts from Airtable...');
         $counts = $airtable->getSummaryCounts();
 
-        $corrStatus = $counts['corr_overdue'] > 0
+        // ACTs section
+        $actsSection = "<b>📋 აქტები</b>\n"
+            ."სულ: {$counts['total']} | ✅ {$counts['done']} | ❌ {$counts['incomplete']}\n";
+
+        // Only show teams with incomplete ACTs
+        $teamLines = '';
+        foreach ($counts['by_team'] as $team => $count) {
+            if ($count > 0) {
+                $teamLines .= "{$team}: {$count}\n";
+            }
+        }
+
+        if ($teamLines) {
+            $actsSection .= $teamLines;
+        }
+
+        // Correspondence section
+        $corrSection = "<b>📨 კორესპონდენცია</b>\n";
+        $corrSection .= $counts['corr_overdue'] > 0
             ? "⚠️ ვადაგადაცილებული: {$counts['corr_overdue']}"
             : '✅ ყველა დროულია';
 
-        $message = "🛡️ <b>Vigil — დღის შეჯამება</b>\n\n"
-            ."აქტები: {$counts['total']} სულ | ✅ {$counts['done']} | ❌ {$counts['incomplete']}\n\n"
-            ."<b>გუნდების მოლოდინი:</b>\n"
-            ."ინსპექტორები: {$counts['by_team']['ინსპექტორები']}\n"
-            ."ამზომველები: {$counts['by_team']['ამზომველები']}\n"
-            ."ხარჯთაღმრიცხველები: {$counts['by_team']['ხარჯთაღმრიცხველი']}\n"
-            ."აგრონომები: {$counts['by_team']['აგრონომები']}\n\n"
-            ."📨 კორესპონდენცია: {$corrStatus}";
+        $message = "<b>დღის შეჯამება</b>\n\n"
+            .$actsSection."\n"
+            .$corrSection;
 
         $telegram->sendToMe($message);
 

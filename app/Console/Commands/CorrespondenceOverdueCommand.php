@@ -28,7 +28,6 @@ class CorrespondenceOverdueCommand extends Command
             return;
         }
 
-        $fields = config('vigil.airtable.fields.correspondence');
         $updated = 0;
 
         foreach ($overdue as $record) {
@@ -38,13 +37,12 @@ class CorrespondenceOverdueCommand extends Command
             $this->warn("Overdue: {$subject}");
         }
 
-        $message = "🔴 <b>ვადაგადაცილებული კორესპონდენცია</b>\n"
-            ."სულ: {$updated}\n\n";
+        $message = "<b>ვადაგადაცილებული კორესპონდენცია</b>\n\n";
 
         foreach ($overdue as $record) {
             $subject = $record['fields']['📋 საკითხი'] ?? 'უცნობი';
             $corrUrl = $airtable->recordUrl(config('vigil.airtable.tables.correspondence'), $record['id']);
-            $message .= "❗ <a href=\"{$corrUrl}\">{$subject}</a>\n";
+            $message .= "🔗 <a href=\"{$corrUrl}\">{$subject}</a>\n";
         }
 
         $message .= "\nგთხოვთ დაუყოვნებლივ უპასუხოთ.";

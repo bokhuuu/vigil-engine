@@ -54,7 +54,7 @@ class SectorProgressCommand extends Command
 
         // Only show sectors that have at least 1 done ACT
         $hasProgress = false;
-        $message = "📊 <b>სექტორების პროგრესი</b>\n\n";
+        $message = "<b>სექტორების პროგრესი</b>\n\n";
         $celebrations = [];
 
         foreach ($sectors as $sectorRecord) {

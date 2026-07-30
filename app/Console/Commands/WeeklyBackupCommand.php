@@ -51,7 +51,7 @@ class WeeklyBackupCommand extends Command
             'businesses' => count($data['businesses']),
         ];
 
-        $message = "💾 <b>Vigil — კვირის სარეზერვო ასლი</b>\n\n"
+        $message = "<b>კვირის სარეზერვო ასლი</b>\n\n"
             ."✅ შენახულია და B2-ზე ატვირთულია\n\n"
             ."აქტები: {$counts['acts']}\n"
             ."ვადები: {$counts['deadlines']}\n"
