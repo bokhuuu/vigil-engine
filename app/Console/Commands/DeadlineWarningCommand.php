@@ -24,7 +24,7 @@ class DeadlineWarningCommand extends Command
 
         // ── ACT commitment deadlines ──────────────────────────────────────
         $deadlines = $airtable->getUpcomingDeadlines();
-        $warnings = [];
+        $actWarnings = [];
 
         foreach ($deadlines as $record) {
             $fields = $record['fields'];
@@ -37,29 +37,34 @@ class DeadlineWarningCommand extends Command
             $promised = Carbon::parse($promisedRaw)->startOfDay();
             $daysLeft = (int) $today->diffInDays($promised, false);
             $title = $fields['🔖 სათაური'] ?? '—';
-            $notes = $fields['📝 შენიშვნა'] ?? '';
             $url = $airtable->recordUrl(config('vigil.airtable.tables.deadlines'), $record['id']);
+
+            $warning = null;
 
             if ($daysLeft < 0) {
                 $airtable->markDeadlineOverdue($record['id']);
-                $warnings[] = "❌ <b>ვადა გავიდა:</b> <a href=\"{$url}\">{$title}</a>\n   {$notes}";
+                $warning = "❌ ვადა გავიდა: 🔗 <a href=\"{$url}\">{$title}</a>";
             } elseif ($daysLeft === 0) {
-                $warnings[] = "🚨 <b>დღეს ვადა:</b> <a href=\"{$url}\">{$title}</a>\n   {$notes}";
+                $warning = "🚨 დღეს ვადა: 🔗 <a href=\"{$url}\">{$title}</a>";
             } elseif ($daysLeft === 1) {
-                $warnings[] = "🔴 <b>ხვალ ვადა:</b> <a href=\"{$url}\">{$title}</a>\n   {$notes}";
+                $warning = "🔴 ხვალ ვადა: 🔗 <a href=\"{$url}\">{$title}</a>";
             } elseif ($daysLeft === 2) {
-                $warnings[] = "⚠️ <b>2 დღე რჩება:</b> <a href=\"{$url}\">{$title}</a>\n   {$notes}";
+                $warning = "⚠️ 2 დღე რჩება: 🔗 <a href=\"{$url}\">{$title}</a>";
             }
 
-            // Send directly to responsible team
-            $teamRecordIds = $fields['👥 გუნდი'] ?? [];
-            if (! empty($teamRecordIds) && ! empty($warnings)) {
-                $teams = $airtable->getTeams();
-                foreach ($teams as $team) {
-                    if (in_array($team['id'], $teamRecordIds)) {
-                        $telegramId = $team['fields']['✈️ Telegram'] ?? null;
-                        if ($telegramId) {
-                            $telegram->send($telegramId, end($warnings));
+            if ($warning) {
+                $actWarnings[] = $warning;
+
+                // Send directly to responsible team
+                $teamRecordIds = $fields['👥 გუნდი'] ?? [];
+                if (! empty($teamRecordIds)) {
+                    $teams = $airtable->getTeams();
+                    foreach ($teams as $team) {
+                        if (in_array($team['id'], $teamRecordIds)) {
+                            $telegramId = $team['fields']['✈️ Telegram'] ?? null;
+                            if ($telegramId) {
+                                $telegram->send($telegramId, $warning);
+                            }
                         }
                     }
                 }
@@ -68,6 +73,7 @@ class DeadlineWarningCommand extends Command
 
         // ── Correspondence promised dates ─────────────────────────────────
         $corrList = $airtable->getCorrespondenceWithPromisedDates();
+        $corrWarnings = [];
 
         foreach ($corrList as $record) {
             $fields = $record['fields'];
@@ -83,38 +89,45 @@ class DeadlineWarningCommand extends Command
             $url = $airtable->recordUrl(config('vigil.airtable.tables.correspondence'), $record['id']);
 
             if ($daysLeft < 0) {
-                $warnings[] = "❌ <b>კორ. ვადა გავიდა:</b> <a href=\"{$url}\">{$subject}</a>";
+                $corrWarnings[] = "❌ ვადა გავიდა: 🔗 <a href=\"{$url}\">{$subject}</a>";
             } elseif ($daysLeft === 0) {
-                $warnings[] = "🚨 <b>კორ. დღეს ვადა:</b> <a href=\"{$url}\">{$subject}</a>";
+                $corrWarnings[] = "🚨 დღეს ვადა: 🔗 <a href=\"{$url}\">{$subject}</a>";
             } elseif ($daysLeft === 1) {
-                $warnings[] = "🔴 <b>კორ. ხვალ ვადა:</b> <a href=\"{$url}\">{$subject}</a>";
+                $corrWarnings[] = "🔴 ხვალ ვადა: 🔗 <a href=\"{$url}\">{$subject}</a>";
             } elseif ($daysLeft === 2) {
-                $warnings[] = "⚠️ <b>კორ. 2 დღე რჩება:</b> <a href=\"{$url}\">{$subject}</a>";
+                $corrWarnings[] = "⚠️ 2 დღე რჩება: 🔗 <a href=\"{$url}\">{$subject}</a>";
             }
         }
 
         // ── Send to Zura ──────────────────────────────────────────────────
-        if (empty($warnings)) {
+        $allWarnings = array_merge($actWarnings, $corrWarnings);
+
+        if (empty($allWarnings)) {
             $telegram->sendToMe('✅ ვადები — პრობლემა არ არის.');
             $this->info('No deadline warnings.');
 
             return;
         }
 
-        $message = "⏰ <b>ვადების შეხსენება</b>\n\n"
-            .implode("\n\n", $warnings);
+        $message = "<b>ვადების შეხსენება</b>\n\n"
+            .implode("\n", $allWarnings);
 
         $telegram->sendToMe($message);
 
         // Send correspondence warnings to managers
-        $managers = $airtable->getManagers();
-        foreach ($managers as $manager) {
-            $telegramId = $manager['fields']['✈️ Telegram'] ?? null;
-            if ($telegramId) {
-                $telegram->send($telegramId, $message);
+        if (! empty($corrWarnings)) {
+            $corrMessage = "<b>ვადების შეხსენება</b>\n\n"
+                .implode("\n", $corrWarnings);
+
+            $managers = $airtable->getManagers();
+            foreach ($managers as $manager) {
+                $telegramId = $manager['fields']['✈️ Telegram'] ?? null;
+                if ($telegramId) {
+                    $telegram->send($telegramId, $corrMessage);
+                }
             }
         }
 
-        $this->info('Deadline warnings sent: '.count($warnings));
+        $this->info('Deadline warnings sent: '.count($allWarnings));
     }
 }
