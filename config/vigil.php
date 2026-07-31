@@ -18,7 +18,6 @@ return [
             'sectors' => 'tblFMU2Zj3VCRdL2M',
             'correspondence' => 'tblM1b0aw2lbvTC2A',
             'teams' => 'tbly6CXuhsuITExqg',
-            'notifications' => 'tbluQf2BlZvzHVDhu',
             'businesses' => 'tbl4Aarov1w9wqgXC',
         ],
 
@@ -101,18 +100,6 @@ return [
                 'telegram' => 'fldHoEvrTmGAWkefs',
                 'email' => 'fldu0xZjo3kUtb9Kr',
                 'notes' => 'fldMNLooMQKu6oVzk',
-            ],
-
-            'notifications' => [
-                'subject' => 'fldx29UubpgK7TrHG',
-                'date' => 'fldv6nQbRGIoWah18',
-                'channel' => 'fldqxjkX4Q9qSCL3y',
-                'resolved' => 'fldQjT3iyPeUZzwCB',
-                'resolved_at' => 'fldeWlkClQ01kN6Np',
-                'act' => 'fldyLQySV51vWUHLQ',
-                'correspondence' => 'fld3AvBIeHQuNDIfC',
-                'team' => 'fldW2uRtgyrRbtXBW',
-                'notes' => 'fldkQSP5tDBwkTIld',
             ],
 
             'businesses' => [

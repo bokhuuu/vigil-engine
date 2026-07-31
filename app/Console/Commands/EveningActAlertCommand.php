@@ -71,13 +71,6 @@ class EveningActAlertCommand extends Command
                 }
                 $message .= "\n";
 
-                $airtable->logNotification(
-                    "აქტი {$number} — {$teamName}",
-                    'Telegram',
-                    $act['id'],
-                    $teamRecord['id'] ?? null
-                );
-
                 $airtable->markActNotified($act['id']);
             }
 

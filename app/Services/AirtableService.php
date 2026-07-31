@@ -141,31 +141,6 @@ class AirtableService
 
     /*
     |--------------------------------------------------------------------------
-    | NOTIFICATIONS
-    |--------------------------------------------------------------------------
-    */
-
-    public function logNotification(string $subject, string $channel, ?string $actRecordId = null, ?string $teamRecordId = null): void
-    {
-        $data = [
-            '📋 საკითხი' => $subject,
-            '📅 თარიღი' => Carbon::now()->toDateString(),
-            '📡 არხი' => [$channel],
-        ];
-
-        if ($actRecordId) {
-            $data['🗂️ აქტი'] = [$actRecordId];
-        }
-
-        if ($teamRecordId) {
-            $data['👥 გუნდი'] = [$teamRecordId];
-        }
-
-        $this->client->post(config('vigil.airtable.tables.notifications'), $data);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
     | SUMMARY COUNTS
     |--------------------------------------------------------------------------
     */
@@ -215,7 +190,6 @@ class AirtableService
             'sectors' => $this->client->get(config('vigil.airtable.tables.sectors')),
             'correspondence' => $this->client->get(config('vigil.airtable.tables.correspondence')),
             'teams' => $this->client->get(config('vigil.airtable.tables.teams')),
-            'notifications' => $this->client->get(config('vigil.airtable.tables.notifications')),
             'businesses' => $this->client->get(config('vigil.airtable.tables.businesses')),
         ];
     }

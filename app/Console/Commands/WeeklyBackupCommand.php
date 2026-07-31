@@ -47,7 +47,6 @@ class WeeklyBackupCommand extends Command
             'sectors' => count($data['sectors']),
             'correspondence' => count($data['correspondence']),
             'teams' => count($data['teams']),
-            'notifications' => count($data['notifications']),
             'businesses' => count($data['businesses']),
         ];
 
@@ -58,7 +57,6 @@ class WeeklyBackupCommand extends Command
             ."სექტორები: {$counts['sectors']}\n"
             ."კორესპონდენცია: {$counts['correspondence']}\n"
             ."გუნდები: {$counts['teams']}\n"
-            ."შეტყობინებები: {$counts['notifications']}\n"
             ."ბიზნესები: {$counts['businesses']}";
 
         $telegram->sendToMe($message);

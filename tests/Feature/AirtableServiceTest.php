@@ -94,19 +94,3 @@ test('markCorrespondenceOverdue patches status to overdue', function () {
             $request['fields']['🚦სტატუსი'] === '🔴 ვადაგადაცილებული'
     );
 });
-
-test('logNotification creates record in notifications table', function () {
-    Http::fake([
-        '*' => Http::response([
-            'records' => [['id' => 'recNEW', 'fields' => []]],
-        ], 200),
-    ]);
-
-    $service = new AirtableService(new AirtableClient);
-    $service->logNotification('ACT-001 — ინსპექტორები', 'Telegram', 'recACT1', 'recTEAM1');
-
-    Http::assertSent(
-        fn ($request) => $request->method() === 'POST' &&
-            str_contains($request->url(), config('vigil.airtable.tables.notifications'))
-    );
-});
