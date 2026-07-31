@@ -73,7 +73,7 @@ class EveningActAlertCommand extends Command
 
                 $message .= "🔗 <a href=\"{$actUrl}\">აქტი {$number}</a> | სექტ: {$sector}\n";
                 if ($missing) {
-                    $message .= "❌ {$missing}\n";
+                    $message .= "❌ აკლია: {$missing}\n";
                 }
                 $message .= "\n";
 
@@ -104,13 +104,32 @@ class EveningActAlertCommand extends Command
             }
         }
 
-        // Group chat — count per team
+        // Group chat — per ACT
         $groupMessage = "🛡️ <b>არასრული აქტები</b>\n\n";
 
-        foreach ($byTeam as $teamName => $acts) {
-            $groupMessage .= "{$teamName}: ".count($acts)."\n";
-        }
+        $shownActs = [];
+        foreach ($incomplete as $act) {
+            $actId = $act['id'];
+            $fields = $act['fields'];
+            $responsible = $fields['👤პასუხისმგებელი აქტზე'] ?? [];
 
+            if (empty($responsible) || isset($shownActs[$actId])) {
+                continue;
+            }
+
+            $shownActs[$actId] = true;
+            $number = $fields['🔖 აქტის ნომერი'] ?? '—';
+            $sector = implode(', ', $fields['📍სექტორი'] ?? []);
+            $missing = $fields['❗რა აკლია აქტს'] ?? null;
+            $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $actId);
+            $teams = implode(', ', $responsible);
+
+            $groupMessage .= "🔗 <a href=\"{$actUrl}\">{$number}</a> | სექტ: {$sector}\n";
+            if ($missing) {
+                $groupMessage .= "❌ აკლია: {$missing}\n";
+            }
+            $groupMessage .= "\n";
+        }
         $telegram->sendToGroup($groupMessage);
 
         $this->info("Done. {$count} incomplete ACTs processed.");
