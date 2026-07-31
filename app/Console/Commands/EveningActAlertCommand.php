@@ -34,10 +34,16 @@ class EveningActAlertCommand extends Command
         // Load teams
         $teams = $airtable->getTeams();
         $teamByName = [];
+        $roleMembers = [];
         foreach ($teams as $team) {
             $name = $team['fields']['👤 სახელი'] ?? null;
+            $role = $team['fields']['🏷️ როლი'] ?? null;
+            $telegramId = $team['fields']['✈️ Telegram'] ?? null;
             if ($name) {
                 $teamByName[$name] = $team;
+            }
+            if ($role && $telegramId) {
+                $roleMembers[$role][] = $telegramId;
             }
         }
 
@@ -76,9 +82,22 @@ class EveningActAlertCommand extends Command
 
             $message .= 'გთხოვთ შეავსოთ და წარადგინოთ.';
 
-            if ($telegramId) {
-                $telegram->send($telegramId, $message);
-                $this->info("Sent to {$teamName} ({$telegramId})");
+            // Determine recipients based on team name
+            $recipients = [];
+
+            if ($teamName === 'ამზომველები') {
+                $recipients = $roleMembers['ამზომველი'] ?? [];
+            } elseif ($teamName === 'აგრონომები') {
+                $recipients = $roleMembers['აგრონომი'] ?? [];
+            } elseif ($telegramId) {
+                $recipients = [$telegramId];
+            }
+
+            if (! empty($recipients)) {
+                foreach ($recipients as $recipient) {
+                    $telegram->send($recipient, $message);
+                }
+                $this->info("Sent to {$teamName} (".count($recipients).' recipients)');
             } else {
                 $telegram->sendToMe("⚠️ {$teamName} — Telegram არ აქვს.\n\n".$message);
                 $this->warn("No Telegram for {$teamName} — forwarded to Zura");
