@@ -42,13 +42,6 @@ class AirtableService
         ]);
     }
 
-    public function markActNotified(string $recordId): void
-    {
-        $this->client->patch(config('vigil.airtable.tables.acts'), $recordId, [
-            '📣 შეტყობინდა' => Carbon::now()->toDateString(),
-        ]);
-    }
-
     /*
     |--------------------------------------------------------------------------
     | CORRESPONDENCE

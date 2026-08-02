@@ -67,20 +67,6 @@ test('getTeams returns all team records', function () {
     expect($teams[0]['fields']['👤 სახელი'])->toBe('ჩადუ');
 });
 
-test('markActNotified patches correct field', function () {
-    Http::fake([
-        '*' => Http::response(['id' => 'rec001', 'fields' => []], 200),
-    ]);
-
-    $service = new AirtableService(new AirtableClient);
-    $service->markActNotified('rec001');
-
-    Http::assertSent(
-        fn ($request) => $request->method() === 'PATCH' &&
-            str_contains($request->url(), 'rec001')
-    );
-});
-
 test('markCorrespondenceOverdue patches status to overdue', function () {
     Http::fake([
         '*' => Http::response(['id' => 'rec001', 'fields' => []], 200),

@@ -76,8 +76,6 @@ class EveningActAlertCommand extends Command
                     $message .= "❌ აკლია: {$missing}\n";
                 }
                 $message .= "\n";
-
-                $airtable->markActNotified($act['id']);
             }
 
             $message .= 'გთხოვთ შეავსოთ და წარადგინოთ.';
