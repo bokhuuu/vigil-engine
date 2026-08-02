@@ -42,10 +42,8 @@ class CorrespondenceOverdueCommand extends Command
         foreach ($overdue as $record) {
             $subject = $record['fields']['📋 საკითხი'] ?? 'უცნობი';
             $corrUrl = $airtable->recordUrl(config('vigil.airtable.tables.correspondence'), $record['id']);
-            $message .= "🔗 <a href=\"{$corrUrl}\">{$subject}</a>\n";
+            $message .= "📋 <a href=\"{$corrUrl}\">{$subject}</a>\n\n";
         }
-
-        $message .= "\nგთხოვთ დაუყოვნებლივ უპასუხოთ.";
 
         $telegram->sendToMe($message);
 

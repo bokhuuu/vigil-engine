@@ -61,8 +61,7 @@ class EveningActAlertCommand extends Command
             $teamRecord = $teamByName[$teamName] ?? null;
             $telegramId = $teamRecord['fields']['✈️ Telegram'] ?? null;
 
-            $message = "<b>შეხსენება</b>\n"
-                ."გუნდი: <b>{$teamName}</b>\n\n";
+            $message = "👥 {$teamName}\n\n";
 
             foreach ($acts as $act) {
                 $fields = $act['fields'];
@@ -71,18 +70,16 @@ class EveningActAlertCommand extends Command
                 $missing = $fields['❗რა აკლია აქტს'] ?? null;
                 $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $act['id']);
 
-                $message .= "🔗 <a href=\"{$actUrl}\">აქტი {$number}</a> | სექტ: {$sector}\n";
+                $message .= "📋 <a href=\"{$actUrl}\">{$number}</a>\n";
+                $message .= "📍 სექტ: {$sector}\n";
                 if ($missing) {
-                    $message .= "❌ აკლია: {$missing}\n";
+                    $message .= "\n❌ აკლია:\n{$missing}\n";
                 }
                 $message .= "\n";
             }
 
-            $message .= 'გთხოვთ შეავსოთ და წარადგინოთ.';
-
-            // Determine recipients based on team name
+            // Determine recipients
             $recipients = [];
-
             if ($teamName === 'ამზომველები') {
                 $recipients = $roleMembers['ამზომველი'] ?? [];
             } elseif ($teamName === 'აგრონომები') {
@@ -120,14 +117,15 @@ class EveningActAlertCommand extends Command
             $sector = implode(', ', $fields['📍სექტორი'] ?? []);
             $missing = $fields['❗რა აკლია აქტს'] ?? null;
             $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $actId);
-            $teams = implode(', ', $responsible);
 
-            $groupMessage .= "🔗 <a href=\"{$actUrl}\">{$number}</a> | სექტ: {$sector}\n";
+            $groupMessage .= "📋 <a href=\"{$actUrl}\">{$number}</a>\n";
+            $groupMessage .= "📍 სექტ: {$sector}\n";
             if ($missing) {
-                $groupMessage .= "❌ აკლია: {$missing}\n";
+                $groupMessage .= "\n❌ აკლია:\n{$missing}\n";
             }
             $groupMessage .= "\n";
         }
+
         $telegram->sendToGroup($groupMessage);
 
         $this->info("Done. {$count} incomplete ACTs processed.");
