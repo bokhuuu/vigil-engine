@@ -33,6 +33,7 @@ class EveningActAlertCommand extends Command
 
         // Load teams
         $teams = $airtable->getTeams();
+
         $teamByName = [];
         $roleMembers = [];
         foreach ($teams as $team) {
@@ -45,6 +46,13 @@ class EveningActAlertCommand extends Command
             if ($role && $telegramId) {
                 $roleMembers[$role][] = $telegramId;
             }
+        }
+
+        // Build sector name map by record ID
+        $sectors = $airtable->getSectors();
+        $sectorById = [];
+        foreach ($sectors as $sector) {
+            $sectorById[$sector['id']] = $sector['fields']['🔖 სახელი'] ?? '—';
         }
 
         // Group by responsible team
@@ -66,7 +74,8 @@ class EveningActAlertCommand extends Command
             foreach ($acts as $act) {
                 $fields = $act['fields'];
                 $number = $fields['🔖 აქტის ნომერი'] ?? '—';
-                $sector = implode(', ', $fields['📍სექტორი'] ?? []);
+                $sectorIds = $fields['📍სექტორი'] ?? [];
+                $sector = implode(', ', array_map(fn ($id) => $sectorById[$id] ?? '—', $sectorIds));
                 $missing = $fields['❗რა აკლია აქტს'] ?? null;
                 $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $act['id']);
 
@@ -114,7 +123,8 @@ class EveningActAlertCommand extends Command
 
             $shownActs[$actId] = true;
             $number = $fields['🔖 აქტის ნომერი'] ?? '—';
-            $sector = implode(', ', $fields['📍სექტორი'] ?? []);
+            $sectorIds = $fields['📍სექტორი'] ?? [];
+            $sector = implode(', ', array_map(fn ($id) => $sectorById[$id] ?? '—', $sectorIds));
             $missing = $fields['❗რა აკლია აქტს'] ?? null;
             $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $actId);
 

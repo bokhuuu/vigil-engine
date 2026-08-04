@@ -36,12 +36,19 @@ class SectorProgressCommand extends Command
             $teamById[$team['id']] = $team['fields']['👤 სახელი'] ?? '—';
         }
 
+        // Build sector name map by record ID
+        $sectorById = [];
+        foreach ($sectors as $sector) {
+            $sectorById[$sector['id']] = $sector['fields']['🔖 სახელი'] ?? '—';
+        }
+
         // Count done/total ACTs per sector name
         $actCounts = [];
         foreach ($allActs as $act) {
-            $actSectors = $act['fields']['📍სექტორი'] ?? [];
+            $actSectorIds = $act['fields']['📍სექტორი'] ?? [];
             $status = $act['fields']['🚦სტატუსი'] ?? '';
-            foreach ($actSectors as $sectorName) {
+            foreach ($actSectorIds as $sectorId) {
+                $sectorName = $sectorById[$sectorId] ?? '—';
                 if (! isset($actCounts[$sectorName])) {
                     $actCounts[$sectorName] = ['total' => 0, 'done' => 0];
                 }
