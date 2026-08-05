@@ -53,7 +53,7 @@ class AirtableService
         $today = Carbon::now()->toDateString();
 
         return $this->client->get(config('vigil.airtable.tables.correspondence'), [
-            'filterByFormula' => "AND({⏰ ვადა} < '{$today}', {🚦სტატუსი} != '📤 პასუხი გაგზავნილი', {🚦სტატუსი} != '🔴 ვადაგადაცილებული')",
+            'filterByFormula' => "AND({⏰ ვადა} != '', {⏰ ვადა} < '{$today}', {🚦სტატუსი} != '📤 პასუხი გაგზავნილი', {🚦სტატუსი} != '🔴 ვადაგადაცილებული')",
         ]);
     }
 
