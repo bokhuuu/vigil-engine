@@ -49,7 +49,7 @@ class SectorDeadlineCommand extends Command
             // Skip if deadline is in future but not yet tomorrow
             if ($diff > 0) {
                 // Days remaining — notify team daily
-                $teamIds = $fields['👥 გუნდი'] ?? [];
+                $teamIds = $fields['👥 გუნდები'] ?? [];
                 $teamRecord = ! empty($teamIds) ? ($teamById[$teamIds[0]] ?? null) : null;
                 $telegramId = $teamRecord['fields']['✈️ Telegram'] ?? null;
                 $teamName = $teamRecord['fields']['👤 სახელი'] ?? '—';
@@ -69,7 +69,7 @@ class SectorDeadlineCommand extends Command
                 $this->info("Warned team {$teamName} — {$diff} days left for {$name}");
             } elseif ($diff === 0) {
                 // Today is deadline — notify team
-                $teamIds = $fields['👥 გუნდი'] ?? [];
+                $teamIds = $fields['👥 გუნდები'] ?? [];
                 $teamRecord = ! empty($teamIds) ? ($teamById[$teamIds[0]] ?? null) : null;
                 $telegramId = $teamRecord['fields']['✈️ Telegram'] ?? null;
                 $teamName = $teamRecord['fields']['👤 სახელი'] ?? '—';
@@ -90,7 +90,7 @@ class SectorDeadlineCommand extends Command
                 // Overdue — notify team + managers daily
                 $overdueDays = abs($diff);
 
-                $teamIds = $fields['👥 გუნდი'] ?? [];
+                $teamIds = $fields['👥 გუნდები'] ?? [];
                 $teamRecord = ! empty($teamIds) ? ($teamById[$teamIds[0]] ?? null) : null;
                 $telegramId = $teamRecord['fields']['✈️ Telegram'] ?? null;
                 $teamName = $teamRecord['fields']['👤 სახელი'] ?? '—';

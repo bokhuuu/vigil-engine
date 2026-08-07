@@ -69,7 +69,7 @@ class SectorProgressCommand extends Command
             $name = $fields['🔖 სახელი'] ?? '—';
             $totalExp = (int) ($fields['📊 სულ აქტები'] ?? 0);
             $celebrated = $fields['🎉 აღინიშნა'] ?? false;
-            $teamIds = $fields['👥 გუნდი'] ?? [];
+            $teamIds = $fields['👥 გუნდები'] ?? [];
             $teamName = ! empty($teamIds) ? ($teamById[$teamIds[0]] ?? '—') : '—';
 
             $done = $actCounts[$name]['done'] ?? 0;

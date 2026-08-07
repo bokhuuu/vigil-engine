@@ -56,7 +56,7 @@ class DeadlineWarningCommand extends Command
                 $actWarnings[] = $warning;
 
                 // Send directly to responsible team
-                $teamRecordIds = $fields['👥 გუნდი'] ?? [];
+                $teamRecordIds = $fields['👥 გუნდები'] ?? [];
                 if (! empty($teamRecordIds)) {
                     $teams = $airtable->getTeams();
                     foreach ($teams as $team) {
