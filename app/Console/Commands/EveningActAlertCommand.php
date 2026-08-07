@@ -87,14 +87,31 @@ class EveningActAlertCommand extends Command
                 $message .= "\n";
             }
 
-            // Determine recipients
+            // Determine recipients — use linked გუნდი field for direct Telegram
             $recipients = [];
-            if ($teamName === 'ამზომველები') {
-                $recipients = $roleMembers['ამზომველი'] ?? [];
-            } elseif ($teamName === 'აგრონომები') {
-                $recipients = $roleMembers['აგრონომი'] ?? [];
-            } elseif ($telegramId) {
-                $recipients = [$telegramId];
+            foreach ($acts as $act) {
+                $linkedTeamIds = $act['fields']['👥 გუნდი'] ?? [];
+                foreach ($linkedTeamIds as $linkedId) {
+                    foreach ($teams as $team) {
+                        if ($team['id'] === $linkedId) {
+                            $tid = $team['fields']['✈️ Telegram'] ?? null;
+                            if ($tid && ! in_array($tid, $recipients)) {
+                                $recipients[] = $tid;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Fallback to role-based or name-based if no linked team
+            if (empty($recipients)) {
+                if ($teamName === 'ამზომველები') {
+                    $recipients = $roleMembers['ამზომველი'] ?? [];
+                } elseif ($teamName === 'აგრონომები') {
+                    $recipients = $roleMembers['აგრონომი'] ?? [];
+                } elseif ($telegramId) {
+                    $recipients = [$telegramId];
+                }
             }
 
             if (! empty($recipients)) {
