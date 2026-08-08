@@ -94,9 +94,19 @@ class EveningActAlertCommand extends Command
                 foreach ($linkedTeamIds as $linkedId) {
                     foreach ($teams as $team) {
                         if ($team['id'] === $linkedId) {
-                            $tid = $team['fields']['✈️ Telegram'] ?? null;
-                            if ($tid && ! in_array($tid, $recipients)) {
-                                $recipients[] = $tid;
+                            $role = $team['fields']['🏷️ როლი'] ?? null;
+                            // Only use if role matches current team context
+                            $roleMatch = (
+                                ($teamName === 'ინსპექტორები' && $role === 'ინსპექტორი') ||
+                                ($teamName === 'ამზომველები' && $role === 'ამზომველი') ||
+                                ($teamName === 'აგრონომები' && $role === 'აგრონომი') ||
+                                ($teamName === 'ხარჯთაღმრიცხველები' && $role === 'ხარჯთაღმრიცხველი')
+                            );
+                            if ($roleMatch) {
+                                $tid = $team['fields']['✈️ Telegram'] ?? null;
+                                if ($tid && ! in_array($tid, $recipients)) {
+                                    $recipients[] = $tid;
+                                }
                             }
                         }
                     }

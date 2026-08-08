@@ -103,7 +103,6 @@ class DeadlineWarningCommand extends Command
         $allWarnings = array_merge($actWarnings, $corrWarnings);
 
         if (empty($allWarnings)) {
-            $telegram->sendToMe('✅ ვადები — პრობლემა არ არის.');
             $this->info('No deadline warnings.');
 
             return;
