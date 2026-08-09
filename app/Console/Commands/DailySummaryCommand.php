@@ -23,13 +23,14 @@ class DailySummaryCommand extends Command
 
         // ACTs section
         $actsSection = "<b>📋 აქტები</b>\n"
-            ."სულ: {$counts['total']} | ✅ {$counts['done']} | ❌ {$counts['incomplete']}\n";
+            ."✅ {$counts['done']}   ❌ {$counts['incomplete']}   სულ: {$counts['total']}\n\n"
+            ."<i>👥 არასრული აქტები გუნდების მიხედვით:</i>\n";
 
         // Only show teams with incomplete ACTs
         $teamLines = '';
         foreach ($counts['by_team'] as $team => $count) {
             if ($count > 0) {
-                $teamLines .= "{$team}: {$count}\n";
+                $teamLines .= "• {$team}: {$count}\n";
             }
         }
 
@@ -38,13 +39,15 @@ class DailySummaryCommand extends Command
         }
 
         // Correspondence section
-        $corrSection = "<b>📨 კორესპონდენცია</b>\n";
-        $corrSection .= $counts['corr_overdue'] > 0
-            ? "⚠️ ვადაგადაცილებული: {$counts['corr_overdue']}"
-            : '✅ ყველა დროულია';
+        $corrSection = '';
+        if ($counts['corr_overdue'] > 0) {
+            $corrSection = "\n<b>📨 კორესპონდენცია</b>\n"
+                ."⚠️ ვადაგადაცილებული: {$counts['corr_overdue']}";
+        }
 
         $message = "<b>დღის შეჯამება</b>\n\n"
-            .$actsSection."\n"
+            .$actsSection
+            .$teamLines
             .$corrSection;
 
         $telegram->sendToMe($message);

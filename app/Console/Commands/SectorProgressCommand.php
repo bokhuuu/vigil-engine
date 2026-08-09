@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Services\AirtableClient;
 use App\Services\AirtableService;
 use App\Services\TelegramService;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class SectorProgressCommand extends Command
@@ -88,6 +89,23 @@ class SectorProgressCommand extends Command
             $message .= "📍 <b>{$name}</b> | {$teamName}\n";
             $message .= "{$bar} {$percent}% ({$done}/{$total})\n\n";
 
+            // Add deadline info if set
+            $deadline = $fields['📅 ვადა'] ?? null;
+            if ($deadline) {
+                $deadlineDate = Carbon::parse($deadline)->startOfDay();
+                $today = Carbon::now()->startOfDay();
+                $diff = (int) $today->diffInDays($deadlineDate, false);
+                if ($diff > 0) {
+                    $message .= "📅 ვადა: {$deadlineDate->format('d/m/Y')} — {$diff} დღე რჩება\n";
+                } elseif ($diff === 0) {
+                    $message .= "📅 ვადა: {$deadlineDate->format('d/m/Y')} — 🚨 დღეს ვადა!\n";
+                } else {
+                    $message .= "📅 ვადა: {$deadlineDate->format('d/m/Y')} — 🔴 ".abs($diff)." დღე გადაცილებულია\n";
+                }
+            }
+
+            $message .= "—————————————\n";
+
             // Check for sector completion
             if ($percent >= 100 && ! $celebrated) {
                 $celebrations[] = [
@@ -105,7 +123,7 @@ class SectorProgressCommand extends Command
             return;
         }
 
-        $message .= '💪 გაგრძელეთ კარგი მუშაობა!';
+        $message .= '💪';
         $telegram->sendToGroup($message);
 
         // Send celebration for completed sectors

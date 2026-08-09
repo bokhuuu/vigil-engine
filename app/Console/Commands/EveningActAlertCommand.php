@@ -79,12 +79,11 @@ class EveningActAlertCommand extends Command
                 $missing = $fields['❗რა აკლია აქტს'] ?? null;
                 $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $act['id']);
 
-                $message .= "📋 <a href=\"{$actUrl}\">{$number}</a>\n";
-                $message .= "📍 სექტ: {$sector}\n";
+                $message .= "📋 <b><a href=\"{$actUrl}\">აქტი {$number}</a></b>\n";
                 if ($missing) {
-                    $message .= "\n❌ აკლია:\n{$missing}\n";
+                    $message .= "❗ რა აკლია: {$missing}\n";
                 }
-                $message .= "\n";
+                $message .= "—————————————\n";
             }
 
             // Determine recipients — use linked გუნდი field for direct Telegram
@@ -155,12 +154,11 @@ class EveningActAlertCommand extends Command
             $missing = $fields['❗რა აკლია აქტს'] ?? null;
             $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $actId);
 
-            $groupMessage .= "📋 <a href=\"{$actUrl}\">{$number}</a>\n";
-            $groupMessage .= "📍 სექტ: {$sector}\n";
+            $groupMessage .= "📋 <b><a href=\"{$actUrl}\">აქტი {$number}</a></b>\n";
             if ($missing) {
-                $groupMessage .= "\n❌ აკლია:\n{$missing}\n";
+                $groupMessage .= "❗ რა აკლია: {$missing}\n";
             }
-            $groupMessage .= "\n";
+            $groupMessage .= "—————————————\n";
         }
 
         $telegram->sendToGroup($groupMessage);
