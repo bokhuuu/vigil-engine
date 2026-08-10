@@ -134,29 +134,55 @@ class EveningActAlertCommand extends Command
             }
         }
 
-        // Group chat — per ACT
-        $groupMessage = "🛡️ <b>არასრული აქტები</b>\n\n";
-
-        $shownActs = [];
+        // Group chat — by sector
+        $bySector = [];
         foreach ($incomplete as $act) {
-            $actId = $act['id'];
             $fields = $act['fields'];
             $responsible = $fields['👤პასუხისმგებელი აქტზე'] ?? [];
-
-            if (empty($responsible) || isset($shownActs[$actId])) {
+            if (empty($responsible)) {
                 continue;
             }
-
-            $shownActs[$actId] = true;
-            $number = $fields['🔖 აქტის ნომერი'] ?? '—';
             $sectorIds = $fields['📍სექტორი'] ?? [];
-            $sector = implode(', ', array_map(fn ($id) => $sectorById[$id] ?? '—', $sectorIds));
-            $missing = $fields['❗რა აკლია აქტს'] ?? null;
-            $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $actId);
+            $sectorName = ! empty($sectorIds) ? ($sectorById[$sectorIds[0]] ?? '—') : '—';
+            $bySector[$sectorName][] = $act;
+        }
 
-            $groupMessage .= "📋 <b><a href=\"{$actUrl}\">აქტი {$number}</a></b>\n";
-            if ($missing) {
-                $groupMessage .= "❗ რა აკლია: {$missing}\n";
+        // Build sector name to team name map
+        $teamById = [];
+        foreach ($teams as $team) {
+            $teamById[$team['id']] = $team['fields']['👤 სახელი'] ?? '—';
+        }
+
+        $sectorTeam = [];
+        foreach ($sectors as $sector) {
+            $sName = $sector['fields']['🔖 სახელი'] ?? '—';
+            $teamIds = $sector['fields']['👥 გუნდები'] ?? [];
+            $sectorTeam[$sName] = ! empty($teamIds) ? ($teamById[$teamIds[0]] ?? '—') : '—';
+        }
+
+        $groupMessage = "🛡️ <b>არასრული აქტები</b>\n\n";
+        $shownActs = [];
+
+        foreach ($bySector as $sectorName => $acts) {
+            $teamName = $sectorTeam[$sectorName] ?? '—';
+            $groupMessage .= "📍 <b>{$sectorName}</b> | {$teamName}\n";
+
+            foreach ($acts as $act) {
+                $actId = $act['id'];
+                if (isset($shownActs[$actId])) {
+                    continue;
+                }
+                $shownActs[$actId] = true;
+                $fields = $act['fields'];
+                $number = $fields['🔖 აქტის ნომერი'] ?? '—';
+                $missing = $fields['❗რა აკლია აქტს'] ?? null;
+                $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $actId);
+
+                $groupMessage .= "• <b><a href=\"{$actUrl}\">აქტი {$number}</a></b>";
+                if ($missing) {
+                    $groupMessage .= " — {$missing}";
+                }
+                $groupMessage .= "\n";
             }
             $groupMessage .= "—————————————\n";
         }
