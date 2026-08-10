@@ -165,7 +165,9 @@ class AirtableService
             'done' => count($done),
             'incomplete' => count($incomplete),
             'by_team' => $byTeam,
-            'corr_overdue' => count($this->getOverdueCorrespondence()),
+            'corr_overdue' => count($this->client->get(config('vigil.airtable.tables.correspondence'), [
+                'filterByFormula' => "{🚦სტატუსი} = '🔴 ვადაგადაცილებული'",
+            ])),
         ];
     }
 

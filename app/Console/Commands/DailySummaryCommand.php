@@ -34,10 +34,6 @@ class DailySummaryCommand extends Command
             }
         }
 
-        if ($teamLines) {
-            $actsSection .= $teamLines;
-        }
-
         // Correspondence section
         $corrSection = '';
         if ($counts['corr_overdue'] > 0) {
