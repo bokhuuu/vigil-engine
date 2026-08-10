@@ -64,6 +64,16 @@ class AirtableService
         ]);
     }
 
+    /**
+     * Get all correspondence already marked as overdue.
+     */
+    public function getAlreadyOverdueCorrespondence(): array
+    {
+        return $this->client->get(config('vigil.airtable.tables.correspondence'), [
+            'filterByFormula' => "{🚦სტატუსი} = '🔴 ვადაგადაცილებული'",
+        ]);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | TEAMS

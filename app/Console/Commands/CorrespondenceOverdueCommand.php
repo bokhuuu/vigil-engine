@@ -20,31 +20,32 @@ class CorrespondenceOverdueCommand extends Command
         $telegram = new TelegramService;
 
         $this->info('Checking correspondence deadlines...');
-        $overdue = $airtable->getOverdueCorrespondence();
 
-        if (empty($overdue)) {
+        // Mark newly overdue
+        $newOverdue = $airtable->getOverdueCorrespondence();
+        foreach ($newOverdue as $record) {
+            $airtable->markCorrespondenceOverdue($record['id']);
+            $subject = $record['fields']['📋 საკითხი'] ?? 'უცნობი';
+            $this->warn("Newly overdue: {$subject}");
+        }
+
+        // Get all overdue (new + existing)
+        $allOverdue = $airtable->getAlreadyOverdueCorrespondence();
+
+        if (empty($allOverdue)) {
             $this->info('No overdue correspondence. All good.');
             $telegram->sendToMe('✅ კორესპონდენცია — ვადაგადაცილებული არ არის.');
 
             return;
         }
 
-        $updated = 0;
-
-        foreach ($overdue as $record) {
-            $airtable->markCorrespondenceOverdue($record['id']);
-            $updated++;
-            $subject = $record['fields']['📋 საკითხი'] ?? 'უცნობი';
-            $this->warn("Overdue: {$subject}");
-        }
-
-        $total = count($overdue);
+        $total = count($allOverdue);
         $message = "<b>ვადაგადაცილებული კორესპონდენცია</b>\n"
             ."სულ: {$total}\n\n";
 
         $today = Carbon::now()->startOfDay();
 
-        foreach ($overdue as $record) {
+        foreach ($allOverdue as $record) {
             $fields = $record['fields'];
             $subject = $fields['📋 საკითხი'] ?? 'უცნობი';
             $lot = $fields['🗂️ ლოტი'] ?? null;
@@ -74,6 +75,6 @@ class CorrespondenceOverdueCommand extends Command
             }
         }
 
-        $this->info("Done. {$updated} records marked overdue.");
+        $this->info("Done. {$total} overdue records alerted.");
     }
 }
