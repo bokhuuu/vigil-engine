@@ -183,7 +183,7 @@ class EveningActAlertCommand extends Command
             }
         }
         $ordered = array_merge($inspectors, $others);
-        $total = array_sum($ordered);
+        $total = $count;
 
         $groupMessage = "🛡️ <b>არასრული აქტები</b>\n"
             ."სულ: {$total}\n\n";
