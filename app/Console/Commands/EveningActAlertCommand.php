@@ -55,6 +55,12 @@ class EveningActAlertCommand extends Command
             $sectorById[$sector['id']] = $sector['fields']['🔖 სახელი'] ?? '—';
         }
 
+        // Build team name map by record ID
+        $teamById = [];
+        foreach ($teams as $team) {
+            $teamById[$team['id']] = $team['fields']['👤 სახელი'] ?? '—';
+        }
+
         // Group by responsible team
         $byTeam = [];
         foreach ($incomplete as $record) {
@@ -134,58 +140,41 @@ class EveningActAlertCommand extends Command
             }
         }
 
-        // Group chat — by sector
-        $bySector = [];
+        // Group chat — counts by team
+        $groupByTeam = [];
         foreach ($incomplete as $act) {
             $fields = $act['fields'];
             $responsible = $fields['👤პასუხისმგებელი აქტზე'] ?? [];
             if (empty($responsible)) {
                 continue;
             }
-            $sectorIds = $fields['📍სექტორი'] ?? [];
-            $sectorName = ! empty($sectorIds) ? ($sectorById[$sectorIds[0]] ?? '—') : '—';
-            $bySector[$sectorName][] = $act;
-        }
+            $linkedTeamIds = $fields['👥 გუნდი'] ?? [];
 
-        // Build sector name to team name map
-        $teamById = [];
-        foreach ($teams as $team) {
-            $teamById[$team['id']] = $team['fields']['👤 სახელი'] ?? '—';
-        }
+            if (in_array('ინსპექტორები', $responsible) && ! empty($linkedTeamIds)) {
+                $linkedName = $teamById[$linkedTeamIds[0]] ?? null;
+                if ($linkedName) {
+                    if (! isset($groupByTeam[$linkedName])) {
+                        $groupByTeam[$linkedName] = 0;
+                    }
+                    $groupByTeam[$linkedName]++;
+                }
+            }
 
-        $sectorTeam = [];
-        foreach ($sectors as $sector) {
-            $sName = $sector['fields']['🔖 სახელი'] ?? '—';
-            $teamIds = $sector['fields']['👥 გუნდები'] ?? [];
-            $sectorTeam[$sName] = ! empty($teamIds) ? ($teamById[$teamIds[0]] ?? '—') : '—';
+            foreach ($responsible as $role) {
+                if ($role !== 'ინსპექტორები') {
+                    if (! isset($groupByTeam[$role])) {
+                        $groupByTeam[$role] = 0;
+                    }
+                    $groupByTeam[$role]++;
+                }
+            }
         }
 
         $groupMessage = "🛡️ <b>არასრული აქტები</b>\n\n";
-        $shownActs = [];
-
-        foreach ($bySector as $sectorName => $acts) {
-            $teamName = $sectorTeam[$sectorName] ?? '—';
-            $groupMessage .= "📍 <b>{$sectorName}</b> | {$teamName}\n";
-
-            foreach ($acts as $act) {
-                $actId = $act['id'];
-                if (isset($shownActs[$actId])) {
-                    continue;
-                }
-                $shownActs[$actId] = true;
-                $fields = $act['fields'];
-                $number = $fields['🔖 აქტის ნომერი'] ?? '—';
-                $missing = $fields['❗რა აკლია აქტს'] ?? null;
-                $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $actId);
-
-                $groupMessage .= "• <b><a href=\"{$actUrl}\">აქტი {$number}</a></b>";
-                if ($missing) {
-                    $groupMessage .= " — {$missing}";
-                }
-                $groupMessage .= "\n";
-            }
-            $groupMessage .= "—————————————\n";
+        foreach ($groupByTeam as $team => $cnt) {
+            $groupMessage .= "👥 {$team}: {$cnt}\n";
         }
+        $groupMessage .= "\n📩 თითოეულ გუნდს გაეგზავნა დეტალური სია პირადად.";
 
         $telegram->sendToGroup($groupMessage);
 

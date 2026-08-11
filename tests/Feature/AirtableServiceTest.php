@@ -17,7 +17,7 @@ test('getIncompleteActs returns only incomplete acts', function () {
     $service = new AirtableService(new AirtableClient);
     $results = $service->getIncompleteActs();
 
-    expect($results)->toHaveCount(2); // filter happens in Airtable, we trust the response
+    expect($results)->toHaveCount(2);
 });
 
 test('getSummaryCounts returns correct counts', function () {
@@ -27,6 +27,7 @@ test('getSummaryCounts returns correct counts', function () {
                 ['id' => 'rec001', 'fields' => [
                     '🚦სტატუსი' => '⏳ მიმდინარე',
                     '👤პასუხისმგებელი აქტზე' => ['ინსპექტორები'],
+                    '👥 გუნდი' => ['recT1'],
                 ]],
                 ['id' => 'rec002', 'fields' => [
                     '🚦სტატუსი' => '✅ დასრულებული',
@@ -36,6 +37,11 @@ test('getSummaryCounts returns correct counts', function () {
                     '🚦სტატუსი' => '⏳ მიმდინარე',
                     '👤პასუხისმგებელი აქტზე' => ['ამზომველები'],
                 ]],
+                ['id' => 'recT1', 'fields' => [
+                    '👤 სახელი' => 'ჩადუ',
+                    '🏷️ როლი' => 'ინსპექტორი',
+                    '✈️ Telegram' => '111111',
+                ]],
             ],
         ], 200),
     ]);
@@ -43,10 +49,10 @@ test('getSummaryCounts returns correct counts', function () {
     $service = new AirtableService(new AirtableClient);
     $counts = $service->getSummaryCounts();
 
-    expect($counts['total'])->toBe(3);
+    expect($counts['total'])->toBe(4);
     expect($counts['done'])->toBe(1);
     expect($counts['incomplete'])->toBe(2);
-    expect($counts['by_team']['ინსპექტორები'])->toBe(1);
+    expect($counts['by_team']['ჩადუ'])->toBe(1);
     expect($counts['by_team']['ამზომველები'])->toBe(1);
 });
 
