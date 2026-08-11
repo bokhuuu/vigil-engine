@@ -170,8 +170,24 @@ class EveningActAlertCommand extends Command
             }
         }
 
-        $groupMessage = "🛡️ <b>არასრული აქტები</b>\n\n";
+        // Sort — inspectors first (by role), then others
+        $inspectors = [];
+        $others = [];
         foreach ($groupByTeam as $team => $cnt) {
+            $teamRecord = $teamByName[$team] ?? null;
+            $role = $teamRecord['fields']['🏷️ როლი'] ?? null;
+            if ($role === 'ინსპექტორი') {
+                $inspectors[$team] = $cnt;
+            } else {
+                $others[$team] = $cnt;
+            }
+        }
+        $ordered = array_merge($inspectors, $others);
+        $total = array_sum($ordered);
+
+        $groupMessage = "🛡️ <b>არასრული აქტები</b>\n"
+            ."სულ: {$total}\n\n";
+        foreach ($ordered as $team => $cnt) {
             $groupMessage .= "👥 {$team}: {$cnt}\n";
         }
         $groupMessage .= "\n📩 თითოეულ გუნდს გაეგზავნა დეტალური სია პირადად.";
