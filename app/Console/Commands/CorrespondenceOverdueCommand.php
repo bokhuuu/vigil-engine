@@ -48,7 +48,7 @@ class CorrespondenceOverdueCommand extends Command
         foreach ($allOverdue as $record) {
             $fields = $record['fields'];
             $subject = $fields['📋 საკითხი'] ?? 'უცნობი';
-            $lot = $fields['🗂️ ლოტი'] ?? null;
+            $lot = $fields['📦 ლოტი'] ?? null;
             $deadline = $fields['⏰ ვადა'] ?? null;
             $corrUrl = $airtable->recordUrl(config('vigil.airtable.tables.correspondence'), $record['id']);
 

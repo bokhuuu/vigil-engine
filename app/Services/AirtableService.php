@@ -144,66 +144,6 @@ class AirtableService
 
     /*
     |--------------------------------------------------------------------------
-    | SUMMARY COUNTS
-    |--------------------------------------------------------------------------
-    */
-
-    public function getSummaryCounts(): array
-    {
-        $allActs = $this->client->get(config('vigil.airtable.tables.acts'));
-        $teams = $this->getTeams();
-
-        // Build team name map by record ID
-        $teamById = [];
-        foreach ($teams as $team) {
-            $teamById[$team['id']] = $team['fields']['👤 სახელი'] ?? '—';
-        }
-
-        $incomplete = array_filter($allActs, fn ($a) => ($a['fields']['🚦სტატუსი'] ?? '') === '⏳ მიმდინარე');
-        $done = array_filter($allActs, fn ($a) => ($a['fields']['🚦სტატუსი'] ?? '') === '✅ დასრულებული');
-
-        $byTeam = [
-            'ამზომველები' => 0,
-            'აგრონომები' => 0,
-            'ხარჯთაღმრიცხველი' => 0,
-        ];
-
-        foreach ($incomplete as $act) {
-            $responsible = $act['fields']['👤პასუხისმგებელი აქტზე'] ?? [];
-            $linkedTeamIds = $act['fields']['👥 გუნდი'] ?? [];
-
-            // For inspectors — count by linked გუნდი name
-            if (in_array('ინსპექტორები', $responsible) && ! empty($linkedTeamIds)) {
-                $linkedName = $teamById[$linkedTeamIds[0]] ?? null;
-                if ($linkedName) {
-                    if (! isset($byTeam[$linkedName])) {
-                        $byTeam[$linkedName] = 0;
-                    }
-                    $byTeam[$linkedName]++;
-                }
-            }
-
-            // For other roles — count by role name
-            foreach ($responsible as $team) {
-                if (isset($byTeam[$team])) {
-                    $byTeam[$team]++;
-                }
-            }
-        }
-
-        return [
-            'total' => count($allActs),
-            'done' => count($done),
-            'incomplete' => count($incomplete),
-            'by_team' => $byTeam,
-            'corr_overdue' => count($this->client->get(config('vigil.airtable.tables.correspondence'), [
-                'filterByFormula' => "{🚦სტატუსი} = '🔴 ვადაგადაცილებული'",
-            ])),
-        ];
-    }
-
-    /*
-    |--------------------------------------------------------------------------
     | BACKUP
     |--------------------------------------------------------------------------
     */

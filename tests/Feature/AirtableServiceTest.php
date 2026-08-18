@@ -20,42 +20,6 @@ test('getIncompleteActs returns only incomplete acts', function () {
     expect($results)->toHaveCount(2);
 });
 
-test('getSummaryCounts returns correct counts', function () {
-    Http::fake([
-        '*' => Http::response([
-            'records' => [
-                ['id' => 'rec001', 'fields' => [
-                    '🚦სტატუსი' => '⏳ მიმდინარე',
-                    '👤პასუხისმგებელი აქტზე' => ['ინსპექტორები'],
-                    '👥 გუნდი' => ['recT1'],
-                ]],
-                ['id' => 'rec002', 'fields' => [
-                    '🚦სტატუსი' => '✅ დასრულებული',
-                    '👤პასუხისმგებელი აქტზე' => ['ამზომველები'],
-                ]],
-                ['id' => 'rec003', 'fields' => [
-                    '🚦სტატუსი' => '⏳ მიმდინარე',
-                    '👤პასუხისმგებელი აქტზე' => ['ამზომველები'],
-                ]],
-                ['id' => 'recT1', 'fields' => [
-                    '👤 სახელი' => 'ჩადუ',
-                    '🏷️ როლი' => 'ინსპექტორი',
-                    '✈️ Telegram' => '111111',
-                ]],
-            ],
-        ], 200),
-    ]);
-
-    $service = new AirtableService(new AirtableClient);
-    $counts = $service->getSummaryCounts();
-
-    expect($counts['total'])->toBe(4);
-    expect($counts['done'])->toBe(1);
-    expect($counts['incomplete'])->toBe(2);
-    expect($counts['by_team']['ჩადუ'])->toBe(1);
-    expect($counts['by_team']['ამზომველები'])->toBe(1);
-});
-
 test('getTeams returns all team records', function () {
     Http::fake([
         '*' => Http::response([
