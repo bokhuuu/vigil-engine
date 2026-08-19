@@ -124,6 +124,8 @@ class EveningActAlertCommand extends Command
                     $recipients = $roleMembers['ამზომველი'] ?? [];
                 } elseif ($teamName === 'აგრონომები') {
                     $recipients = $roleMembers['აგრონომი'] ?? [];
+                } elseif ($teamName === 'ხარჯთაღმრიცხველები') {
+                    $recipients = $roleMembers['ხარჯთაღმრიცხველი'] ?? [];
                 } elseif ($telegramId) {
                     $recipients = [$telegramId];
                 }
