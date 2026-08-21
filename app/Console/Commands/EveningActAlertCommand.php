@@ -132,12 +132,18 @@ class EveningActAlertCommand extends Command
             }
 
             if (! empty($recipients)) {
+                $chunks = mb_str_split($message, 4000);
                 foreach ($recipients as $recipient) {
-                    $telegram->send($recipient, $message);
+                    foreach ($chunks as $chunk) {
+                        $telegram->send($recipient, $chunk);
+                    }
                 }
                 $this->info("Sent to {$teamName} (".count($recipients).' recipients)');
             } else {
-                $telegram->sendToMe("⚠️ {$teamName} — Telegram არ აქვს.\n\n".$message);
+                $chunks = mb_str_split("⚠️ {$teamName} — Telegram არ აქვს.\n\n".$message, 4000);
+                foreach ($chunks as $chunk) {
+                    $telegram->sendToMe($chunk);
+                }
                 $this->warn("No Telegram for {$teamName} — forwarded to Zura");
             }
         }
