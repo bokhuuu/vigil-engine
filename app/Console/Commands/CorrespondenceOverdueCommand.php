@@ -45,33 +45,58 @@ class CorrespondenceOverdueCommand extends Command
 
         $today = Carbon::now()->startOfDay();
 
+        // Build items with overdue days for sorting
+        $items = [];
         foreach ($allOverdue as $record) {
             $fields = $record['fields'];
-            $subject = $fields['📋 საკითხი'] ?? 'უცნობი';
-            $lot = $fields['📦 ლოტი'] ?? null;
             $deadline = $fields['⏰ ვადა'] ?? null;
-            $corrUrl = $airtable->recordUrl(config('vigil.airtable.tables.correspondence'), $record['id']);
-
-            $message .= "📋 <a href=\"{$corrUrl}\">{$subject}</a>\n";
-            if ($lot) {
-                $message .= "🗂️ {$lot}\n";
-            }
+            $overdueDays = 0;
             if ($deadline) {
                 $deadlineDate = Carbon::parse($deadline)->startOfDay();
                 $overdueDays = (int) $deadlineDate->diffInDays($today, false);
-                $message .= "🔴 გადაცილება: {$overdueDays} დღე\n";
             }
+            $items[] = [
+                'record' => $record,
+                'overdueDays' => $overdueDays,
+            ];
+        }
+
+        // Sort by most overdue first
+        usort($items, fn ($a, $b) => $b['overdueDays'] - $a['overdueDays']);
+
+        foreach ($items as $item) {
+            $fields = $item['record']['fields'];
+            $subject = $fields['📋 საკითხი'] ?? 'უცნობი';
+            $corrUrl = $airtable->recordUrl(config('vigil.airtable.tables.correspondence'), $item['record']['id']);
+            $message .= "📋 <a href=\"{$corrUrl}\">{$subject}</a>\n";
+            $message .= "🔴 გადაცილება: {$item['overdueDays']} დღე\n";
             $message .= "—————————————\n";
         }
 
-        $telegram->sendToMe($message);
+        // Send with line-based chunking
+        $sendChunked = function (callable $sendFn) use ($message) {
+            $lines = explode("\n", $message);
+            $chunk = '';
+            foreach ($lines as $line) {
+                if (mb_strlen($chunk.$line."\n") > 4000) {
+                    $sendFn($chunk);
+                    $chunk = '';
+                }
+                $chunk .= $line."\n";
+            }
+            if (! empty(trim($chunk))) {
+                $sendFn($chunk);
+            }
+        };
+
+        $sendChunked(fn ($chunk) => $telegram->sendToMe($chunk));
 
         // Send to all managers
         $managers = $airtable->getManagers();
         foreach ($managers as $manager) {
             $telegramId = $manager['fields']['✈️ Telegram'] ?? null;
             if ($telegramId) {
-                $telegram->send($telegramId, $message);
+                $sendChunked(fn ($chunk) => $telegram->send($telegramId, $chunk));
             }
         }
 
