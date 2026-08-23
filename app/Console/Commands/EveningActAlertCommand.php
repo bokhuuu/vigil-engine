@@ -75,21 +75,13 @@ class EveningActAlertCommand extends Command
             $teamRecord = $teamByName[$teamName] ?? null;
             $telegramId = $teamRecord['fields']['✈️ Telegram'] ?? null;
 
-            $message = "👥 {$teamName}\n\n";
+            $message = "👥 {$teamName} — თქვენს პასუხისმგებლობაში არსებული არასრული აქტები:\n\n";
 
             foreach ($acts as $act) {
                 $fields = $act['fields'];
                 $number = $fields['🔖 აქტის ნომერი'] ?? '—';
-                $sectorIds = $fields['📍სექტორი'] ?? [];
-                $sector = implode(', ', array_map(fn ($id) => $sectorById[$id] ?? '—', $sectorIds));
-                $missing = $fields['❗რა აკლია აქტს'] ?? null;
                 $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $act['id']);
-
-                $message .= "📋 <b><a href=\"{$actUrl}\">აქტი {$number}</a></b>\n";
-                if ($missing) {
-                    $message .= "❗ რა აკლია: {$missing}\n";
-                }
-                $message .= "—————————————\n";
+                $message .= "📋 <a href=\"{$actUrl}\">აქტი {$number}</a>\n";
             }
 
             // Determine recipients — use linked გუნდი field for direct Telegram
