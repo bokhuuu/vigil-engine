@@ -75,14 +75,14 @@ class EveningActAlertCommand extends Command
             $teamRecord = $teamByName[$teamName] ?? null;
             $telegramId = $teamRecord['fields']['✈️ Telegram'] ?? null;
 
-            $message = "👥 {$teamName} — თქვენს პასუხისმგებლობაში არსებული არასრული აქტები:\n\n";
-
+            // Group acts by sector, sorted by ACT number within each sector
+            $bySectorActs = [];
             foreach ($acts as $act) {
-                $fields = $act['fields'];
-                $number = $fields['🔖 აქტის ნომერი'] ?? '—';
-                $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $act['id']);
-                $message .= "📋 <a href=\"{$actUrl}\">აქტი {$number}</a>\n";
+                $sectorIds = $act['fields']['📍სექტორი'] ?? [];
+                $sectorName = ! empty($sectorIds) ? ($sectorById[$sectorIds[0]] ?? '—') : '—';
+                $bySectorActs[$sectorName][] = $act;
             }
+            ksort($bySectorActs);
 
             // Determine recipients — use linked გუნდი field for direct Telegram
             $recipients = [];
@@ -123,36 +123,60 @@ class EveningActAlertCommand extends Command
                 }
             }
 
-            if (! empty($recipients)) {
-                foreach ($recipients as $recipient) {
-                    $lines = explode("\n", $message);
+            // Send one message per sector
+            $sendMessage = function (string $msg) use ($telegram, $recipients, $teamName) {
+                if (! empty($recipients)) {
+                    foreach ($recipients as $recipient) {
+                        $lines = explode("\n", $msg);
+                        $chunk = '';
+                        foreach ($lines as $line) {
+                            if (mb_strlen($chunk.$line."\n") > 4000) {
+                                $telegram->send($recipient, $chunk);
+                                $chunk = '';
+                            }
+                            $chunk .= $line."\n";
+                        }
+                        if (! empty(trim($chunk))) {
+                            $telegram->send($recipient, $chunk);
+                        }
+                    }
+                } else {
+                    $fullMsg = "⚠️ {$teamName} — Telegram არ აქვს.\n\n".$msg;
+                    $lines = explode("\n", $fullMsg);
                     $chunk = '';
                     foreach ($lines as $line) {
                         if (mb_strlen($chunk.$line."\n") > 4000) {
-                            $telegram->send($recipient, $chunk);
+                            $telegram->sendToMe($chunk);
                             $chunk = '';
                         }
                         $chunk .= $line."\n";
                     }
                     if (! empty(trim($chunk))) {
-                        $telegram->send($recipient, $chunk);
+                        $telegram->sendToMe($chunk);
                     }
                 }
+            };
+
+            foreach ($bySectorActs as $sectorName => $sectorActs) {
+                // Sort by ACT number within sector
+                usort($sectorActs, fn ($a, $b) => strnatcmp(
+                    $a['fields']['🔖 აქტის ნომერი'] ?? '',
+                    $b['fields']['🔖 აქტის ნომერი'] ?? ''
+                ));
+
+                $message = "👥 {$teamName} — {$sectorName}:\n\n";
+                foreach ($sectorActs as $act) {
+                    $fields = $act['fields'];
+                    $number = $fields['🔖 აქტის ნომერი'] ?? '—';
+                    $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $act['id']);
+                    $message .= "📋 <a href=\"{$actUrl}\">აქტი {$number}</a>\n";
+                }
+                $sendMessage($message);
+            }
+
+            if (! empty($recipients)) {
                 $this->info("Sent to {$teamName} (".count($recipients).' recipients)');
             } else {
-                $fullMessage = "⚠️ {$teamName} — Telegram არ აქვს.\n\n".$message;
-                $lines = explode("\n", $fullMessage);
-                $chunk = '';
-                foreach ($lines as $line) {
-                    if (mb_strlen($chunk.$line."\n") > 4000) {
-                        $telegram->sendToMe($chunk);
-                        $chunk = '';
-                    }
-                    $chunk .= $line."\n";
-                }
-                if (! empty(trim($chunk))) {
-                    $telegram->sendToMe($chunk);
-                }
                 $this->warn("No Telegram for {$teamName} — forwarded to Zura");
             }
         }
