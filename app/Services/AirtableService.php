@@ -33,6 +33,16 @@ class AirtableService
         ]);
     }
 
+    /**
+     * Get all completed ACTs.
+     */
+    public function getDoneActs(): array
+    {
+        return $this->client->get(config('vigil.airtable.tables.acts'), [
+            'filterByFormula' => "{🚦სტატუსი} = '✅ დასრულებული'",
+        ]);
+    }
+
     public function getOverdueActs(): array
     {
         $cutoff = Carbon::now()->subDays(config('vigil.overdue_days'))->toDateString();

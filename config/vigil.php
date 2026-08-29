@@ -2,6 +2,25 @@
 
 return [
 
+    'shared_views' => [
+        'teams' => [
+            'ამზომველები' => 'https://airtable.com/appuF9IUa53xy31el/shrh8vbbOI9U9RDEj',
+            'ხარჯთაღმრიცხველები' => 'https://airtable.com/appuF9IUa53xy31el/shrfQYJ3cZAT9OZNr',
+            'აგრონომები' => 'https://airtable.com/appuF9IUa53xy31el/shrrFn4ExraA59BkB',
+            'ჩადუ & გივიკო' => 'https://airtable.com/appuF9IUa53xy31el/shrKFxy3T0bWRx3IS',
+            'გიო & სანდრიკა' => 'https://airtable.com/appuF9IUa53xy31el/shrTQCW2mmzZ4YMIY',
+            'მურო & რევაზა' => 'https://airtable.com/appuF9IUa53xy31el/shr9RQqhU0MqS6tTk',
+        ],
+        'sectors' => 'https://airtable.com/appuF9IUa53xy31el/shrATg4H8DSyzRmCq',
+        'managers' => [
+            'acts_incomplete' => 'https://airtable.com/appuF9IUa53xy31el/shrbvQh8eU5u0yNEp',
+            'acts_complete' => 'https://airtable.com/appuF9IUa53xy31el/shrXqsOLH8RhpVm6H',
+            'corr_incomplete' => 'https://airtable.com/appuF9IUa53xy31el/shrjg95XhKYnLKswV',
+            'corr_overdue' => 'https://airtable.com/appuF9IUa53xy31el/shrQiFtI3fp3trU3z',
+            'corr_answered' => 'https://airtable.com/appuF9IUa53xy31el/shry43IQTUyxqqyr7',
+        ],
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Airtable

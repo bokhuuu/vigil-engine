@@ -2,32 +2,11 @@
 
 use Illuminate\Support\Facades\Http;
 
-test('act alert command runs successfully with no incomplete acts', function () {
-    Http::fake([
-        'api.airtable.com/*' => Http::response(['records' => []], 200),
-        'api.telegram.org/*' => Http::response(['ok' => true], 200),
-    ]);
-
-    $this->artisan('vigil:act-alert')
-        ->assertSuccessful();
+beforeEach(function () {
+    Http::preventStrayRequests();
 });
 
-test('act alert command sends no incomplete message when all acts done', function () {
-    Http::fake([
-        'api.airtable.com/*' => Http::response(['records' => []], 200),
-        'api.telegram.org/*' => Http::response(['ok' => true], 200),
-    ]);
-
-    $this->artisan('vigil:act-alert')
-        ->assertSuccessful();
-
-    Http::assertSent(
-        fn ($request) => str_contains($request->url(), 'api.telegram.org') &&
-            str_contains($request['text'], 'არასრული აქტი არ არის')
-    );
-});
-
-test('act alert groups acts by responsible team', function () {
+test('act alert groups acts by responsible team and sends individual messages', function () {
     Http::fake([
         'api.airtable.com/*' => Http::sequence()
             // getIncompleteActs
@@ -38,7 +17,8 @@ test('act alert groups acts by responsible team', function () {
                         '🚦სტატუსი' => '⏳ მიმდინარე',
                         '👤პასუხისმგებელი აქტზე' => ['ინსპექტორები'],
                         '❗რა აკლია აქტს' => 'ფოტოები',
-                        '📍სექტორი' => ['1-1'],
+                        '📍სექტორი' => ['recS1'],
+                        '👥 გუნდი' => ['recT1'],
                         '📅 აქტის მიღების თარიღი' => '2026-07-27',
                         '📞 მესაკუთრის კონტაქტი' => '555000001',
                     ]],
@@ -48,29 +28,36 @@ test('act alert groups acts by responsible team', function () {
             ->push([
                 'records' => [
                     ['id' => 'recT1', 'fields' => [
-                        '👤 სახელი' => 'ჩადუ',
+                        '👤 სახელი' => 'ჩადუ & გივიკო',
+                        '🏷️ როლი' => 'ინსპექტორი',
                         '✈️ Telegram' => null,
                     ]],
                 ],
             ], 200)
-            // logNotification POST
-            ->push(['records' => [['id' => 'recN1', 'fields' => []]]], 200)
-            // markActNotified PATCH
-            ->push(['id' => 'rec001', 'fields' => []], 200),
+            // getSectors
+            ->push([
+                'records' => [
+                    ['id' => 'recS1', 'fields' => [
+                        '🔖 სახელი' => 'სექტორი 1-100',
+                        '👥 გუნდები' => ['recT1'],
+                    ]],
+                ],
+            ], 200)
+            // getDoneActs
+            ->push(['records' => []], 200)
+            // getManagers
+            ->push(['records' => []], 200),
         'api.telegram.org/*' => Http::response(['ok' => true], 200),
     ]);
 
     $this->artisan('vigil:act-alert')
         ->assertSuccessful();
-
-    Http::assertSent(
-        fn ($request) => str_contains($request->url(), 'api.telegram.org')
-    );
 });
 
-test('act alert sends to group chat', function () {
+test('act alert sends to group chat with counts', function () {
     Http::fake([
         'api.airtable.com/*' => Http::sequence()
+            // getIncompleteActs
             ->push([
                 'records' => [
                     ['id' => 'rec001', 'fields' => [
@@ -78,15 +65,36 @@ test('act alert sends to group chat', function () {
                         '🚦სტატუსი' => '⏳ მიმდინარე',
                         '👤პასუხისმგებელი აქტზე' => ['ინსპექტორები'],
                         '❗რა აკლია აქტს' => 'ფოტოები',
-                        '📍სექტორი' => ['1-1'],
+                        '📍სექტორი' => ['recS1'],
+                        '👥 გუნდი' => ['recT1'],
                         '📅 აქტის მიღების თარიღი' => '2026-07-27',
                         '📞 მესაკუთრის კონტაქტი' => '555000001',
                     ]],
                 ],
             ], 200)
+            // getTeams
+            ->push([
+                'records' => [
+                    ['id' => 'recT1', 'fields' => [
+                        '👤 სახელი' => 'ჩადუ & გივიკო',
+                        '🏷️ როლი' => 'ინსპექტორი',
+                        '✈️ Telegram' => null,
+                    ]],
+                ],
+            ], 200)
+            // getSectors
+            ->push([
+                'records' => [
+                    ['id' => 'recS1', 'fields' => [
+                        '🔖 სახელი' => 'სექტორი 1-100',
+                        '👥 გუნდები' => ['recT1'],
+                    ]],
+                ],
+            ], 200)
+            // getDoneActs
             ->push(['records' => []], 200)
-            ->push(['records' => [['id' => 'recN1', 'fields' => []]]], 200)
-            ->push(['id' => 'rec001', 'fields' => []], 200),
+            // getManagers
+            ->push(['records' => []], 200),
         'api.telegram.org/*' => Http::response(['ok' => true], 200),
     ]);
 

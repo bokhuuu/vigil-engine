@@ -61,6 +61,14 @@ class EveningActAlertCommand extends Command
             $teamById[$team['id']] = $team['fields']['👤 სახელი'] ?? '—';
         }
 
+        // Build sector name to team name map
+        $sectorTeam = [];
+        foreach ($sectors as $sector) {
+            $sName = $sector['fields']['🔖 სახელი'] ?? '—';
+            $teamIds = $sector['fields']['👥 გუნდები'] ?? [];
+            $sectorTeam[$sName] = ! empty($teamIds) ? ($teamById[$teamIds[0]] ?? '—') : '—';
+        }
+
         // Group by responsible team
         $byTeam = [];
         foreach ($incomplete as $record) {
@@ -70,21 +78,58 @@ class EveningActAlertCommand extends Command
             }
         }
 
+        // Shared view links
+        $sharedViews = config('vigil.shared_views.teams');
+        $sectorsLink = config('vigil.shared_views.sectors');
+
+        // Helper to send chunked message
+        $sendChunked = function (string $msg, callable $sendFn) {
+            $lines = explode("\n", $msg);
+            $chunk = '';
+            foreach ($lines as $line) {
+                if (mb_strlen($chunk.$line."\n") > 4000) {
+                    $sendFn($chunk);
+                    $chunk = '';
+                }
+                $chunk .= $line."\n";
+            }
+            if (! empty(trim($chunk))) {
+                $sendFn($chunk);
+            }
+        };
+
         // Individual alerts per team
         foreach ($byTeam as $teamName => $acts) {
-            $teamRecord = $teamByName[$teamName] ?? null;
-            $telegramId = $teamRecord['fields']['✈️ Telegram'] ?? null;
+            $teamCount = count($acts);
 
-            // Group acts by sector, sorted by ACT number within each sector
-            $bySectorActs = [];
-            foreach ($acts as $act) {
-                $sectorIds = $act['fields']['📍სექტორი'] ?? [];
-                $sectorName = ! empty($sectorIds) ? ($sectorById[$sectorIds[0]] ?? '—') : '—';
-                $bySectorActs[$sectorName][] = $act;
+            // Determine linked team name for inspectors
+            $linkedTeamName = null;
+            if ($teamName === 'ინსპექტორები') {
+                foreach ($acts as $act) {
+                    $linkedIds = $act['fields']['👥 გუნდი'] ?? [];
+                    if (! empty($linkedIds)) {
+                        $linkedTeamName = $teamById[$linkedIds[0]] ?? null;
+                        break;
+                    }
+                }
             }
-            ksort($bySectorActs);
 
-            // Determine recipients — use linked გუნდი field for direct Telegram
+            $displayName = $linkedTeamName ?? $teamName;
+            $viewLink = $sharedViews[$displayName] ?? ($sharedViews[$teamName] ?? null);
+            $isInspector = $teamName === 'ინსპექტორები';
+
+            // Build message
+            $message = "👥 {$displayName}\n";
+            $message .= "⏳ არასრული აქტები: {$teamCount}\n";
+            if ($viewLink) {
+                $message .= "🔗 <a href=\"{$viewLink}\">იხილეთ სია</a>\n";
+            }
+            if ($isInspector && $sectorsLink) {
+                $message .= "\n📍 სექტორების სტატუსი\n";
+                $message .= "🔗 <a href=\"{$sectorsLink}\">იხილეთ სია</a>\n";
+            }
+
+            // Determine recipients
             $recipients = [];
             foreach ($acts as $act) {
                 $linkedTeamIds = $act['fields']['👥 გუნდი'] ?? [];
@@ -92,7 +137,6 @@ class EveningActAlertCommand extends Command
                     foreach ($teams as $team) {
                         if ($team['id'] === $linkedId) {
                             $role = $team['fields']['🏷️ როლი'] ?? null;
-                            // Only use if role matches current team context
                             $roleMatch = (
                                 ($teamName === 'ინსპექტორები' && $role === 'ინსპექტორი') ||
                                 ($teamName === 'ამზომველები' && $role === 'ამზომველი') ||
@@ -110,7 +154,7 @@ class EveningActAlertCommand extends Command
                 }
             }
 
-            // Fallback to role-based or name-based if no linked team
+            // Fallback to role-based
             if (empty($recipients)) {
                 if ($teamName === 'ამზომველები') {
                     $recipients = $roleMembers['ამზომველი'] ?? [];
@@ -118,66 +162,25 @@ class EveningActAlertCommand extends Command
                     $recipients = $roleMembers['აგრონომი'] ?? [];
                 } elseif ($teamName === 'ხარჯთაღმრიცხველები') {
                     $recipients = $roleMembers['ხარჯთაღმრიცხველი'] ?? [];
-                } elseif ($telegramId) {
-                    $recipients = [$telegramId];
-                }
-            }
-
-            // Send one message per sector
-            $sendMessage = function (string $msg) use ($telegram, $recipients, $teamName) {
-                if (! empty($recipients)) {
-                    foreach ($recipients as $recipient) {
-                        $lines = explode("\n", $msg);
-                        $chunk = '';
-                        foreach ($lines as $line) {
-                            if (mb_strlen($chunk.$line."\n") > 4000) {
-                                $telegram->send($recipient, $chunk);
-                                $chunk = '';
-                            }
-                            $chunk .= $line."\n";
-                        }
-                        if (! empty(trim($chunk))) {
-                            $telegram->send($recipient, $chunk);
-                        }
-                    }
                 } else {
-                    $fullMsg = "⚠️ {$teamName} — Telegram არ აქვს.\n\n".$msg;
-                    $lines = explode("\n", $fullMsg);
-                    $chunk = '';
-                    foreach ($lines as $line) {
-                        if (mb_strlen($chunk.$line."\n") > 4000) {
-                            $telegram->sendToMe($chunk);
-                            $chunk = '';
-                        }
-                        $chunk .= $line."\n";
-                    }
-                    if (! empty(trim($chunk))) {
-                        $telegram->sendToMe($chunk);
+                    $teamRecord = $teamByName[$teamName] ?? null;
+                    $telegramId = $teamRecord['fields']['✈️ Telegram'] ?? null;
+                    if ($telegramId) {
+                        $recipients = [$telegramId];
                     }
                 }
-            };
-
-            foreach ($bySectorActs as $sectorName => $sectorActs) {
-                // Sort by ACT number within sector
-                usort($sectorActs, fn ($a, $b) => strnatcmp(
-                    $a['fields']['🔖 აქტის ნომერი'] ?? '',
-                    $b['fields']['🔖 აქტის ნომერი'] ?? ''
-                ));
-
-                $message = "👥 {$teamName} — {$sectorName}:\n\n";
-                foreach ($sectorActs as $act) {
-                    $fields = $act['fields'];
-                    $number = $fields['🔖 აქტის ნომერი'] ?? '—';
-                    $actUrl = $airtable->recordUrl(config('vigil.airtable.tables.acts'), $act['id']);
-                    $message .= "📋 <a href=\"{$actUrl}\">აქტი {$number}</a>\n";
-                }
-                $sendMessage($message);
             }
 
             if (! empty($recipients)) {
-                $this->info("Sent to {$teamName} (".count($recipients).' recipients)');
+                foreach ($recipients as $recipient) {
+                    $sendChunked($message, fn ($chunk) => $telegram->send($recipient, $chunk));
+                }
+                // Forward copy to Zura
+                $sendChunked("📋 {$displayName}:\n".$message, fn ($chunk) => $telegram->sendToMe($chunk));
+                $this->info("Sent to {$displayName} (".count($recipients).' recipients)');
             } else {
-                $this->warn("No Telegram for {$teamName} — forwarded to Zura");
+                $sendChunked("⚠️ {$displayName} — Telegram არ აქვს.\n\n".$message, fn ($chunk) => $telegram->sendToMe($chunk));
+                $this->warn("No Telegram for {$displayName} — forwarded to Zura");
             }
         }
 
@@ -211,7 +214,7 @@ class EveningActAlertCommand extends Command
             }
         }
 
-        // Sort — inspectors first (by role), then others
+        // Sort — inspectors first, then others
         $inspectors = [];
         $others = [];
         foreach ($groupByTeam as $team => $cnt) {
@@ -233,7 +236,32 @@ class EveningActAlertCommand extends Command
         }
         $groupMessage .= "\n📩 თითოეულ გუნდს გაეგზავნა დეტალური სია პირადად.";
 
-        $telegram->sendToGroup($groupMessage);
+        $sendChunked($groupMessage, fn ($chunk) => $telegram->sendToGroup($chunk));
+
+        // Manager message
+        $allActs = $airtable->getAllActs() ?? $incomplete;
+        $doneCount = count(array_filter($allActs, fn ($a) => ($a['fields']['🚦სტატუსი'] ?? '') === '✅ დასრულებული'));
+        $incompleteCount = count(array_filter($allActs, fn ($a) => ($a['fields']['🚦სტატუსი'] ?? '') === '⏳ მიმდინარე'));
+        $totalCount = count($allActs);
+
+        $managerMessage = "📋 აქტები\n\n"
+            ."✅ დასრულებული: {$doneCount}\n"
+            .'🔗 <a href="'.config('vigil.shared_views.managers.acts_complete')."\">იხილეთ სია</a>\n\n"
+            ."⏳ მიმდინარე: {$incompleteCount}\n"
+            .'🔗 <a href="'.config('vigil.shared_views.managers.acts_incomplete')."\">იხილეთ სია</a>\n\n"
+            ."📍 სექტორების სტატუსი\n"
+            .'🔗 <a href="'.config('vigil.shared_views.sectors')."\">იხილეთ სია</a>\n\n"
+            ."სულ: {$totalCount}";
+
+        $managers = $airtable->getManagers();
+        foreach ($managers as $manager) {
+            $telegramId = $manager['fields']['✈️ Telegram'] ?? null;
+            if ($telegramId) {
+                $sendChunked($managerMessage, fn ($chunk) => $telegram->send($telegramId, $chunk));
+            }
+        }
+        // Forward manager message to Zura
+        $sendChunked("📋 მენეჯერების შეტყობინება:\n".$managerMessage, fn ($chunk) => $telegram->sendToMe($chunk));
 
         $this->info("Done. {$count} incomplete ACTs processed.");
     }
