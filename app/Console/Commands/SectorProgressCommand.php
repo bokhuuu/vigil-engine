@@ -124,7 +124,7 @@ class SectorProgressCommand extends Command
         }
 
         $message .= '💪';
-        $telegram->sendToGroup($message);
+        // $telegram->sendToGroup($message); // commented out — ready for 11:00 when needed
 
         // Send celebration for completed sectors
         foreach ($celebrations as $sector) {
