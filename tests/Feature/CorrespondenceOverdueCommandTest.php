@@ -23,7 +23,13 @@ test('correspondence overdue command marks overdue and sends alert', function ()
                 ]],
             ]], 200)
             ->push(['id' => 'recC1', 'fields' => []], 200) // PATCH response
-            ->push(['records' => []], 200), // getTeams for managers
+            ->push(['records' => [
+                ['id' => 'recC1', 'fields' => [
+                    '📋 საკითხი' => 'გზების მოთხოვნა',
+                    '⏰ ვადა' => '2026-07-01',
+                ]],
+            ]], 200) // getAlreadyOverdueCorrespondence
+            ->push(['records' => []], 200), // getManagers
         'api.telegram.org/*' => Http::response(['ok' => true], 200),
     ]);
 
@@ -47,7 +53,13 @@ test('correspondence overdue command sends telegram alert when overdue found', f
                 ]],
             ]], 200)
             ->push(['id' => 'recC1', 'fields' => []], 200)
-            ->push(['records' => []], 200), // getTeams for managers
+            ->push(['records' => [
+                ['id' => 'recC1', 'fields' => [
+                    '📋 საკითხი' => 'გზების მოთხოვნა',
+                    '⏰ ვადა' => '2026-07-01',
+                ]],
+            ]], 200) // getAlreadyOverdueCorrespondence
+            ->push(['records' => []], 200), // getManagers
         'api.telegram.org/*' => Http::response(['ok' => true], 200),
     ]);
 
