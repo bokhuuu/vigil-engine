@@ -89,12 +89,9 @@ class CorrespondenceOverdueCommand extends Command
             }
         };
 
-        $sendChunked(fn ($chunk) => $telegram->sendToMe($chunk));
-
         // Send correspondence links to managers
         $managers = $airtable->getManagers();
         $managerMessage = "<b>📨 კორესპონდენცია</b>\n"
-            ."🔴 ვადაგადაცილებული: {$total}\n\n"
             ."⏳ მიმდინარე\n"
             .'🔗 <a href="'.config('vigil.shared_views.managers.corr_incomplete')."\">იხილეთ სია</a>\n\n"
             ."🔴 ვადაგადაცილებული\n"
@@ -108,8 +105,8 @@ class CorrespondenceOverdueCommand extends Command
             }
         }
 
-        // Forward manager message to Zura
-        $telegram->sendToMe("📋 მენეჯერების შეტყობინება:\n".$managerMessage);
+        // Forward manager message to Zura for monitoring
+        $telegram->sendToMe($managerMessage);
 
         $this->info("Done. {$total} overdue records alerted.");
     }

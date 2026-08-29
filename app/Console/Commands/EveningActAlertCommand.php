@@ -175,8 +175,8 @@ class EveningActAlertCommand extends Command
                 foreach ($recipients as $recipient) {
                     $sendChunked($message, fn ($chunk) => $telegram->send($recipient, $chunk));
                 }
-                // Forward copy to Zura
-                $sendChunked("📋 {$displayName}:\n".$message, fn ($chunk) => $telegram->sendToMe($chunk));
+                // Forward copy to Zura for monitoring
+                $sendChunked($message, fn ($chunk) => $telegram->sendToMe($chunk));
                 $this->info("Sent to {$displayName} (".count($recipients).' recipients)');
             } else {
                 $sendChunked("⚠️ {$displayName} — Telegram არ აქვს.\n\n".$message, fn ($chunk) => $telegram->sendToMe($chunk));
@@ -263,6 +263,8 @@ class EveningActAlertCommand extends Command
         // Forward manager message to Zura
         $sendChunked("📋 მენეჯერების შეტყობინება:\n".$managerMessage, fn ($chunk) => $telegram->sendToMe($chunk));
 
+        // Forward manager message to Zura for monitoring
+        $sendChunked($managerMessage, fn ($chunk) => $telegram->sendToMe($chunk));
         $this->info("Done. {$count} incomplete ACTs processed.");
     }
 }
