@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use App\Services\AirtableClient;
@@ -61,29 +63,12 @@ class EveningActAlertCommand extends Command
             $teamById[$team['id']] = $team['fields']['👤 სახელი'] ?? '—';
         }
 
-        // Build sector name to team name map
-        $sectorTeam = [];
-        foreach ($sectors as $sector) {
-            $sName = $sector['fields']['🔖 სახელი'] ?? '—';
-            $teamIds = $sector['fields']['👥 გუნდები'] ?? [];
-            $sectorTeam[$sName] = ! empty($teamIds) ? ($teamById[$teamIds[0]] ?? '—') : '—';
-        }
-
-        // Group by responsible team
-        $byTeam = [];
-        foreach ($incomplete as $record) {
-            $responsible = $record['fields']['👤პასუხისმგებელი აქტზე'] ?? [];
-            foreach ($responsible as $team) {
-                $byTeam[$team][] = $record;
-            }
-        }
-
         // Shared view links
         $sharedViews = config('vigil.shared_views.teams');
         $sectorsLink = config('vigil.shared_views.sectors');
 
         // Helper to send chunked message
-        $sendChunked = function (string $msg, callable $sendFn) {
+        $sendChunked = function (string $msg, callable $sendFn): void {
             $lines = explode("\n", $msg);
             $chunk = '';
             foreach ($lines as $line) {
@@ -98,25 +83,28 @@ class EveningActAlertCommand extends Command
             }
         };
 
+        // Group by responsible team — split inspectors by linked გუნდი
+        $byTeam = [];
+        foreach ($incomplete as $record) {
+            $responsible = $record['fields']['👤პასუხისმგებელი აქტზე'] ?? [];
+            foreach ($responsible as $team) {
+                if ($team === 'ინსპექტორები') {
+                    $linkedIds = $record['fields']['👥 გუნდი'] ?? [];
+                    $linkedName = ! empty($linkedIds) ? ($teamById[$linkedIds[0]] ?? 'ინსპექტორები') : 'ინსპექტორები';
+                    $byTeam['inspector_'.$linkedName][] = $record;
+                } else {
+                    $byTeam[$team][] = $record;
+                }
+            }
+        }
+
         // Individual alerts per team
         foreach ($byTeam as $teamName => $acts) {
             $teamCount = count($acts);
 
-            // Determine linked team name for inspectors
-            $linkedTeamName = null;
-            if ($teamName === 'ინსპექტორები') {
-                foreach ($acts as $act) {
-                    $linkedIds = $act['fields']['👥 გუნდი'] ?? [];
-                    if (! empty($linkedIds)) {
-                        $linkedTeamName = $teamById[$linkedIds[0]] ?? null;
-                        break;
-                    }
-                }
-            }
-
-            $displayName = $linkedTeamName ?? $teamName;
-            $viewLink = $sharedViews[$displayName] ?? ($sharedViews[$teamName] ?? null);
-            $isInspector = $teamName === 'ინსპექტორები';
+            $isInspector = str_starts_with($teamName, 'inspector_');
+            $displayName = $isInspector ? str_replace('inspector_', '', $teamName) : $teamName;
+            $viewLink = $sharedViews[$displayName] ?? null;
 
             // Build message
             $message = "👥 {$displayName}\n";
@@ -138,7 +126,7 @@ class EveningActAlertCommand extends Command
                         if ($team['id'] === $linkedId) {
                             $role = $team['fields']['🏷️ როლი'] ?? null;
                             $roleMatch = (
-                                ($teamName === 'ინსპექტორები' && $role === 'ინსპექტორი') ||
+                                ($isInspector && $role === 'ინსპექტორი') ||
                                 ($teamName === 'ამზომველები' && $role === 'ამზომველი') ||
                                 ($teamName === 'აგრონომები' && $role === 'აგრონომი') ||
                                 ($teamName === 'ხარჯთაღმრიცხველები' && $role === 'ხარჯთაღმრიცხველი')
@@ -162,11 +150,11 @@ class EveningActAlertCommand extends Command
                     $recipients = $roleMembers['აგრონომი'] ?? [];
                 } elseif ($teamName === 'ხარჯთაღმრიცხველები') {
                     $recipients = $roleMembers['ხარჯთაღმრიცხველი'] ?? [];
-                } else {
-                    $teamRecord = $teamByName[$teamName] ?? null;
-                    $telegramId = $teamRecord['fields']['✈️ Telegram'] ?? null;
-                    if ($telegramId) {
-                        $recipients = [$telegramId];
+                } elseif ($isInspector) {
+                    $teamRecord = $teamByName[$displayName] ?? null;
+                    $tid = $teamRecord['fields']['✈️ Telegram'] ?? null;
+                    if ($tid) {
+                        $recipients = [$tid];
                     }
                 }
             }
@@ -179,7 +167,8 @@ class EveningActAlertCommand extends Command
                 $sendChunked($message, fn ($chunk) => $telegram->sendToMe($chunk));
                 $this->info("Sent to {$displayName} (".count($recipients).' recipients)');
             } else {
-                $sendChunked("⚠️ {$displayName} — Telegram არ აქვს.\n\n".$message, fn ($chunk) => $telegram->sendToMe($chunk));
+                $telegram->sendToMe("⚠️ {$displayName} — Telegram არ აქვს.");
+                $sendChunked($message, fn ($chunk) => $telegram->sendToMe($chunk));
                 $this->warn("No Telegram for {$displayName} — forwarded to Zura");
             }
         }
@@ -239,10 +228,9 @@ class EveningActAlertCommand extends Command
         $sendChunked($groupMessage, fn ($chunk) => $telegram->sendToGroup($chunk));
 
         // Manager message
-        $allActs = $airtable->getAllActs() ?? $incomplete;
-        $doneCount = count(array_filter($allActs, fn ($a) => ($a['fields']['🚦სტატუსი'] ?? '') === '✅ დასრულებული'));
-        $incompleteCount = count(array_filter($allActs, fn ($a) => ($a['fields']['🚦სტატუსი'] ?? '') === '⏳ მიმდინარე'));
-        $totalCount = count($allActs);
+        $doneCount = count($airtable->getDoneActs());
+        $incompleteCount = $count;
+        $totalCount = $doneCount + $incompleteCount;
 
         $managerMessage = "📋 აქტები\n\n"
             ."✅ დასრულებული: {$doneCount}\n"
@@ -260,11 +248,10 @@ class EveningActAlertCommand extends Command
                 $sendChunked($managerMessage, fn ($chunk) => $telegram->send($telegramId, $chunk));
             }
         }
-        // Forward manager message to Zura
-        $sendChunked("📋 მენეჯერების შეტყობინება:\n".$managerMessage, fn ($chunk) => $telegram->sendToMe($chunk));
 
         // Forward manager message to Zura for monitoring
         $sendChunked($managerMessage, fn ($chunk) => $telegram->sendToMe($chunk));
+
         $this->info("Done. {$count} incomplete ACTs processed.");
     }
 }
