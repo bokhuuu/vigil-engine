@@ -5,7 +5,7 @@ return [
     'shared_views' => [
         'teams' => [
             'ამზომველები' => 'https://airtable.com/appuF9IUa53xy31el/shrh8vbbOI9U9RDEj',
-            'ხარჯთაღმრიცხველები' => 'https://airtable.com/appuF9IUa53xy31el/shrfQYJ3cZAT9OZNr',
+            'ხარჯთაღმრიცხველი' => 'https://airtable.com/appuF9IUa53xy31el/shrfQYJ3cZAT9OZNr',
             'აგრონომები' => 'https://airtable.com/appuF9IUa53xy31el/shrrFn4ExraA59BkB',
             'ჩადუ & გივიკო' => 'https://airtable.com/appuF9IUa53xy31el/shrKFxy3T0bWRx3IS',
             'გიო & სანდრიკა' => 'https://airtable.com/appuF9IUa53xy31el/shrTQCW2mmzZ4YMIY',

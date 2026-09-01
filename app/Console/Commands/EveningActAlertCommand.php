@@ -42,11 +42,15 @@ class EveningActAlertCommand extends Command
             $name = $team['fields']['👤 სახელი'] ?? null;
             $role = $team['fields']['🏷️ როლი'] ?? null;
             $telegramId = $team['fields']['✈️ Telegram'] ?? null;
+            $telegramId2 = $team['fields']['✈️ Telegram 2'] ?? null;
             if ($name) {
                 $teamByName[$name] = $team;
             }
             if ($role && $telegramId) {
                 $roleMembers[$role][] = $telegramId;
+            }
+            if ($role && $telegramId2) {
+                $roleMembers[$role][] = $telegramId2;
             }
         }
 
@@ -133,8 +137,12 @@ class EveningActAlertCommand extends Command
                             );
                             if ($roleMatch) {
                                 $tid = $team['fields']['✈️ Telegram'] ?? null;
+                                $tid2 = $team['fields']['✈️ Telegram 2'] ?? null;
                                 if ($tid && ! in_array($tid, $recipients)) {
                                     $recipients[] = $tid;
+                                }
+                                if ($tid2 && ! in_array($tid2, $recipients)) {
+                                    $recipients[] = $tid2;
                                 }
                             }
                         }
@@ -153,8 +161,12 @@ class EveningActAlertCommand extends Command
                 } elseif ($isInspector) {
                     $teamRecord = $teamByName[$displayName] ?? null;
                     $tid = $teamRecord['fields']['✈️ Telegram'] ?? null;
+                    $tid2 = $teamRecord['fields']['✈️ Telegram 2'] ?? null;
                     if ($tid) {
-                        $recipients = [$tid];
+                        $recipients[] = $tid;
+                    }
+                    if ($tid2) {
+                        $recipients[] = $tid2;
                     }
                 }
             }
