@@ -12,6 +12,12 @@ return [
             'მურო & რევაზა' => 'https://airtable.com/appuF9IUa53xy31el/shr9RQqhU0MqS6tTk',
         ],
         'sectors' => 'https://airtable.com/appuF9IUa53xy31el/shrATg4H8DSyzRmCq',
+
+        'inspector_full' => [
+            'ჩადუ & გივიკო' => 'https://airtable.com/appuF9IUa53xy31el/shrJifbw7c0fx2Oxi',
+            'გიო & სანდრიკა' => 'https://airtable.com/appuF9IUa53xy31el/shrp8pg5J3jiyWzUV',
+            'მურო & რევაზა' => 'https://airtable.com/appuF9IUa53xy31el/shrcg6wDQNeTBvF4R',
+        ],
         'managers' => [
             'acts_incomplete' => 'https://airtable.com/appuF9IUa53xy31el/shrbvQh8eU5u0yNEp',
             'acts_complete' => 'https://airtable.com/appuF9IUa53xy31el/shrXqsOLH8RhpVm6H',

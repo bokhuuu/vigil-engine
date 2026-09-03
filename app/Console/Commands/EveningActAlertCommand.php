@@ -119,6 +119,11 @@ class EveningActAlertCommand extends Command
             if ($isInspector && $sectorsLink) {
                 $message .= "\n📍 სექტორების სტატუსი\n";
                 $message .= "🔗 <a href=\"{$sectorsLink}\">იხილეთ სია</a>\n";
+                $fullInfoLink = config('vigil.shared_views.inspector_full')[$displayName] ?? null;
+                if ($fullInfoLink) {
+                    $message .= "\n📊 სრული ინფო\n";
+                    $message .= "🔗 <a href=\"{$fullInfoLink}\">იხილეთ სრული ინფო</a>\n";
+                }
             }
 
             // Determine recipients
@@ -251,7 +256,13 @@ class EveningActAlertCommand extends Command
             .'🔗 <a href="'.config('vigil.shared_views.managers.acts_incomplete')."\">იხილეთ სია</a>\n\n"
             ."📍 სექტორების სტატუსი\n"
             .'🔗 <a href="'.config('vigil.shared_views.sectors')."\">იხილეთ სია</a>\n\n"
-            ."სულ: {$totalCount}";
+            ."სულ: {$totalCount}\n\n"
+            ."👥 ჩადუ & გივიკო\n"
+            .'🔗 <a href="'.config('vigil.shared_views.inspector_full')['ჩადუ & გივიკო']."\">იხილეთ სრული ინფო</a>\n\n"
+            ."👥 გიო & სანდრიკა\n"
+            .'🔗 <a href="'.config('vigil.shared_views.inspector_full')['გიო & სანდრიკა']."\">იხილეთ სრული ინფო</a>\n\n"
+            ."👥 მურო & რევაზა\n"
+            .'🔗 <a href="'.config('vigil.shared_views.inspector_full')['მურო & რევაზა'].'">იხილეთ სრული ინფო</a>';
 
         $managers = $airtable->getManagers();
         foreach ($managers as $manager) {
