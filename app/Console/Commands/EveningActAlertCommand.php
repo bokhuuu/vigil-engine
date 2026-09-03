@@ -241,6 +241,8 @@ class EveningActAlertCommand extends Command
             $groupMessage .= "👥 {$team}: {$cnt}\n";
         }
         $groupMessage .= "\n📩 თითოეულ გუნდს გაეგზავნა დეტალური სია პირადად.";
+        $groupMessage .= "📍 სექტორების სტატუსი\n";
+        $groupMessage .= "🔗 <a href=\"{$sectorsLink}\">იხილეთ სია</a>";
 
         $sendChunked($groupMessage, fn ($chunk) => $telegram->sendToGroup($chunk));
 
