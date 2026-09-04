@@ -111,7 +111,7 @@ class EveningActAlertCommand extends Command
             $viewLink = $sharedViews[$displayName] ?? null;
 
             // Build message
-            $message = "👥 {$displayName}\n";
+            $message = "👥 <b>{$displayName}</b>\n\n";
             $message .= "⏳ არასრული აქტები: {$teamCount}\n";
             if ($viewLink) {
                 $message .= "🔗 <a href=\"{$viewLink}\">იხილეთ სია</a>\n";
@@ -122,7 +122,7 @@ class EveningActAlertCommand extends Command
                 $fullInfoLink = config('vigil.shared_views.inspector_full')[$displayName] ?? null;
                 if ($fullInfoLink) {
                     $message .= "\n📊 სრული ინფო\n";
-                    $message .= "🔗 <a href=\"{$fullInfoLink}\">იხილეთ სრული ინფო</a>\n";
+                    $message .= "🔗 <a href=\"{$fullInfoLink}\">გუნდის სტატისტიკა</a>\n";
                 }
             }
 
@@ -240,9 +240,8 @@ class EveningActAlertCommand extends Command
         foreach ($ordered as $team => $cnt) {
             $groupMessage .= "👥 {$team}: {$cnt}\n";
         }
-        $groupMessage .= "\n📩 თითოეულ გუნდს გაეგზავნა დეტალური სია პირადად.";
-        $groupMessage .= "📍 სექტორების სტატუსი\n";
-        $groupMessage .= "🔗 <a href=\"{$sectorsLink}\">იხილეთ სია</a>";
+        $groupMessage .= "\n🔗 <a href=\"{$sectorsLink}\">სექტორების სტატუსი</a>\n\n";
+        $groupMessage .= '📩 თითოეულ გუნდს გაეგზავნა დეტალური სია პირადად.';
 
         $sendChunked($groupMessage, fn ($chunk) => $telegram->sendToGroup($chunk));
 
@@ -260,11 +259,11 @@ class EveningActAlertCommand extends Command
             .'🔗 <a href="'.config('vigil.shared_views.sectors')."\">იხილეთ სია</a>\n\n"
             ."სულ: {$totalCount}\n\n"
             ."👥 ჩადუ & გივიკო\n"
-            .'🔗 <a href="'.config('vigil.shared_views.inspector_full')['ჩადუ & გივიკო']."\">იხილეთ სრული ინფო</a>\n\n"
+            .'🔗 <a href="'.config('vigil.shared_views.inspector_full')['ჩადუ & გივიკო']."\">გუნდის სტატისტიკა</a>\n\n"
             ."👥 გიო & სანდრიკა\n"
-            .'🔗 <a href="'.config('vigil.shared_views.inspector_full')['გიო & სანდრიკა']."\">იხილეთ სრული ინფო</a>\n\n"
+            .'🔗 <a href="'.config('vigil.shared_views.inspector_full')['გიო & სანდრიკა']."\">გუნდის სტატისტიკა</a>\n\n"
             ."👥 მურო & რევაზა\n"
-            .'🔗 <a href="'.config('vigil.shared_views.inspector_full')['მურო & რევაზა'].'">იხილეთ სრული ინფო</a>';
+            .'🔗 <a href="'.config('vigil.shared_views.inspector_full')['მურო & რევაზა'].'">გუნდის სტატისტიკა</a>';
 
         $managers = $airtable->getManagers();
         foreach ($managers as $manager) {
