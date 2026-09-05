@@ -18,6 +18,11 @@ return [
             'გიო & სანდრიკა' => 'https://airtable.com/appuF9IUa53xy31el/shrp8pg5J3jiyWzUV',
             'მურო & რევაზა' => 'https://airtable.com/appuF9IUa53xy31el/shrcg6wDQNeTBvF4R',
         ],
+        'inspector_sectors' => [
+            'ჩადუ & გივიკო' => 'https://airtable.com/appuF9IUa53xy31el/shr2i4AZNvkrUd7ap',
+            'გიო & სანდრიკა' => 'https://airtable.com/appuF9IUa53xy31el/shrq2yGsByaQodlpV',
+            'მურო & რევაზა' => 'https://airtable.com/appuF9IUa53xy31el/shrQxuDZq6omDh7d2',
+        ],
         'managers' => [
             'acts_incomplete' => 'https://airtable.com/appuF9IUa53xy31el/shrbvQh8eU5u0yNEp',
             'acts_complete' => 'https://airtable.com/appuF9IUa53xy31el/shrXqsOLH8RhpVm6H',

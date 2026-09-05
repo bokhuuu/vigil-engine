@@ -116,9 +116,10 @@ class EveningActAlertCommand extends Command
             if ($viewLink) {
                 $message .= "🔗 <a href=\"{$viewLink}\">იხილეთ სია</a>\n";
             }
-            if ($isInspector && $sectorsLink) {
+            if ($isInspector) {
+                $inspectorSectorLink = config('vigil.shared_views.inspector_sectors')[$displayName] ?? $sectorsLink;
                 $message .= "\n📍 სექტორების სტატუსი\n";
-                $message .= "🔗 <a href=\"{$sectorsLink}\">იხილეთ სია</a>\n";
+                $message .= "🔗 <a href=\"{$inspectorSectorLink}\">იხილეთ სია</a>\n";
                 $fullInfoLink = config('vigil.shared_views.inspector_full')[$displayName] ?? null;
                 if ($fullInfoLink) {
                     $message .= "\n📊 სრული ინფო\n";
