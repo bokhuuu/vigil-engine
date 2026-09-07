@@ -91,7 +91,7 @@ class CorrespondenceOverdueCommand extends Command
 
         // Send correspondence links to managers
         $managers = $airtable->getManagers();
-        $managerMessage = "<b>📨 კორესპონდენცია</b>\n"
+        $managerMessage = "<b>📨 კორესპონდენცია</b>\n\n"
             ."⏳ მიმდინარე\n"
             .'🔗 <a href="'.config('vigil.shared_views.managers.corr_incomplete')."\">იხილეთ სია</a>\n\n"
             ."🔴 ვადაგადაცილებული\n"
