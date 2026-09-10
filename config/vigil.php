@@ -23,6 +23,11 @@ return [
             'გიო & სანდრიკა' => 'https://airtable.com/appuF9IUa53xy31el/shrq2yGsByaQodlpV',
             'მურო & რევაზა' => 'https://airtable.com/appuF9IUa53xy31el/shrQxuDZq6omDh7d2',
         ],
+        'updates' => [
+            'ჩადუ & გივიკო' => 'https://airtable.com/appuF9IUa53xy31el/shrvDSwwdEJ77Fwgm',
+            'გიო & სანდრიკა' => 'https://airtable.com/appuF9IUa53xy31el/shr6g4niD4F6Fz2D1',
+            'მურო & რევაზა' => 'https://airtable.com/appuF9IUa53xy31el/shrxNX86BNNCvwz6q',
+        ],
         'managers' => [
             'acts_incomplete' => 'https://airtable.com/appuF9IUa53xy31el/shrbvQh8eU5u0yNEp',
             'acts_complete' => 'https://airtable.com/appuF9IUa53xy31el/shrXqsOLH8RhpVm6H',
@@ -48,6 +53,7 @@ return [
             'sectors' => 'tblFMU2Zj3VCRdL2M',
             'correspondence' => 'tblM1b0aw2lbvTC2A',
             'teams' => 'tbly6CXuhsuITExqg',
+            'updates' => 'tbly4VL3pjKn8a0bn',
             'businesses' => 'tbl4Aarov1w9wqgXC',
         ],
 
@@ -145,6 +151,11 @@ return [
                 'act' => 'fldE1dvs6gvXMXfsK',
                 'notes' => 'fldCKpiFYWJUKl0Gl',
                 'folder' => 'fldR39QaVJwsLhffc',
+            ],
+
+            'updates' => [
+                'team' => 'flds3k5Wp3ZWVLUdn',
+                'date' => 'fldIwotK3pAtot1aG',
             ],
         ],
 
