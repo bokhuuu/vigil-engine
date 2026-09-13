@@ -35,7 +35,7 @@ class SendUpdateReminders extends Command
 
             $scheduledAt = Carbon::parse($cached['scheduled_at']);
 
-            if (abs(Carbon::now()->diffInMinutes($scheduledAt)) < 15) {
+            if (Carbon::now()->lt($scheduledAt->addMinutes(15))) {
                 $this->info("Skipping {$teamName} — less than 15 min passed");
 
                 continue;
