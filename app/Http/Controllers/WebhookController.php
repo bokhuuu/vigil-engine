@@ -1,7 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use App\Services\AirtableClient;
+use App\Services\AirtableService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -19,13 +23,25 @@ class WebhookController
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        // Extract team name from payload
+        // Extract record ID from payload
         $payload = $request->json()->all();
+        $recordId = $payload['record_id'] ?? null;
+
+        if (! $recordId) {
+            Log::warning('Webhook: no record_id in payload', $payload);
+
+            return response()->json(['ok' => true]);
+        }
+
+        // Fetch record from Airtable
+        $airtable = new AirtableService(new AirtableClient);
+        $record = $airtable->getUpdateRecord($recordId);
+
         $teamField = config('vigil.airtable.fields.updates.team');
-        $teamName = data_get($payload, "fields.{$teamField}.0.name");
+        $teamName = data_get($record, "fields.{$teamField}.0.name");
 
         if (! $teamName) {
-            Log::warning('Webhook: no team name in payload', $payload);
+            Log::warning('Webhook: no team name in record', ['record_id' => $recordId]);
 
             return response()->json(['ok' => true]);
         }

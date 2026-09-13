@@ -187,4 +187,15 @@ class AirtableService
             '🎉 აღინიშნა' => true,
         ]);
     }
+
+    /**
+     * Get a single record from the updates table.
+     */
+    public function getUpdateRecord(string $recordId): array
+    {
+        return $this->client->getRecord(
+            config('vigil.airtable.tables.updates'),
+            $recordId
+        );
+    }
 }

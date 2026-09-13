@@ -1,8 +1,17 @@
 <?php
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+
+beforeEach(function () {
+    Http::preventStrayRequests();
+});
 
 test('webhook rejects request with invalid secret', function () {
+    Http::fake([
+        'api.airtable.com/*' => Http::response([], 200),
+    ]);
+
     $response = $this->postJson('/webhook/airtable', [], [
         'X-Airtable-Hmac-SHA256' => 'wrong-secret',
     ]);
@@ -17,15 +26,18 @@ test('webhook accepts valid request and schedules reminder for inspector team', 
 
     $teamField = config('vigil.airtable.fields.updates.team');
 
+    Http::fake([
+        'api.airtable.com/*' => Http::response([
+            'id' => 'recTest123',
+            'fields' => [
+                $teamField => [['name' => 'ჩადუ & გივიკო']],
+            ],
+        ], 200),
+    ]);
+
     $response = $this->postJson(
         '/webhook/airtable?secret=test-secret',
-        [
-            'fields' => [
-                $teamField => [
-                    ['name' => 'ჩადუ & გივიკო'],
-                ],
-            ],
-        ]
+        ['record_id' => 'recTest123']
     );
 
     $response->assertStatus(200);
@@ -41,15 +53,18 @@ test('webhook ignores non-inspector teams', function () {
 
     $teamField = config('vigil.airtable.fields.updates.team');
 
+    Http::fake([
+        'api.airtable.com/*' => Http::response([
+            'id' => 'recTest456',
+            'fields' => [
+                $teamField => [['name' => 'ამზომველები']],
+            ],
+        ], 200),
+    ]);
+
     $response = $this->postJson(
         '/webhook/airtable?secret=test-secret',
-        [
-            'fields' => [
-                $teamField => [
-                    ['name' => 'ამზომველები'],
-                ],
-            ],
-        ]
+        ['record_id' => 'recTest456']
     );
 
     $response->assertStatus(200);
@@ -64,13 +79,17 @@ test('webhook does not schedule twice for same team same day', function () {
     config(['vigil.webhook.secret' => 'test-secret']);
 
     $teamField = config('vigil.airtable.fields.updates.team');
-    $payload = [
-        'fields' => [
-            $teamField => [
-                ['name' => 'გიო & სანდრიკა'],
+
+    Http::fake([
+        'api.airtable.com/*' => Http::response([
+            'id' => 'recTest789',
+            'fields' => [
+                $teamField => [['name' => 'გიო & სანდრიკა']],
             ],
-        ],
-    ];
+        ], 200),
+    ]);
+
+    $payload = ['record_id' => 'recTest789'];
 
     // First submission
     $this->postJson('/webhook/airtable?secret=test-secret', $payload);

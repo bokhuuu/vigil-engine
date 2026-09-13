@@ -56,6 +56,27 @@ class AirtableClient
     }
 
     /**
+     * Fetch a single record by ID.
+     */
+    public function getRecord(string $tableId, string $recordId): array
+    {
+        $response = Http::withToken($this->token)
+            ->get("{$this->baseUrl}/{$this->baseId}/{$tableId}/{$recordId}");
+
+        if ($response->failed()) {
+            Log::error('Airtable GET record failed', [
+                'table' => $tableId,
+                'record' => $recordId,
+                'status' => $response->status(),
+            ]);
+
+            return [];
+        }
+
+        return $response->json() ?? [];
+    }
+
+    /**
      * Update an existing record (PATCH — only changed fields).
      */
     public function patch(string $tableId, string $recordId, array $fields): array
