@@ -198,4 +198,15 @@ class AirtableService
             $recordId
         );
     }
+
+    /**
+     * Get a single team record by ID from the გუნდები table.
+     */
+    public function getTeamRecord(string $recordId): array
+    {
+        return $this->client->getRecord(
+            config('vigil.airtable.tables.teams'),
+            $recordId
+        );
+    }
 }

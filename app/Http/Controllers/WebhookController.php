@@ -37,8 +37,17 @@ class WebhookController
         $airtable = new AirtableService(new AirtableClient);
         $record = $airtable->getUpdateRecord($recordId);
 
-        $teamField = config('vigil.airtable.fields.updates.team');
-        $teamName = data_get($record, "fields.{$teamField}.0.name");
+        $linkedTeamIds = $record['fields']['👥 გუნდები'] ?? [];
+
+        if (empty($linkedTeamIds)) {
+            Log::warning('Webhook: no team linked in record', ['record_id' => $recordId]);
+
+            return response()->json(['ok' => true]);
+        }
+
+        // Fetch team name from გუნდები table
+        $teamRecord = $airtable->getTeamRecord($linkedTeamIds[0]);
+        $teamName = $teamRecord['fields']['👤 სახელი'] ?? null;
 
         if (! $teamName) {
             Log::warning('Webhook: no team name in record', ['record_id' => $recordId]);

@@ -24,15 +24,22 @@ test('webhook accepts valid request and schedules reminder for inspector team', 
 
     config(['vigil.webhook.secret' => 'test-secret']);
 
-    $teamField = config('vigil.airtable.fields.updates.team');
-
     Http::fake([
-        'api.airtable.com/*' => Http::response([
-            'id' => 'recTest123',
-            'fields' => [
-                $teamField => [['name' => 'ჩადუ & გივიკო']],
-            ],
-        ], 200),
+        'api.airtable.com/*' => Http::sequence()
+            // getUpdateRecord
+            ->push([
+                'id' => 'recTest123',
+                'fields' => [
+                    '👥 გუნდები' => ['recTeam1'],
+                ],
+            ], 200)
+            // getTeamRecord
+            ->push([
+                'id' => 'recTeam1',
+                'fields' => [
+                    '👤 სახელი' => 'ჩადუ & გივიკო',
+                ],
+            ], 200),
     ]);
 
     $response = $this->postJson(
@@ -51,15 +58,20 @@ test('webhook ignores non-inspector teams', function () {
 
     config(['vigil.webhook.secret' => 'test-secret']);
 
-    $teamField = config('vigil.airtable.fields.updates.team');
-
     Http::fake([
-        'api.airtable.com/*' => Http::response([
-            'id' => 'recTest456',
-            'fields' => [
-                $teamField => [['name' => 'ამზომველები']],
-            ],
-        ], 200),
+        'api.airtable.com/*' => Http::sequence()
+            ->push([
+                'id' => 'recTest456',
+                'fields' => [
+                    '👥 გუნდები' => ['recTeam2'],
+                ],
+            ], 200)
+            ->push([
+                'id' => 'recTeam2',
+                'fields' => [
+                    '👤 სახელი' => 'ამზომველები',
+                ],
+            ], 200),
     ]);
 
     $response = $this->postJson(
@@ -78,13 +90,12 @@ test('webhook does not schedule twice for same team same day', function () {
 
     config(['vigil.webhook.secret' => 'test-secret']);
 
-    $teamField = config('vigil.airtable.fields.updates.team');
-
     Http::fake([
         'api.airtable.com/*' => Http::response([
             'id' => 'recTest789',
             'fields' => [
-                $teamField => [['name' => 'გიო & სანდრიკა']],
+                '👥 გუნდები' => ['recTeam3'],
+                '👤 სახელი' => 'გიო & სანდრიკა',
             ],
         ], 200),
     ]);
@@ -100,6 +111,5 @@ test('webhook does not schedule twice for same team same day', function () {
     // Second submission
     $this->postJson('/webhook/airtable?secret=test-secret', $payload);
 
-    // scheduled_at must not change
     expect(Cache::get($cacheKey)['scheduled_at'])->toBe($firstTime);
 });
