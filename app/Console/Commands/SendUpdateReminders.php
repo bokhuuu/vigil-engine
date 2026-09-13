@@ -89,7 +89,7 @@ class SendUpdateReminders extends Command
                 foreach ($recipients as $recipient) {
                     $telegram->send($recipient, $message);
                 }
-                $telegram->sendToMe("📋 [კოპია] {$message}");
+                $telegram->sendToMe($message);
                 $this->info("Sent update reminder to {$teamName}");
             } else {
                 $telegram->sendToMe("⚠️ {$teamName} — Telegram არ აქვს (განახლებების შეხსენება)");
