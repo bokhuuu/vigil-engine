@@ -27,6 +27,7 @@ return [
             'ჩადუ & გივიკო' => 'https://airtable.com/appuF9IUa53xy31el/shrvDSwwdEJ77Fwgm',
             'გიო & სანდრიკა' => 'https://airtable.com/appuF9IUa53xy31el/shr6g4niD4F6Fz2D1',
             'მურო & რევაზა' => 'https://airtable.com/appuF9IUa53xy31el/shrxNX86BNNCvwz6q',
+            'კალმახელიძე' => 'https://airtable.com/appuF9IUa53xy31el/shr1YKe651P4fVf9A',
         ],
         'managers' => [
             'acts_incomplete' => 'https://airtable.com/appuF9IUa53xy31el/shrbvQh8eU5u0yNEp',
