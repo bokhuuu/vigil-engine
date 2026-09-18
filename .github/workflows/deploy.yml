@@ -24,24 +24,24 @@ jobs:
           php-version: "8.4"
           extensions: mbstring, xml, curl, bcmath
 
-      - name: Install PHP dependencies
-        run: composer install --no-interaction --optimize-autoloader
-
-      - name: Check code formatting
-        run: ./vendor/bin/pint --test
-
       - name: Copy environment file
         run: |
           cp .env.example .env
+          echo "APP_KEY=base64:$(openssl rand -base64 32)" >> .env
           echo "AIRTABLE_TOKEN=fake" >> .env
           echo "AIRTABLE_BASE_ID=appFake" >> .env
           echo "TELEGRAM_BOT_TOKEN=fake" >> .env
           echo "TELEGRAM_MY_CHAT_ID=123" >> .env
           echo "TELEGRAM_GROUP_CHAT_ID=-123" >> .env
           echo "SENTRY_LARAVEL_DSN=" >> .env
+          echo "GOOGLE_DRIVE_CREDENTIALS=/tmp/fake-credentials.json" >> .env
+          echo "GOOGLE_DRIVE_ACT_FOLDER_ID=fakeFolderId" >> .env
 
-      - name: Generate app key
-        run: php artisan key:generate
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --optimize-autoloader
+
+      - name: Check code formatting
+        run: ./vendor/bin/pint --test
 
       - name: Run tests
         env:
