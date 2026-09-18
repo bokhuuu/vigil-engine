@@ -130,6 +130,29 @@ class AirtableService
     }
 
     /**
+     * Find a single ACT by its act number.
+     */
+    public function getActByNumber(string $actNumber): ?array
+    {
+        $records = $this->client->get(config('vigil.airtable.tables.acts'), [
+            'filterByFormula' => "{🔖 აქტის ნომერი} = '{$actNumber}'",
+            'maxRecords' => 1,
+        ]);
+
+        return $records[0] ?? null;
+    }
+
+    /**
+     * Tick a single checkbox field on an ACT record.
+     */
+    public function tickActCheckbox(string $recordId, string $field): void
+    {
+        $this->client->patch(config('vigil.airtable.tables.acts'), $recordId, [
+            $field => true,
+        ]);
+    }
+
+    /**
      * Get all manager contacts for correspondence alerts.
      */
     public function getManagers(): array
@@ -138,7 +161,7 @@ class AirtableService
 
         return array_filter(
             $teams,
-            fn ($team) => ($team['fields']['🏷️ როლი'] ?? '') === 'მენეჯერი'
+            fn($team) => ($team['fields']['🏷️ როლი'] ?? '') === 'მენეჯერი'
         );
     }
 
