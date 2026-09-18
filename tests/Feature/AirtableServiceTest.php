@@ -50,3 +50,48 @@ test('markCorrespondenceOverdue patches status to overdue', function () {
             $request['fields']['🚦სტატუსი'] === '🔴 ვადაგადაცილებული'
     );
 });
+
+test('getActsWithoutDriveFolder returns acts with empty საქაღალდე', function () {
+    Http::fake([
+        '*' => Http::response([
+            'records' => [
+                ['id' => 'rec001', 'fields' => ['🔖 აქტის ნომერი' => '001']],
+                ['id' => 'rec002', 'fields' => ['🔖 აქტის ნომერი' => '002']],
+            ],
+        ], 200),
+    ]);
+
+    $service = new AirtableService(new AirtableClient);
+    $results = $service->getActsWithoutDriveFolder();
+
+    expect($results)->toHaveCount(2);
+});
+
+test('getActsWithoutDriveFolder respects limit', function () {
+    Http::fake([
+        '*' => Http::response([
+            'records' => [
+                ['id' => 'rec001', 'fields' => ['🔖 აქტის ნომერი' => '001']],
+            ],
+        ], 200),
+    ]);
+
+    $service = new AirtableService(new AirtableClient);
+    $results = $service->getActsWithoutDriveFolder(1);
+
+    expect($results)->toHaveCount(1);
+});
+
+test('updateActDriveFolder patches საქაღალდე field', function () {
+    Http::fake([
+        '*' => Http::response(['id' => 'rec001', 'fields' => []], 200),
+    ]);
+
+    $service = new AirtableService(new AirtableClient);
+    $service->updateActDriveFolder('rec001', 'https://drive.google.com/drive/folders/abc123');
+
+    Http::assertSent(
+        fn ($request) => $request->method() === 'PATCH' &&
+            $request['fields']['💼 საქაღალდე'] === 'https://drive.google.com/drive/folders/abc123'
+    );
+});
