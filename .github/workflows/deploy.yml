@@ -40,6 +40,9 @@ jobs:
       - name: Install PHP dependencies
         run: composer install --no-interaction --optimize-autoloader
 
+      - name: Generate app key
+        run: php artisan key:generate
+
       - name: Check code formatting
         run: ./vendor/bin/pint --test
 
