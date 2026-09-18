@@ -1,61 +1,66 @@
 const WEBHOOK_URL = "https://vigil.45-32-154-101.nip.io/webhook/drive";
-const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_HERE";
+const WEBHOOK_SECRET =
+    "b964cf127693707f8aa57a507a01e58264be2e9dbdeab8d6c97bf142d5c11b57";
 const ROOT_FOLDER_ID = "1UzSEitUL8gzCoLVZtmPXKh8wczDz1ggM";
 
+// Subfolders that trigger Airtable checkbox updates
+const TRACKED_SUBFOLDERS = [
+    "შიდა ნახაზები",
+    "გამიჯვნები",
+    "ხარჯთაღრიცხვა",
+    "ტოპო ნარგავები",
+];
+
 /**
- * Trigger this function on Drive changes.
- * Set up: Triggers → Add Trigger → onDriveChange → Drive → onChange
+ * Runs every 5 minutes via time-driven trigger.
+ * Scans all ACT folders, finds subfolders with files,
+ * sends webhook for each non-empty tracked subfolder.
  */
-function onDriveChange(event) {
+function scanDriveFolders() {
     try {
-        var fileId = event.fileId;
-        var file = DriveApp.getFileById(fileId);
-        var changeType = event.changeType; // 'added', 'edited', 'removed'
+        var rootFolder = DriveApp.getFolderById(ROOT_FOLDER_ID);
+        var actFolders = rootFolder.getFolders();
 
-        // Ignore deletions for now
-        if (changeType === "removed") {
-            return;
+        while (actFolders.hasNext()) {
+            var actFolder = actFolders.next();
+            var actNumber = actFolder.getName();
+
+            var subfolders = actFolder.getFolders();
+
+            while (subfolders.hasNext()) {
+                var subfolder = subfolders.next();
+                var subfolderName = subfolder.getName();
+
+                // Only process tracked subfolders
+                if (TRACKED_SUBFOLDERS.indexOf(subfolderName) === -1) {
+                    continue;
+                }
+
+                // Check if subfolder has any files
+                var files = subfolder.getFiles();
+                if (!files.hasNext()) {
+                    continue;
+                }
+
+                // Send webhook
+                var payload = JSON.stringify({
+                    act_number: actNumber,
+                    subfolder: subfolderName,
+                    change_type: "added",
+                });
+
+                UrlFetchApp.fetch(WEBHOOK_URL + "?secret=" + WEBHOOK_SECRET, {
+                    method: "post",
+                    contentType: "application/json",
+                    payload: payload,
+                    muteHttpExceptions: true,
+                });
+
+                Logger.log(
+                    "Sent webhook: ACT " + actNumber + " / " + subfolderName,
+                );
+            }
         }
-
-        // Get the parent folder (e.g. ფოტოები)
-        var parents = file.getParents();
-        if (!parents.hasNext()) {
-            return;
-        }
-        var subfolder = parents.next();
-        var subfolderName = subfolder.getName();
-
-        // Get the grandparent folder (e.g. 329)
-        var grandparents = subfolder.getParents();
-        if (!grandparents.hasNext()) {
-            return;
-        }
-        var actFolder = grandparents.next();
-        var actFolderName = actFolder.getName();
-
-        // Verify this is inside our root folder
-        var rootParents = actFolder.getParents();
-        if (!rootParents.hasNext()) {
-            return;
-        }
-        var rootFolder = rootParents.next();
-        if (rootFolder.getId() !== ROOT_FOLDER_ID) {
-            return;
-        }
-
-        // Send to our engine
-        var payload = JSON.stringify({
-            act_number: actFolderName,
-            subfolder: subfolderName,
-            change_type: changeType,
-        });
-
-        UrlFetchApp.fetch(WEBHOOK_URL + "?secret=" + WEBHOOK_SECRET, {
-            method: "post",
-            contentType: "application/json",
-            payload: payload,
-            muteHttpExceptions: true,
-        });
     } catch (e) {
         Logger.log("Vigil Drive Watcher error: " + e.toString());
     }
