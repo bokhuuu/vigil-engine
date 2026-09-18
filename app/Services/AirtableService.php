@@ -104,6 +104,32 @@ class AirtableService
     }
 
     /**
+     * Get ACTs that don't have a Drive folder yet.
+     */
+    public function getActsWithoutDriveFolder(?int $limit = null): array
+    {
+        $params = [
+            'filterByFormula' => "{💼 საქაღალდე} = ''",
+        ];
+
+        if ($limit !== null) {
+            $params['maxRecords'] = $limit;
+        }
+
+        return $this->client->get(config('vigil.airtable.tables.acts'), $params);
+    }
+
+    /**
+     * Write the Drive folder URL back to the ACT record.
+     */
+    public function updateActDriveFolder(string $recordId, string $folderUrl): void
+    {
+        $this->client->patch(config('vigil.airtable.tables.acts'), $recordId, [
+            '💼 საქაღალდე' => $folderUrl,
+        ]);
+    }
+
+    /**
      * Get all manager contacts for correspondence alerts.
      */
     public function getManagers(): array
