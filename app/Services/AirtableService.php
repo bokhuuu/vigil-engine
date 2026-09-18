@@ -161,7 +161,7 @@ class AirtableService
 
         return array_filter(
             $teams,
-            fn($team) => ($team['fields']['🏷️ როლი'] ?? '') === 'მენეჯერი'
+            fn ($team) => ($team['fields']['🏷️ როლი'] ?? '') === 'მენეჯერი'
         );
     }
 
