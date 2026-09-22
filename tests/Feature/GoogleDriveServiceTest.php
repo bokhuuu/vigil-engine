@@ -142,3 +142,26 @@ test('createActFolders creates კორესპონდენცია folder
         '📨 კორესპონდენცია' => ['recCorr1'],
     ]);
 });
+
+test('setFolderColor calls Drive API update with correct color', function () {
+    $mockDrive = Mockery::mock(Drive::class);
+    $mockFiles = Mockery::mock();
+    $mockDrive->files = $mockFiles;
+
+    $mockFiles->shouldReceive('update')
+        ->once()
+        ->andReturnUsing(function () {
+            $mock = Mockery::mock();
+            $mock->shouldReceive('getId')->andReturn('fakeFolderId');
+
+            return $mock;
+        });
+
+    $service = new GoogleDriveService;
+    $reflection = new ReflectionClass($service);
+    $prop = $reflection->getProperty('drive');
+    $prop->setAccessible(true);
+    $prop->setValue($service, $mockDrive);
+
+    $service->setFolderColor('fakeFolderId', '#00843D');
+});

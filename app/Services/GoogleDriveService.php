@@ -117,4 +117,23 @@ class GoogleDriveService
 
         return $folder->getId();
     }
+
+    /**
+     * Set the color of a Drive folder.
+     * Green = '#00843D', Yellow = '#F6C026', null = remove color.
+     */
+    public function setFolderColor(string $folderId, ?string $color): void
+    {
+        $metadata = new DriveFile;
+
+        if ($color !== null) {
+            $metadata->setFolderColorRgb($color);
+        } else {
+            $metadata->setFolderColorRgb('');
+        }
+
+        $this->drive()->files->update($folderId, $metadata, [
+            'fields' => 'id,folderColorRgb',
+        ]);
+    }
 }
