@@ -127,7 +127,12 @@ class DashboardController
             ->when($activeBiznes === 'yes', fn ($col) => $col->filter(
                 fn ($f) => $f['_biznes_count'] > 0
             ))
-            ->sortBy(fn ($f) => (int) ($f['🔖 აქტის ნომერი'] ?? 0))
+            ->sortBy(function ($f) {
+                $num = $f['🔖 აქტის ნომერი'] ?? '0';
+                $parts = explode('-', $num);
+
+                return [(int) ($parts[0] ?? 0), (int) ($parts[1] ?? 0)];
+            })
             ->values();
 
         $total = count($data);
