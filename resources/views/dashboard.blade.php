@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vigil 🛡️ Dashboard</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
     <style>
@@ -16,16 +18,15 @@
 
         body {
             font-family: 'IBM Plex Sans', sans-serif;
-            background: #f4f5f7;
+            background: #f0f2f5;
             color: #1a1f36;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         /* Header */
         .header {
-            background: #fff;
-            border-bottom: 1px solid #e1e4e8;
-            padding: 14px 24px;
+            background: #1a1f36;
+            padding: 12px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -43,14 +44,15 @@
         }
 
         .header-title {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
+            color: #fff;
         }
 
         .header-badge {
-            font-size: 11px;
-            color: #6b778c;
-            background: #f4f5f7;
+            font-size: 10px;
+            color: #8892a4;
+            background: #2d3448;
             padding: 2px 8px;
             border-radius: 10px;
         }
@@ -63,19 +65,19 @@
         }
 
         .stats-link {
-            font-size: 12px;
-            color: #0052cc;
+            font-size: 11px;
+            color: #7c9df7;
             text-decoration: none;
             white-space: nowrap;
         }
 
         .stats-link:hover {
-            text-decoration: underline;
+            color: #adc4ff;
         }
 
         .timer {
-            font-size: 12px;
-            color: #6b778c;
+            font-size: 11px;
+            color: #8892a4;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -86,7 +88,7 @@
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background: #0a7c42;
+            background: #34d399;
             flex-shrink: 0;
             animation: pulse 2s infinite;
         }
@@ -106,84 +108,88 @@
         /* Stats */
         .stats-row {
             display: flex;
-            gap: 12px;
-            padding: 16px 24px;
+            gap: 10px;
+            padding: 14px 24px;
             flex-wrap: wrap;
         }
 
         .stat-card {
             background: #fff;
-            border: 1px solid #e1e4e8;
+            border: 1px solid #e4e8f0;
             border-radius: 8px;
-            padding: 14px 20px;
+            padding: 12px 18px;
             flex: 1;
-            min-width: 140px;
+            min-width: 120px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
         }
 
         .stat-label {
-            font-size: 11px;
-            color: #6b778c;
+            font-size: 10px;
+            color: #8892a4;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
+            letter-spacing: 0.08em;
             margin-bottom: 4px;
         }
 
         .stat-value {
-            font-size: 26px;
+            font-size: 24px;
             font-weight: 600;
             font-family: 'IBM Plex Mono', monospace;
+            line-height: 1.1;
         }
 
         .stat-value.green {
-            color: #0a7c42;
+            color: #059669;
         }
 
         .stat-value.red {
-            color: #c7381e;
+            color: #dc2626;
         }
 
         .stat-value.blue {
-            color: #0052cc;
+            color: #2563eb;
         }
 
         .progress-card {
             flex: 2;
-            min-width: 200px;
+            min-width: 180px;
         }
 
         .progress-bar-wrap {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-top: 8px;
+            gap: 10px;
+            margin-top: 6px;
         }
 
         .progress-bar-bg {
             flex: 1;
-            height: 8px;
-            background: #e1e4e8;
-            border-radius: 4px;
+            height: 6px;
+            background: #e4e8f0;
+            border-radius: 3px;
             overflow: hidden;
         }
 
         .progress-bar-fill {
             height: 100%;
-            background: #0a7c42;
-            border-radius: 4px;
+            background: #059669;
+            border-radius: 3px;
+            transition: width 0.5s;
         }
 
         .progress-pct {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             font-family: 'IBM Plex Mono', monospace;
             white-space: nowrap;
+            color: #059669;
         }
 
         /* Filters */
         .filters-wrap {
-            padding: 0 24px 12px;
+            padding: 0 24px 10px;
             display: flex;
-            gap: 8px;
+            gap: 6px;
             flex-wrap: wrap;
             align-items: center;
         }
@@ -195,43 +201,44 @@
         .filter-toggle {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            border-radius: 4px;
-            font-size: 12px;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 11px;
             font-family: 'IBM Plex Sans', sans-serif;
             cursor: pointer;
-            border: 1px solid #e1e4e8;
+            border: 1px solid #e4e8f0;
             background: #fff;
-            color: #42526e;
+            color: #4b5563;
             user-select: none;
             white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
         .filter-toggle:hover {
-            border-color: #0052cc;
-            color: #0052cc;
+            border-color: #2563eb;
+            color: #2563eb;
         }
 
         .filter-toggle.has-active {
-            border-color: #0052cc;
-            color: #0052cc;
-            background: #f0f5ff;
+            border-color: #2563eb;
+            color: #2563eb;
+            background: #eff6ff;
             font-weight: 500;
         }
 
         .filter-dropdown {
             display: none;
             position: absolute;
-            top: calc(100% + 6px);
+            top: calc(100% + 4px);
             left: 0;
             background: #fff;
-            border: 1px solid #e1e4e8;
-            border-radius: 6px;
-            padding: 10px 12px;
+            border: 1px solid #e4e8f0;
+            border-radius: 8px;
+            padding: 8px;
             z-index: 200;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-            min-width: 200px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            min-width: 180px;
         }
 
         .filter-dropdown.open {
@@ -239,27 +246,28 @@
         }
 
         .filter-dropdown-label {
-            font-size: 11px;
-            color: #6b778c;
+            font-size: 10px;
+            color: #8892a4;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
-            margin-bottom: 8px;
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
+            padding: 0 4px;
         }
 
         .filter-options {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 1px;
         }
 
         .filter-opt {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 5px 8px;
-            border-radius: 4px;
+            padding: 6px 8px;
+            border-radius: 5px;
             font-size: 12px;
-            color: #42526e;
+            color: #4b5563;
             text-decoration: none;
             white-space: nowrap;
         }
@@ -269,8 +277,8 @@
         }
 
         .filter-opt.active {
-            background: #e8f0fe;
-            color: #0052cc;
+            background: #eff6ff;
+            color: #2563eb;
             font-weight: 500;
         }
 
@@ -281,43 +289,51 @@
             flex-shrink: 0;
         }
 
-        /* ბიზნესი inline buttons */
-        .biznes-filters {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-            padding: 6px 0;
-        }
-
         .biznes-btn {
-            padding: 5px 14px;
-            border-radius: 4px;
-            font-size: 12px;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 11px;
             font-family: 'IBM Plex Sans', sans-serif;
             cursor: pointer;
-            border: 1px solid #e1e4e8;
+            border: 1px solid #e4e8f0;
             background: #fff;
-            color: #42526e;
+            color: #4b5563;
+            text-decoration: none;
+            white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .biznes-btn:hover {
+            border-color: #2563eb;
+            color: #2563eb;
+        }
+
+        .biznes-btn.active {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff;
+        }
+
+        .clear-btn {
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            border: 1px solid #fca5a5;
+            background: #fff5f5;
+            color: #dc2626;
             text-decoration: none;
             white-space: nowrap;
         }
 
-        .biznes-btn:hover {
-            border-color: #0052cc;
-            color: #0052cc;
-        }
-
-        .biznes-btn.active {
-            background: #0052cc;
-            border-color: #0052cc;
-            color: #fff;
+        .clear-btn:hover {
+            background: #fee2e2;
         }
 
         /* Legend */
         .legend {
             display: flex;
-            gap: 20px;
-            padding: 0 24px 10px;
+            gap: 16px;
+            padding: 0 24px 8px;
             align-items: center;
             flex-wrap: wrap;
         }
@@ -325,18 +341,19 @@
         .legend-item {
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            color: #6b778c;
+            gap: 5px;
+            font-size: 10px;
+            color: #8892a4;
         }
 
         /* Table */
         .table-wrap {
-            margin: 0 24px 36px;
+            margin: 0 24px 40px;
             background: #fff;
-            border: 1px solid #e1e4e8;
+            border: 1px solid #e4e8f0;
             border-radius: 8px;
             overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
         }
 
         .table-scroll {
@@ -351,19 +368,19 @@
         }
 
         thead tr {
-            background: #f4f5f7;
+            background: #f8f9fc;
         }
 
         th {
-            padding: 9px 14px;
+            padding: 6px 8px;
             text-align: left;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
-            color: #6b778c;
+            color: #8892a4;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
+            letter-spacing: 0.08em;
             white-space: nowrap;
-            border-bottom: 1px solid #e1e4e8;
+            border-bottom: 1px solid #e4e8f0;
         }
 
         th.center,
@@ -372,7 +389,7 @@
         }
 
         td {
-            padding: 10px 14px;
+            padding: 6px 8px;
             border-bottom: 1px solid #f4f5f7;
             vertical-align: middle;
             position: relative;
@@ -383,79 +400,92 @@
         }
 
         tr:hover td {
-            background: #f8f9ff;
+            background: #f8f9fc;
+        }
+
+        tr:nth-child(even) td {
+            background: #fafbfd;
+        }
+
+        tr:nth-child(even):hover td {
+            background: #f0f4ff;
         }
 
         .act-num {
             font-family: 'IBM Plex Mono', monospace;
             font-weight: 500;
-            color: #0052cc;
-            font-size: 13px;
+            color: #2563eb;
+            font-size: 12px;
             white-space: nowrap;
+            width: 80px;
         }
 
         .badge {
             display: inline-block;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 500;
-            padding: 2px 10px;
-            border-radius: 3px;
+            padding: 1px 7px;
+            border-radius: 10px;
             white-space: nowrap;
         }
 
         .badge.complete {
-            color: #0a7c42;
-            background: #e3fcef;
+            color: #059669;
+            background: #d1fae5;
         }
 
         .badge.incomplete {
-            color: #c7381e;
-            background: #ffecea;
+            color: #dc2626;
+            background: #fee2e2;
+        }
+
+        .col-status {
+            width: 90px;
         }
 
         .doc-check {
-            font-size: 13px;
+            font-size: 12px;
             line-height: 1;
         }
 
         .kvleva-dot {
             display: inline-block;
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
         }
 
         .biznes-count {
             display: inline-block;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
             font-family: 'IBM Plex Mono', monospace;
-            color: #0052cc;
-            background: #e8f0fe;
+            color: #2563eb;
+            background: #dbeafe;
             border-radius: 10px;
-            padding: 1px 7px;
+            padding: 1px 6px;
         }
 
         .drive-link {
-            color: #6b778c;
+            color: #8892a4;
             text-decoration: none;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .drive-link:hover {
-            color: #0052cc;
+            color: #2563eb;
         }
 
         .empty {
             padding: 48px;
             text-align: center;
-            color: #6b778c;
+            color: #8892a4;
         }
 
         /* Tooltip */
         .tip {
             cursor: help;
-            font-size: 13px;
+            font-size: 12px;
             position: relative;
             display: inline-block;
         }
@@ -467,7 +497,7 @@
             color: #fff;
             padding: 6px 12px;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 11px;
             font-family: 'IBM Plex Sans', sans-serif;
             white-space: pre-wrap;
             max-width: 320px;
@@ -484,14 +514,36 @@
             opacity: 1;
         }
 
+        /* Fixed footer */
+        .footer-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1a1f36;
+            border-top: 1px solid #2d3448;
+            padding: 6px 24px;
+            padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+            font-size: 11px;
+            color: #8892a4;
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .footer-bar strong {
+            color: #e2e8f0;
+        }
+
         /* Mobile */
         @media (max-width: 640px) {
             .header {
-                padding: 12px 16px;
+                padding: 10px 16px;
             }
 
             .stats-row {
-                padding: 12px 16px;
+                padding: 10px 16px;
                 gap: 8px;
             }
 
@@ -504,20 +556,16 @@
             }
 
             .filters-wrap {
-                padding: 0 16px 10px;
+                padding: 0 16px 8px;
             }
 
             .legend {
-                padding: 0 16px 10px;
+                padding: 0 16px 8px;
             }
 
             .table-wrap {
-                margin: 0 16px 24px;
+                margin: 0 16px 40px;
             }
-        }
-
-        body {
-            padding-bottom: 0;
         }
     </style>
 </head>
@@ -648,10 +696,7 @@
         </div>
 
         @if ($hasActiveFilter)
-            <a href="/dashboard"
-                style="display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:4px;font-size:12px;border:1px solid #ffd0cc;background:#fff5f5;color:#c7381e;text-decoration:none;">
-                ✕ გასუფთავება
-            </a>
+            <a href="/dashboard" class="clear-btn">✕ გასუფთავება</a>
         @endif
 
     </div>
@@ -672,8 +717,8 @@
             <table>
                 <thead>
                     <tr>
-                        <th>ნომერი</th>
-                        <th>სტატუსი</th>
+                        <th style="width:80px;">ნომერი</th>
+                        <th class="col-status">სტატუსი</th>
                         <th class="center">შენ.</th>
                         @foreach ($docFields as $label => $field)
                             <th class="center">{{ $label }}</th>
@@ -751,9 +796,8 @@
     </div>
 
 
-    <div
-        style="position:fixed;bottom:0;left:0;right:0;background:#f4f5f7;border-top:2px solid #e1e4e8;padding:8px 24px;padding-bottom:calc(8px + env(safe-area-inset-bottom, 0px));font-size:12px;color:#6b778c;z-index:200;">
-        ნაჩვენები: <strong style="color:#1a1f36;">{{ $acts->count() }}</strong>
+    <div class="footer-bar">
+        ნაჩვენები: <strong>{{ $acts->count() }}</strong>
     </div>
 
     <script>
