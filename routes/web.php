@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/webhook/airtable', [WebhookController::class, 'handle']);
 Route::post('/webhook/drive', [DriveWebhookController::class, 'handle']);
+Route::get('/webhook/act-status', [DriveWebhookController::class, 'actStatus']);
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(BasicAuthMiddleware::class);

@@ -85,6 +85,42 @@ class DriveWebhookController
     }
 
     /**
+     * GET /webhook/act-status?act_number=329&secret=...
+     * Returns whether ხელმოწერები is ticked for the given ACT.
+     * Used by Apps Script to determine root folder color.
+     */
+    public function actStatus(Request $request): JsonResponse
+    {
+        $secret = $request->query('secret');
+
+        if ($secret !== config('vigil.webhook.secret')) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $actNumber = $request->query('act_number');
+
+        if (! $actNumber) {
+            return response()->json(['error' => 'Missing act_number'], 400);
+        }
+
+        $airtable = new AirtableService(new AirtableClient);
+        $act = $airtable->getActByNumber($actNumber);
+
+        if (! $act) {
+            return response()->json(['error' => 'ACT not found'], 404);
+        }
+
+        $fields = $act['fields'];
+
+        $signatures = ! empty($fields['📥 ხელმოწერები']);
+
+        return response()->json([
+            'act_number' => $actNumber,
+            'signatures' => $signatures,
+        ]);
+    }
+
+    /**
      * Update the ACT root folder color based on document completeness.
      * Green = all required docs received, Yellow = some missing.
      */
