@@ -31,7 +31,7 @@ test('drive webhook ignores removed change type', function () {
 test('drive webhook ignores subfolders with no checkbox mapping', function () {
     $response = $this->postJson('/webhook/drive?secret=test-secret', [
         'act_number' => '329',
-        'subfolder' => 'ფოტოები',
+        'subfolder' => 'სკანი',
         'change_type' => 'added',
     ]);
 
@@ -63,6 +63,31 @@ test('drive webhook ticks correct checkbox when file added to შიდა ნ�
     Http::assertSent(
         fn ($request) => $request->method() === 'PATCH' &&
             $request['fields']['📥 შიდა ნახაზები'] === true
+    );
+});
+
+test('drive webhook ticks ფოტოები checkbox when file added to ფოტოები folder', function () {
+    Http::fake([
+        'api.airtable.com/*' => Http::sequence()
+            ->push([
+                'records' => [
+                    ['id' => 'rec001', 'fields' => ['🔖 აქტის ნომერი' => '329']],
+                ],
+            ], 200)
+            ->push(['id' => 'rec001', 'fields' => []], 200),
+    ]);
+
+    $response = $this->postJson('/webhook/drive?secret=test-secret', [
+        'act_number' => '329',
+        'subfolder' => 'ფოტოები',
+        'change_type' => 'added',
+    ]);
+
+    $response->assertStatus(200);
+
+    Http::assertSent(
+        fn ($request) => $request->method() === 'PATCH' &&
+            $request['fields']['📥 ფოტოები'] === true
     );
 });
 

@@ -82,6 +82,21 @@ class GoogleDriveService
             $this->createFolder('ტოპო ნარგავები', $actFolderId);
         }
 
+        // ბიზნესი — one subfolder per linked business
+        $businesses = $fields['🏢 ბიზნესი'] ?? [];
+        if (! empty($businesses)) {
+            $businessFolderId = $this->createFolder('ბიზნესი', $actFolderId);
+            foreach (array_values($businesses) as $index => $businessId) {
+                $this->createFolder('ბიზნესი-'.($index + 1), $businessFolderId);
+            }
+        }
+
+        // კორესპონდენცია — if any correspondence linked
+        $correspondence = $fields['📨 კორესპონდენცია'] ?? [];
+        if (! empty($correspondence)) {
+            $this->createFolder('კორესპონდენცია', $actFolderId);
+        }
+
         return "https://drive.google.com/drive/folders/{$actFolderId}";
     }
 

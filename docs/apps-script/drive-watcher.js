@@ -5,6 +5,7 @@ const ROOT_FOLDER_ID = "1UzSEitUL8gzCoLVZtmPXKh8wczDz1ggM";
 
 // Subfolders that trigger Airtable checkbox updates
 const TRACKED_SUBFOLDERS = [
+    "ფოტოები",
     "შიდა ნახაზები",
     "გამიჯვნები",
     "ხარჯთაღრიცხვა",

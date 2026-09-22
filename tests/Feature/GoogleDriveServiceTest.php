@@ -90,3 +90,55 @@ test('createActFolders creates ტოპო ნარგავები if მ�
         '🏠 მრავალწლოვანი' => true,
     ]);
 });
+
+test('createActFolders creates ბიზნესი folder with subfolders when business linked', function () {
+    $mockDrive = Mockery::mock(Drive::class);
+    $mockFiles = Mockery::mock();
+    $mockDrive->files = $mockFiles;
+
+    // root + ფოტოები + სკანი + ბიზნესი + ბიზნესი-1 + ბიზნესი-2 = 6
+    $mockFiles->shouldReceive('create')
+        ->times(6)
+        ->andReturnUsing(function () {
+            $mock = Mockery::mock();
+            $mock->shouldReceive('getId')->andReturn('fakeFolderId');
+
+            return $mock;
+        });
+
+    $service = new GoogleDriveService;
+    $reflection = new ReflectionClass($service);
+    $prop = $reflection->getProperty('drive');
+    $prop->setAccessible(true);
+    $prop->setValue($service, $mockDrive);
+
+    $service->createActFolders('ACT-TEST', [
+        '🏢 ბიზნესი' => ['recBiz1', 'recBiz2'],
+    ]);
+});
+
+test('createActFolders creates კორესპონდენცია folder when correspondence linked', function () {
+    $mockDrive = Mockery::mock(Drive::class);
+    $mockFiles = Mockery::mock();
+    $mockDrive->files = $mockFiles;
+
+    // root + ფოტოები + სკანი + კორესპონდენცია = 4
+    $mockFiles->shouldReceive('create')
+        ->times(4)
+        ->andReturnUsing(function () {
+            $mock = Mockery::mock();
+            $mock->shouldReceive('getId')->andReturn('fakeFolderId');
+
+            return $mock;
+        });
+
+    $service = new GoogleDriveService;
+    $reflection = new ReflectionClass($service);
+    $prop = $reflection->getProperty('drive');
+    $prop->setAccessible(true);
+    $prop->setValue($service, $mockDrive);
+
+    $service->createActFolders('ACT-TEST', [
+        '📨 კორესპონდენცია' => ['recCorr1'],
+    ]);
+});
