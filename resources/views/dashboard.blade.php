@@ -615,6 +615,12 @@
 
     {{-- Filters --}}
     <div class="filters-wrap">
+        <div style="position:relative;display:inline-flex;align-items:center;">
+            <input type="text" id="act-search" placeholder="🔍 ACT ძებნა..."
+                style="padding:5px 28px 5px 12px;border-radius:6px;border:1px solid #e4e8f0;font-size:11px;font-family:'IBM Plex Mono',monospace;width:150px;background:#fff;color:#1a1f36;box-shadow:0 1px 2px rgba(0,0,0,0.05);outline:none;">
+            <span id="search-clear" onclick="clearSearch()"
+                style="display:none;position:absolute;right:8px;cursor:pointer;color:#dc2626;font-size:16px;font-weight:600;line-height:1;">×</span>
+        </div>
 
         {{-- სტატუსი --}}
         <div class="filter-group" id="fg-status">
@@ -728,7 +734,7 @@
                         <th class="center">Drive</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="act-tbody">
                     @forelse($acts as $act)
                         @php
                             $isComplete = ($act['🚦სტატუსი'] ?? '') === '✅ დასრულებული';
@@ -797,11 +803,17 @@
 
 
     <div class="footer-bar">
-        ნაჩვენები: <strong>{{ $acts->count() }}</strong>
+        ნაჩვენები: <strong id="visible-count">{{ $acts->count() }}</strong>
+        &nbsp;·&nbsp;
+        <a id="prev-page" href="#" style="color:#7c9df7;text-decoration:none;font-size:11px;display:none;">←
+            წინა</a>
+        <span id="page-info" style="font-size:11px;color:#8892a4;"></span>
+        <a id="next-page" href="#"
+            style="color:#7c9df7;text-decoration:none;font-size:11px;display:none;">შემდეგი →</a>
     </div>
 
     <script>
-        // Filter dropdowns
+        // ── Filter dropdowns ────────────────────────────────────────────
         function toggleFilter(name) {
             const dropdown = document.getElementById('fd-' + name);
             const isOpen = dropdown.classList.contains('open');
@@ -815,7 +827,7 @@
             }
         });
 
-        // Tooltip positioning
+        // ── Tooltip positioning ─────────────────────────────────────────
         document.querySelectorAll('.tip').forEach(el => {
             el.addEventListener('mousemove', (e) => {
                 el.style.setProperty('--tip-x', (e.clientX + 12) + 'px');
@@ -823,7 +835,86 @@
             });
         });
 
-        // Countdown timer
+        // ── Search + Pagination ─────────────────────────────────────────
+        const PAGE_SIZE = 100;
+        const allRows = Array.from(document.querySelectorAll('#act-tbody tr'));
+        let filteredRows = [...allRows];
+        let currentPage = 0;
+
+        function renderPage() {
+            const start = currentPage * PAGE_SIZE;
+            const end = start + PAGE_SIZE;
+
+            allRows.forEach(r => r.style.display = 'none');
+            filteredRows.slice(start, end).forEach(r => r.style.display = '');
+
+            const total = filteredRows.length;
+            const totalPages = Math.ceil(total / PAGE_SIZE);
+            const showing = Math.min(end, total) - start;
+
+            document.getElementById('visible-count').textContent = total;
+
+            const pageInfo = document.getElementById('page-info');
+            const prevBtn = document.getElementById('prev-page');
+            const nextBtn = document.getElementById('next-page');
+
+            if (totalPages > 1) {
+                pageInfo.textContent = ' გვ. ' + (currentPage + 1) + '/' + totalPages + ' ';
+                prevBtn.style.display = currentPage > 0 ? 'inline' : 'none';
+                nextBtn.style.display = currentPage < totalPages - 1 ? 'inline' : 'none';
+            } else {
+                pageInfo.textContent = '';
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+            }
+        }
+
+        function applySearch(query) {
+            const q = query.toLowerCase().trim();
+            filteredRows = allRows.filter(row => {
+                const actNum = row.querySelector('.act-num');
+                return !q || (actNum && actNum.textContent.toLowerCase().includes(q));
+            });
+            currentPage = 0;
+            renderPage();
+        }
+
+        const searchInput = document.getElementById('act-search');
+        const searchClear = document.getElementById('search-clear');
+
+        searchInput.addEventListener('input', function() {
+            searchClear.style.display = this.value ? 'block' : 'none';
+            applySearch(this.value);
+        });
+
+        function clearSearch() {
+            searchInput.value = '';
+            searchClear.style.display = 'none';
+            applySearch('');
+        }
+
+        document.getElementById('prev-page').addEventListener('click', (e) => {
+            e.preventDefault();
+            if (currentPage > 0) {
+                currentPage--;
+                renderPage();
+                window.scrollTo(0, 0);
+            }
+        });
+
+        document.getElementById('next-page').addEventListener('click', (e) => {
+            e.preventDefault();
+            if (currentPage < Math.ceil(filteredRows.length / PAGE_SIZE) - 1) {
+                currentPage++;
+                renderPage();
+                window.scrollTo(0, 0);
+            }
+        });
+
+        // ── Initial render ──────────────────────────────────────────────
+        renderPage();
+
+        // ── Countdown timer ─────────────────────────────────────────────
         const cachedAt = new Date({{ $cachedAt instanceof \Carbon\Carbon ? $cachedAt->timestamp : now()->timestamp }} *
             1000);
         const cacheMinutes = {{ $cacheMinutes }};
