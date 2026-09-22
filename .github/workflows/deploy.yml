@@ -36,6 +36,8 @@ jobs:
           echo "SENTRY_LARAVEL_DSN=" >> .env
           echo "GOOGLE_DRIVE_CREDENTIALS=/tmp/fake-credentials.json" >> .env
           echo "GOOGLE_DRIVE_ACT_FOLDER_ID=fakeFolderId" >> .env
+          echo "DASHBOARD_USER=vigil" >> .env
+          echo "DASHBOARD_PASSWORD=fake" >> .env
 
       - name: Install PHP dependencies
         run: composer install --no-interaction --optimize-autoloader
