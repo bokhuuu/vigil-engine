@@ -4,11 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vigil 🛡️ Dashboard</title>
+    <title>Vigil · Dashboard</title>
     <link rel="icon"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563eb'><path d='M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z'/></svg>">
+    <link rel="shortcut icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563eb'><path d='M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z'/></svg>">
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
     <style>
         * {
             box-sizing: border-box;
@@ -567,6 +568,47 @@
                 margin: 0 16px 40px;
             }
         }
+
+        /* Column tints */
+        .col-manual {
+            background: #f0f7ff !important;
+        }
+
+        .col-auto {
+            background: #f0faf4 !important;
+        }
+
+        .col-biznes {
+            background: #f5f0ff !important;
+        }
+
+        .col-kvleva {
+            background: #fff8f0 !important;
+        }
+
+        .col-drive {
+            background: #f8f9fc !important;
+        }
+
+        tr:hover .col-manual {
+            background: #e4f0ff !important;
+        }
+
+        tr:hover .col-auto {
+            background: #e4f5ec !important;
+        }
+
+        tr:hover .col-biznes {
+            background: #ede4ff !important;
+        }
+
+        tr:hover .col-kvleva {
+            background: #fff0e0 !important;
+        }
+
+        tr:hover .col-drive {
+            background: #eef0f5 !important;
+        }
     </style>
 </head>
 
@@ -726,12 +768,15 @@
                         <th style="width:80px;">ნომერი</th>
                         <th class="col-status">სტატუსი</th>
                         <th class="center">შენ.</th>
-                        @foreach ($docFields as $label => $field)
-                            <th class="center">{{ $label }}</th>
-                        @endforeach
-                        <th class="center">ბიზნ.</th>
-                        <th class="center">კვლევა</th>
-                        <th class="center">Drive</th>
+                        <th class="center col-manual">ფოტო</th>
+                        <th class="center col-manual">ხელმ.</th>
+                        <th class="center col-auto">ნახაზი</th>
+                        <th class="center col-auto">გამიჯ.</th>
+                        <th class="center col-auto">ხარჯ.</th>
+                        <th class="center col-auto">ტოპო</th>
+                        <th class="center col-biznes">ბიზნ.</th>
+                        <th class="center col-kvleva">კვლევა</th>
+                        <th class="center col-drive">Drive</th>
                     </tr>
                 </thead>
                 <tbody id="act-tbody">
@@ -760,7 +805,8 @@
                                 @endif
                             </td>
                             @foreach ($docFields as $label => $field)
-                                <td class="center">
+                                @php $colClass = in_array($field, ['📥 ფოტოები', '📥 ხელმოწერები']) ? 'col-manual' : 'col-auto'; @endphp
+                                <td class="center {{ $colClass }}">
                                     @if (in_array($field, $required))
                                         <span class="doc-check">{{ $act[$field] ?? false ? '✅' : '❌' }}</span>
                                     @else
@@ -768,14 +814,14 @@
                                     @endif
                                 </td>
                             @endforeach
-                            <td class="center">
+                            <td class="center col-biznes">
                                 @if ($biznesCount > 0)
                                     <span class="biznes-count">{{ $biznesCount }}</span>
                                 @else
                                     <span style="color:#d0d7de;">—</span>
                                 @endif
                             </td>
-                            <td class="center">
+                            <td class="center col-kvleva">
                                 @if ($kvleva)
                                     <span class="kvleva-dot" style="background: {{ $kvlevaColor }};"
                                         title="{{ $kvleva }}"></span>
@@ -783,7 +829,7 @@
                                     <span style="color:#d0d7de;">—</span>
                                 @endif
                             </td>
-                            <td class="center">
+                            <td class="center col-drive">
                                 @if ($folder)
                                     <a href="{{ $folder }}" target="_blank" class="drive-link">📁</a>
                                 @else
@@ -796,6 +842,11 @@
                             <td colspan="{{ count($docFields) + 6 }}" class="empty">ACT-ები ვერ მოიძებნა</td>
                         </tr>
                     @endforelse
+                    <tr id="search-empty-row" style="display:none;">
+                        <td colspan="{{ count($docFields) + 6 }}" class="empty">
+                            🔍 ACT ვერ მოიძებნა
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -837,9 +888,11 @@
 
         // ── Search + Pagination ─────────────────────────────────────────
         const PAGE_SIZE = 100;
-        const allRows = Array.from(document.querySelectorAll('#act-tbody tr'));
+        const allRows = Array.from(document.querySelectorAll('#act-tbody tr:not(#search-empty-row)'));
         let filteredRows = [...allRows];
         let currentPage = 0;
+
+        const emptyRow = document.getElementById('search-empty-row');
 
         function renderPage() {
             const start = currentPage * PAGE_SIZE;
@@ -847,6 +900,10 @@
 
             allRows.forEach(r => r.style.display = 'none');
             filteredRows.slice(start, end).forEach(r => r.style.display = '');
+
+            if (emptyRow) {
+                emptyRow.style.display = filteredRows.length === 0 ? '' : 'none';
+            }
 
             const total = filteredRows.length;
             const totalPages = Math.ceil(total / PAGE_SIZE);
