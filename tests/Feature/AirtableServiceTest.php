@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Services\AirtableClient;
 use App\Services\AirtableService;
 use Illuminate\Support\Facades\Http;
@@ -93,5 +95,19 @@ test('updateActDriveFolder patches საქაღალდე field', function 
     Http::assertSent(
         fn ($request) => $request->method() === 'PATCH' &&
             $request['fields']['💼 საქაღალდე'] === 'https://drive.google.com/drive/folders/abc123'
+    );
+});
+
+test('untickActCheckbox patches the field to false', function () {
+    Http::fake([
+        '*' => Http::response(['id' => 'rec001', 'fields' => []], 200),
+    ]);
+
+    $service = new AirtableService(new AirtableClient);
+    $service->untickActCheckbox('rec001', '📥 ფოტოები');
+
+    Http::assertSent(
+        fn ($request) => $request->method() === 'PATCH' &&
+            $request['fields']['📥 ფოტოები'] === false
     );
 });

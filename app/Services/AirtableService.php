@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use Carbon\Carbon;
@@ -149,6 +151,16 @@ class AirtableService
     {
         $this->client->patch(config('vigil.airtable.tables.acts'), $recordId, [
             $field => true,
+        ]);
+    }
+
+    /**
+     * Untick a single checkbox field on an ACT record.
+     */
+    public function untickActCheckbox(string $recordId, string $field): void
+    {
+        $this->client->patch(config('vigil.airtable.tables.acts'), $recordId, [
+            $field => false,
         ]);
     }
 
