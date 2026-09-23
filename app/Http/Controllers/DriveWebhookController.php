@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Services\AirtableClient;
 use App\Services\AirtableService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,20 +11,33 @@ use Illuminate\Support\Facades\Log;
 
 class DriveWebhookController
 {
+    public function __construct(
+        private AirtableService $airtable,
+    ) {}
+
+    /**
+     * Timing-safe secret check. Rejects everything if no secret is configured.
+     */
+    private function authorized(Request $request): bool
+    {
+        $expected = (string) config('vigil.webhook.secret');
+
+        return $expected !== ''
+            && hash_equals($expected, (string) $request->query('secret'));
+    }
+
     public function handle(Request $request): JsonResponse
     {
-        $secret = $request->query('secret');
-
-        if ($secret !== config('vigil.webhook.secret')) {
+        if (! $this->authorized($request)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
         $payload = $request->json()->all();
-        $actNumber = $payload['act_number'] ?? null;
-        $subfolder = $payload['subfolder'] ?? null;
+        $actNumber = (string) ($payload['act_number'] ?? '');
+        $subfolder = (string) ($payload['subfolder'] ?? '');
         $changeType = $payload['change_type'] ?? 'added';
 
-        if (! $actNumber || ! $subfolder) {
+        if ($actNumber === '' || $subfolder === '') {
             Log::warning('Drive webhook: missing act_number or subfolder', $payload);
 
             return response()->json(['ok' => true]);
@@ -51,8 +63,7 @@ class DriveWebhookController
             return response()->json(['ok' => true]);
         }
 
-        $airtable = new AirtableService(new AirtableClient);
-        $act = $airtable->getActByNumber($actNumber);
+        $act = $this->airtable->getActByNumber($actNumber);
 
         if (! $act) {
             Log::warning("Drive webhook: ACT [{$actNumber}] not found in Airtable");
@@ -60,7 +71,7 @@ class DriveWebhookController
             return response()->json(['ok' => true]);
         }
 
-        $airtable->tickActCheckbox($act['id'], $field);
+        $this->airtable->tickActCheckbox($act['id'], $field);
 
         Log::info("Drive webhook: ticked [{$field}] on ACT [{$actNumber}]");
 
@@ -74,20 +85,17 @@ class DriveWebhookController
      */
     public function actStatus(Request $request): JsonResponse
     {
-        $secret = $request->query('secret');
-
-        if ($secret !== config('vigil.webhook.secret')) {
+        if (! $this->authorized($request)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $actNumber = $request->query('act_number');
+        $actNumber = (string) $request->query('act_number', '');
 
-        if (! $actNumber) {
+        if ($actNumber === '') {
             return response()->json(['error' => 'Missing act_number'], 400);
         }
 
-        $airtable = new AirtableService(new AirtableClient);
-        $act = $airtable->getActByNumber($actNumber);
+        $act = $this->airtable->getActByNumber($actNumber);
 
         if (! $act) {
             return response()->json(['error' => 'ACT not found'], 404);

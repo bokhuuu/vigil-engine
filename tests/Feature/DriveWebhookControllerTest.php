@@ -148,3 +148,34 @@ test('drive webhook ignores untracked subfolders like კორესპონ�
 
     Http::assertNothingSent();
 });
+
+test('drive webhook rejects everything when no secret is configured', function () {
+    config(['vigil.webhook.secret' => null]);
+
+    $this->postJson('/webhook/drive', [
+        'act_number' => '329',
+        'subfolder' => 'ფოტოები',
+    ])->assertStatus(401);
+
+    Http::assertNothingSent();
+});
+
+test('drive webhook accepts numeric act_number', function () {
+    Http::fake([
+        'api.airtable.com/*' => Http::sequence()
+            ->push([
+                'records' => [
+                    ['id' => 'rec001', 'fields' => ['🔖 აქტის ნომერი' => '329']],
+                ],
+            ], 200)
+            ->push(['id' => 'rec001', 'fields' => []], 200),
+    ]);
+
+    $this->postJson('/webhook/drive?secret=test-secret', [
+        'act_number' => 329,
+        'subfolder' => 'ფოტოები',
+        'change_type' => 'added',
+    ])->assertStatus(200);
+
+    Http::assertSent(fn ($request) => $request->method() === 'PATCH');
+});
