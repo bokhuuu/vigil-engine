@@ -13,23 +13,6 @@ use Illuminate\Support\Facades\Log;
 
 class DriveWebhookController
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Subfolder → Airtable checkbox mapping
-    |--------------------------------------------------------------------------
-    |
-    | ფოტოები and სკანი are intentionally excluded — no Airtable checkbox.
-    | Only document folders trigger checkbox updates.
-    |
-    */
-    private array $folderToField = [
-        'ფოტოები' => '📥 ფოტოები',
-        'შიდა ნახაზები' => '📥 შიდა ნახაზები',
-        'გამიჯვნები' => '📥 გამიჯვნები',
-        'ხარჯთაღრიცხვა' => '📥 ხარჯთაღრიცხვა',
-        'ტოპო ნარგავები' => '📥 ტოპო ნარგავები',
-    ];
-
     public function handle(Request $request): JsonResponse
     {
         $secret = $request->query('secret');
@@ -53,13 +36,21 @@ class DriveWebhookController
             return response()->json(['ok' => true]);
         }
 
-        if (! isset($this->folderToField[$subfolder])) {
-            Log::info("Drive webhook: no checkbox mapping for subfolder [{$subfolder}] — skipping");
+        $tracked = config('vigil.drive.tracked_subfolders');
+
+        if (! array_key_exists($subfolder, $tracked)) {
+            Log::info("Drive webhook: untracked subfolder [{$subfolder}] — skipping");
 
             return response()->json(['ok' => true]);
         }
 
-        $field = $this->folderToField[$subfolder];
+        $field = $tracked[$subfolder];
+
+        if ($field === null) {
+            Log::info("Drive webhook: [{$subfolder}] has no checkbox — skipping");
+
+            return response()->json(['ok' => true]);
+        }
 
         $airtable = new AirtableService(new AirtableClient);
         $act = $airtable->getActByNumber($actNumber);

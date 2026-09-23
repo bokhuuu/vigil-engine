@@ -113,3 +113,38 @@ test('drive webhook returns ok when payload is missing fields', function () {
     $response->assertStatus(200);
     Http::assertNothingSent();
 });
+
+test('drive webhook reads subfolder mapping from config', function () {
+    config(['vigil.drive.tracked_subfolders' => ['ტესტი' => '📥 ტესტი']]);
+
+    Http::fake([
+        'api.airtable.com/*' => Http::sequence()
+            ->push([
+                'records' => [
+                    ['id' => 'rec001', 'fields' => ['🔖 აქტის ნომერი' => '329']],
+                ],
+            ], 200)
+            ->push(['id' => 'rec001', 'fields' => []], 200),
+    ]);
+
+    $this->postJson('/webhook/drive?secret=test-secret', [
+        'act_number' => '329',
+        'subfolder' => 'ტესტი',
+        'change_type' => 'added',
+    ])->assertStatus(200);
+
+    Http::assertSent(
+        fn ($request) => $request->method() === 'PATCH' &&
+            $request['fields']['📥 ტესტი'] === true
+    );
+});
+
+test('drive webhook ignores untracked subfolders like კორესპონდენცია', function () {
+    $this->postJson('/webhook/drive?secret=test-secret', [
+        'act_number' => '329',
+        'subfolder' => 'კორესპონდენცია',
+        'change_type' => 'added',
+    ])->assertStatus(200);
+
+    Http::assertNothingSent();
+});
