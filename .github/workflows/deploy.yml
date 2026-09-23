@@ -52,7 +52,6 @@ jobs:
         env:
           APP_ENV: testing
           QUEUE_CONNECTION: sync
-          CACHE_STORE: file
         run: php artisan test
 
   deploy:
