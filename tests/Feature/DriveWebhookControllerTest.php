@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
@@ -17,15 +19,78 @@ test('drive webhook rejects request with invalid secret', function () {
     $response->assertStatus(401);
 });
 
-test('drive webhook ignores removed change type', function () {
-    $response = $this->postJson('/webhook/drive?secret=test-secret', [
+test('removed ფოტოები unticks checkbox and notifies managers', function () {
+    config(['vigil.telegram.bot_token' => 'test-token', 'vigil.telegram.my_chat_id' => '999']);
+
+    Http::fake([
+        'api.airtable.com/*' => Http::sequence()
+            // getActByNumber
+            ->push(['records' => [['id' => 'rec001', 'fields' => ['🔖 აქტის ნომერი' => '329']]]], 200)
+            // untickActCheckbox
+            ->push(['id' => 'rec001', 'fields' => []], 200)
+            // getManagers → getTeams
+            ->push(['records' => [['id' => 'm1', 'fields' => ['🏷️ როლი' => 'მენეჯერი', '✈️ Telegram' => '111']]]], 200),
+        'api.telegram.org/*' => Http::response(['ok' => true], 200),
+    ]);
+
+    $this->postJson('/webhook/drive?secret=test-secret', [
         'act_number' => '329',
         'subfolder' => 'ფოტოები',
         'change_type' => 'removed',
+    ])->assertStatus(200);
+
+    Http::assertSent(fn ($request) => $request->method() === 'PATCH'
+        && $request['fields']['📥 ფოტოები'] === false);
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), 'api.telegram.org')
+        && $request['chat_id'] === '111');
+});
+
+test('removed სკანი notifies but does not patch Airtable', function () {
+    config(['vigil.telegram.bot_token' => 'test-token', 'vigil.telegram.my_chat_id' => '999']);
+
+    Http::fake([
+        'api.airtable.com/*' => Http::sequence()
+            ->push(['records' => [['id' => 'rec001', 'fields' => ['🔖 აქტის ნომერი' => '329']]]], 200)
+            ->push(['records' => []], 200),
+        'api.telegram.org/*' => Http::response(['ok' => true], 200),
     ]);
 
-    $response->assertStatus(200);
+    $this->postJson('/webhook/drive?secret=test-secret', [
+        'act_number' => '329',
+        'subfolder' => 'სკანი',
+        'change_type' => 'removed',
+    ])->assertStatus(200);
+
+    Http::assertNotSent(fn ($request) => $request->method() === 'PATCH');
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), 'api.telegram.org')
+        && $request['chat_id'] === '999');
+});
+
+test('removed in untracked folder does nothing', function () {
+    $this->postJson('/webhook/drive?secret=test-secret', [
+        'act_number' => '329',
+        'subfolder' => 'კორესპონდენცია',
+        'change_type' => 'removed',
+    ])->assertStatus(200);
+
     Http::assertNothingSent();
+});
+
+test('removed for unknown ACT does not notify', function () {
+    Http::fake([
+        'api.airtable.com/*' => Http::response(['records' => []], 200),
+        'api.telegram.org/*' => Http::response(['ok' => true], 200),
+    ]);
+
+    $this->postJson('/webhook/drive?secret=test-secret', [
+        'act_number' => '999',
+        'subfolder' => 'ფოტოები',
+        'change_type' => 'removed',
+    ])->assertStatus(200);
+
+    Http::assertNotSent(fn ($request) => str_contains($request->url(), 'api.telegram.org'));
 });
 
 test('drive webhook ignores subfolders with no checkbox mapping', function () {
