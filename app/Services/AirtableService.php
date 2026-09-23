@@ -145,6 +145,26 @@ class AirtableService
     }
 
     /**
+     * Map of ACT number => whether 📥 ხელმოწერები is ticked.
+     *
+     * @return array<string, bool>
+     */
+    public function getSignatureStatuses(): array
+    {
+        $statuses = [];
+
+        foreach ($this->getAllActs() as $act) {
+            $number = (string) ($act['fields']['🔖 აქტის ნომერი'] ?? '');
+
+            if ($number !== '') {
+                $statuses[$number] = ! empty($act['fields']['📥 ხელმოწერები']);
+            }
+        }
+
+        return $statuses;
+    }
+
+    /**
      * Tick a single checkbox field on an ACT record.
      */
     public function tickActCheckbox(string $recordId, string $field): void

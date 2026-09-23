@@ -8,6 +8,7 @@ use App\Services\AirtableService;
 use App\Services\ManagerNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class DriveWebhookController
@@ -144,5 +145,25 @@ class DriveWebhookController
             'act_number' => $actNumber,
             'signatures' => $signatures,
         ]);
+    }
+
+    /**
+     * GET /webhook/act-statuses?secret=...
+     * Signature status of every ACT in one response, cached briefly.
+     * Used by Apps Script once per run instead of one call per ACT.
+     */
+    public function actStatuses(Request $request): JsonResponse
+    {
+        if (! $this->authorized($request)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $statuses = Cache::remember(
+            'drive_act_statuses',
+            (int) config('vigil.drive.statuses_cache_seconds'),
+            fn () => $this->airtable->getSignatureStatuses()
+        );
+
+        return response()->json(['statuses' => (object) $statuses]);
     }
 }

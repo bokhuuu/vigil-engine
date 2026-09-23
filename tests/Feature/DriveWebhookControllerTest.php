@@ -244,3 +244,40 @@ test('drive webhook accepts numeric act_number', function () {
 
     Http::assertSent(fn ($request) => $request->method() === 'PATCH');
 });
+
+test('act-statuses rejects invalid secret', function () {
+    $this->getJson('/webhook/act-statuses?secret=wrong')->assertStatus(401);
+
+    Http::assertNothingSent();
+});
+
+test('act-statuses returns signature map for all ACTs', function () {
+    Http::fake([
+        'api.airtable.com/*' => Http::response([
+            'records' => [
+                ['id' => 'r1', 'fields' => ['🔖 აქტის ნომერი' => '7-1', '📥 ხელმოწერები' => true]],
+                ['id' => 'r2', 'fields' => ['🔖 აქტის ნომერი' => '329']],
+                ['id' => 'r3', 'fields' => []],
+            ],
+        ], 200),
+    ]);
+
+    $this->getJson('/webhook/act-statuses?secret=test-secret')
+        ->assertStatus(200)
+        ->assertExactJson(['statuses' => ['7-1' => true, '329' => false]]);
+});
+
+test('act-statuses is cached between calls', function () {
+    Http::fake([
+        'api.airtable.com/*' => Http::response([
+            'records' => [
+                ['id' => 'r1', 'fields' => ['🔖 აქტის ნომერი' => '329', '📥 ხელმოწერები' => true]],
+            ],
+        ], 200),
+    ]);
+
+    $this->getJson('/webhook/act-statuses?secret=test-secret')->assertStatus(200);
+    $this->getJson('/webhook/act-statuses?secret=test-secret')->assertStatus(200);
+
+    Http::assertSentCount(1);
+});

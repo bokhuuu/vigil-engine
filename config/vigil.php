@@ -213,12 +213,12 @@ return [
             'ხარჯთაღრიცხვა' => '📥 ხარჯთაღრიცხვა',
             'ტოპო ნარგავები' => '📥 ტოპო ნარგავები',
         ],
+        'statuses_cache_seconds' => 60,
         /*
         | Required documents per ACT.
         | always      → required for every ACT
         | conditional → doc field => property flags (required if ANY flag is ticked)
         */
-
         'requirements' => [
             'always' => [
                 '📥 ფოტოები',
