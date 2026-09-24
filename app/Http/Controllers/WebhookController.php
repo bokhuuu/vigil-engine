@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Services\AirtableClient;
 use App\Services\AirtableService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,29 +12,24 @@ use Illuminate\Support\Facades\Log;
 
 class WebhookController
 {
+    public function __construct(
+        private AirtableService $airtable,
+    ) {}
+
     public function handle(Request $request): JsonResponse
     {
-        // Verify secret
-        $secret = $request->header('X-Airtable-Hmac-SHA256')
-            ?? $request->query('secret');
-
-        if ($secret !== config('vigil.webhook.secret')) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
         // Extract record ID from payload
         $payload = $request->json()->all();
-        $recordId = $payload['record_id'] ?? null;
+        $recordId = (string) ($payload['record_id'] ?? '');
 
-        if (! $recordId) {
+        if ($recordId === '') {
             Log::warning('Webhook: no record_id in payload', $payload);
 
             return response()->json(['ok' => true]);
         }
 
         // Fetch record from Airtable
-        $airtable = new AirtableService(new AirtableClient);
-        $record = $airtable->getUpdateRecord($recordId);
+        $record = $this->airtable->getUpdateRecord($recordId);
 
         $linkedTeamIds = $record['fields']['👥 გუნდები'] ?? [];
 
@@ -46,7 +40,7 @@ class WebhookController
         }
 
         // Fetch team name from გუნდები table
-        $teamRecord = $airtable->getTeamRecord($linkedTeamIds[0]);
+        $teamRecord = $this->airtable->getTeamRecord($linkedTeamIds[0]);
         $teamName = $teamRecord['fields']['👤 სახელი'] ?? null;
 
         if (! $teamName) {
