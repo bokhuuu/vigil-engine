@@ -283,3 +283,22 @@ test('act-statuses is cached between calls', function () {
 
     Http::assertSentCount(1);
 });
+
+test('airtable webhook rejects everything when no secret is configured', function () {
+    config(['vigil.webhook.secret' => null]);
+
+    $this->postJson('/webhook/airtable', ['record_id' => 'rec001'])
+        ->assertStatus(401);
+
+    Http::assertNothingSent();
+});
+
+test('webhook secret is also accepted from the Airtable header', function () {
+    Http::fake([
+        'api.airtable.com/*' => Http::response(['records' => []], 200),
+    ]);
+
+    $this->withHeader('X-Airtable-Hmac-SHA256', 'test-secret')
+        ->getJson('/webhook/act-statuses')
+        ->assertStatus(200);
+});

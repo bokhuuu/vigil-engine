@@ -18,22 +18,8 @@ class DriveWebhookController
         private ManagerNotifier $notifier,
     ) {}
 
-    /**
-     * Timing-safe secret check. Rejects everything if no secret is configured.
-     */
-    private function authorized(Request $request): bool
-    {
-        $expected = (string) config('vigil.webhook.secret');
-
-        return $expected !== ''
-            && hash_equals($expected, (string) $request->query('secret'));
-    }
-
     public function handle(Request $request): JsonResponse
     {
-        if (! $this->authorized($request)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
 
         $payload = $request->json()->all();
         $actNumber = (string) ($payload['act_number'] ?? '');
@@ -123,10 +109,6 @@ class DriveWebhookController
      */
     public function actStatuses(Request $request): JsonResponse
     {
-        if (! $this->authorized($request)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
         $statuses = Cache::remember(
             'drive_act_statuses',
             (int) config('vigil.drive.statuses_cache_seconds'),
