@@ -24,4 +24,25 @@ class ActRequirements
 
         return $required;
     }
+
+    /**
+     * Drive subfolders an ACT must have: every tracked subfolder that has no
+     * checkbox (always required, e.g. სკანი) or whose document is required.
+     *
+     * @param  array<string, mixed>  $fields  Airtable record fields
+     * @return array<int, string>
+     */
+    public function requiredSubfolders(array $fields): array
+    {
+        $requiredDocs = $this->requiredDocFields($fields);
+        $folders = [];
+
+        foreach (config('vigil.drive.tracked_subfolders') as $folder => $docField) {
+            if ($docField === null || in_array($docField, $requiredDocs, true)) {
+                $folders[] = $folder;
+            }
+        }
+
+        return $folders;
+    }
 }
