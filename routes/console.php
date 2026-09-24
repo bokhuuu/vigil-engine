@@ -17,3 +17,8 @@ Schedule::command('vigil:send-update-reminders')->everyMinute();
 
 // Weekly backup - Sunday 11:00 Georgia
 Schedule::command('vigil:backup')->weeklyOn(0, '11:00');
+
+// Drive folders — every 15 min, all days: new ACTs (limited per run) + sync recently changed
+Schedule::command('vigil:create-drive-folders', [
+    '--limit' => config('vigil.drive.create_limit_per_run'),
+])->everyFifteenMinutes()->withoutOverlapping(30);

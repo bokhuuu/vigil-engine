@@ -216,7 +216,8 @@ return [
             'ტოპო ნარგავები' => '📥 ტოპო ნარგავები',
         ],
         'statuses_cache_seconds' => 60,
-        'sync_window_minutes' => 30,   // re-check ACTs modified within this window
+        'sync_window_minutes' => 30,
+        'create_limit_per_run' => 25,
         /*
         | Required documents per ACT.
         | always      → required for every ACT
