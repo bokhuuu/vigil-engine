@@ -11,7 +11,7 @@ test('create-drive-folders skips when no acts without folder', function () {
         ->andReturn([]);
 
     $drive = Mockery::mock(GoogleDriveService::class);
-    $drive->shouldNotReceive('createActFolders');
+    $drive->shouldNotReceive('ensureActFolders');
 
     $this->app->instance(AirtableService::class, $airtable);
     $this->app->instance(GoogleDriveService::class, $drive);
@@ -35,7 +35,7 @@ test('create-drive-folders processes acts and writes folder url', function () {
         ->twice();
 
     $drive = Mockery::mock(GoogleDriveService::class);
-    $drive->shouldReceive('createActFolders')
+    $drive->shouldReceive('ensureActFolders')
         ->twice()
         ->andReturn('https://drive.google.com/drive/folders/abc123');
 
@@ -60,7 +60,7 @@ test('create-drive-folders counts failed acts correctly', function () {
     $airtable->shouldNotReceive('updateActDriveFolder');
 
     $drive = Mockery::mock(GoogleDriveService::class);
-    $drive->shouldReceive('createActFolders')
+    $drive->shouldReceive('ensureActFolders')
         ->once()
         ->andThrow(new Exception('Drive API error'));
 

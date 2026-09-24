@@ -12,23 +12,9 @@ class GoogleDriveService
 {
     private ?Drive $drive = null;
 
-    /*
-    |--------------------------------------------------------------------------
-    | Subfolder rules
-    |--------------------------------------------------------------------------
-    |
-    | ფოტოები        — always
-    | სკანი           — always
-    | შიდა ნახაზები  — only if 🏠 შენობა/ნაგებობები
-    | გამიჯვნები     — only if 📋 გამიჯვნა საჭიროა
-    | ხარჯთაღრიცხვა — if any of: 🏠 შენობა/ნაგებობები, 🏠 ღობე - ჭიშკარი,
-    |                             🏠 გადასატანი აქტივები, 🏠 ეზოს-მოპირკეთება,
-    |                             🏠 სამ-ფაზიანი დენი
-    | ტოპო ნარგავები — if 🏠 მრავალწლოვანი or 🏠 ერთწლოვანი
-    |
-    */
-
-    public function __construct() {}
+    public function __construct(
+        private ActRequirements $requirements,
+    ) {}
 
     private function drive(): Drive
     {
@@ -43,57 +29,42 @@ class GoogleDriveService
     }
 
     /**
-     * Create the ACT root folder and all required subfolders based on property flags.
-     * Returns the URL of the ACT root folder.
+     * Make sure the ACT folder and every required subfolder exist.
+     * Reuses what is already there and creates only what is missing,
+     * so it is safe to run any number of times. Returns the ACT folder URL.
      */
-    public function createActFolders(string $actNumber, array $fields): string
+    public function ensureActFolders(string $actNumber, array $fields, ?string $folderUrl = null): string
     {
         $rootFolderId = config('services.google_drive.act_folder_id');
 
-        $actFolderId = $this->createFolder($actNumber, $rootFolderId);
+        $actFolderId = $this->folderIdFromUrl($folderUrl)
+            ?? $this->findChildFolder($actNumber, $rootFolderId)
+            ?? $this->createFolder($actNumber, $rootFolderId);
 
-        // Always created
-        $this->createFolder('ფოტოები', $actFolderId);
-        $this->createFolder('სკანი', $actFolderId);
+        $existing = $this->listChildFolders($actFolderId);
 
-        // შიდა ნახაზები — only if building exists
-        if ($fields['🏠 შენობა/ნაგებობები'] ?? false) {
-            $this->createFolder('შიდა ნახაზები', $actFolderId);
+        foreach ($this->requirements->requiredSubfolders($fields) as $name) {
+            $existing[$name] ??= $this->createFolder($name, $actFolderId);
         }
 
-        // გამიჯვნები — only if demarcation required
-        if ($fields['📋 გამიჯვნა საჭიროა'] ?? false) {
-            $this->createFolder('გამიჯვნები', $actFolderId);
-        }
+        // ბიზნესი/ბიზნესი-1, -2, … — one per linked business
+        $businessCount = count($fields['🏢 ბიზნესი'] ?? []);
 
-        // ხარჯთაღრიცხვა — if any cost-triggering flag is set
-        $needsCost = ($fields['🏠 შენობა/ნაგებობები'] ?? false)
-            || ($fields['🏠 ღობე - ჭიშკარი'] ?? false)
-            || ($fields['🏠 გადასატანი აქტივები'] ?? false)
-            || ($fields['🏠 ეზოს-მოპირკეთება'] ?? false)
-            || ($fields['🏠 სამ-ფაზიანი დენი'] ?? false);
+        if ($businessCount > 0) {
+            $businessFolderId = $existing['ბიზნესი'] ??= $this->createFolder('ბიზნესი', $actFolderId);
+            $existingBusinesses = $this->listChildFolders($businessFolderId);
 
-        if ($needsCost) {
-            $this->createFolder('ხარჯთაღრიცხვა', $actFolderId);
-        }
+            for ($i = 1; $i <= $businessCount; $i++) {
+                $name = "ბიზნესი-{$i}";
 
-        // ტოპო ნარგავები — if any plants
-        if (($fields['🏠 მრავალწლოვანი'] ?? false) || ($fields['🏠 ერთწლოვანი'] ?? false)) {
-            $this->createFolder('ტოპო ნარგავები', $actFolderId);
-        }
-
-        // ბიზნესი — one subfolder per linked business
-        $businesses = $fields['🏢 ბიზნესი'] ?? [];
-        if (! empty($businesses)) {
-            $businessFolderId = $this->createFolder('ბიზნესი', $actFolderId);
-            foreach (array_values($businesses) as $index => $businessId) {
-                $this->createFolder('ბიზნესი-'.($index + 1), $businessFolderId);
+                if (! isset($existingBusinesses[$name])) {
+                    $this->createFolder($name, $businessFolderId);
+                }
             }
         }
 
-        // კორესპონდენცია — if any correspondence linked
-        $correspondence = $fields['📨 კორესპონდენცია'] ?? [];
-        if (! empty($correspondence)) {
+        // კორესპონდენცია — if any correspondence is linked
+        if (! empty($fields['📨 კორესპონდენცია'] ?? []) && ! isset($existing['კორესპონდენცია'])) {
             $this->createFolder('კორესპონდენცია', $actFolderId);
         }
 
@@ -101,9 +72,58 @@ class GoogleDriveService
     }
 
     /**
+     * Folder ID from a Drive folder URL, or null.
+     */
+    private function folderIdFromUrl(?string $url): ?string
+    {
+        if ($url !== null && preg_match('#folders/([A-Za-z0-9_-]+)#', $url, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
+    }
+
+    /**
+     * Child folders of a parent, as name => id.
+     */
+    protected function listChildFolders(string $parentId): array
+    {
+        $response = $this->drive()->files->listFiles([
+            'q' => "'{$parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
+            'fields' => 'files(id, name)',
+            'pageSize' => 100,
+        ]);
+
+        $folders = [];
+
+        foreach ($response->getFiles() as $file) {
+            $folders[$file->getName()] ??= $file->getId();
+        }
+
+        return $folders;
+    }
+
+    /**
+     * Find a child folder by exact name, or null.
+     */
+    protected function findChildFolder(string $name, string $parentId): ?string
+    {
+        $escaped = str_replace(['\\', "'"], ['\\\\', "\\'"], $name);
+
+        $response = $this->drive()->files->listFiles([
+            'q' => "name = '{$escaped}' and '{$parentId}' in parents"
+                ." and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
+            'fields' => 'files(id)',
+            'pageSize' => 1,
+        ]);
+
+        return ($response->getFiles()[0] ?? null)?->getId();
+    }
+
+    /**
      * Create a single folder inside a parent and return its ID.
      */
-    private function createFolder(string $name, string $parentId): string
+    protected function createFolder(string $name, string $parentId): string
     {
         $metadata = new DriveFile([
             'name' => $name,

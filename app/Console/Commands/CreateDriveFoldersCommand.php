@@ -46,7 +46,7 @@ class CreateDriveFoldersCommand extends Command
             $actNumber = $fields['🔖 აქტის ნომერი'] ?? $recordId;
 
             try {
-                $folderUrl = $this->drive->createActFolders($actNumber, $fields);
+                $folderUrl = $this->drive->ensureActFolders((string) $actNumber, $fields);
                 $this->airtable->updateActDriveFolder($recordId, $folderUrl);
                 $this->info("✅ {$actNumber} — {$folderUrl}");
                 $success++;
