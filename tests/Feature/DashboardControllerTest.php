@@ -207,3 +207,18 @@ test('dashboard falls back to last good data when Airtable fails', function () {
         ->assertSee('Airtable მიუწვდომელია')
         ->assertSee('329');
 });
+
+test('dashboard head has no stray text and loads fonts via link tag', function () {
+    Cache::flush();
+
+    Http::fake([
+        'api.airtable.com/*' => Http::response(['records' => []], 200),
+    ]);
+
+    $html = $this->withHeaders([
+        'Authorization' => 'Basic '.base64_encode('vigil:test-password'),
+    ])->get('/dashboard')->getContent();
+
+    expect($html)->toContain('<link rel="stylesheet"');
+    expect($html)->not->toMatch('/>\s*href="https:\/\/fonts\.googleapis\.com/');
+});
