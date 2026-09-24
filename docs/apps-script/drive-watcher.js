@@ -200,8 +200,25 @@ function processAct(actFolder, allState, statuses) {
 }
 
 // ---------- Entry point (5-min trigger) ----------
+// Only one run at a time: if a run is already in progress
+// (e.g. manual Run while the trigger fires), exit immediately.
 
 function scanDriveFolders() {
+    var lock = LockService.getScriptLock();
+
+    if (!lock.tryLock(0)) {
+        Logger.log("Another run in progress — skipping");
+        return;
+    }
+
+    try {
+        runSweep();
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+function runSweep() {
     var started = Date.now();
     var props = PropertiesService.getScriptProperties();
     var allState = loadAllState();
