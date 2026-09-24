@@ -95,6 +95,7 @@ class DashboardController
 
                 return array_merge($fields, [
                     '_id' => $act['id'],
+                    '_url' => $this->airtable->recordUrl(config('vigil.airtable.tables.acts'), $act['id']),
                     '_required' => $this->requirements->requiredDocFields($fields),
                     '_biznes_count' => count($fields['🏢 ბიზნესი'] ?? []),
                     '_has_corr' => ! empty($fields['📨 კორესპონდენცია'] ?? []),

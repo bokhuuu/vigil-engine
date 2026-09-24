@@ -222,3 +222,23 @@ test('dashboard head has no stray text and loads fonts via link tag', function (
     expect($html)->toContain('<link rel="stylesheet"');
     expect($html)->not->toMatch('/>\s*href="https:\/\/fonts\.googleapis\.com/');
 });
+
+test('dashboard links each ACT number to its Airtable record', function () {
+    Cache::flush();
+
+    Http::fake([
+        'api.airtable.com/*' => Http::response([
+            'records' => [['id' => 'rec329', 'fields' => ['🔖 აქტის ნომერი' => '329']]],
+        ], 200),
+    ]);
+
+    $expected = 'https://airtable.com/'
+        .config('vigil.airtable.base_id').'/'
+        .config('vigil.airtable.tables.acts').'/rec329';
+
+    $this->withHeaders([
+        'Authorization' => 'Basic '.base64_encode('vigil:test-password'),
+    ])->get('/dashboard')
+        ->assertOk()
+        ->assertSee($expected, false);
+});

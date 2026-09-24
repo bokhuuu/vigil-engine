@@ -424,6 +424,15 @@
             width: 80px;
         }
 
+        .act-link {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .act-link:hover {
+            text-decoration: underline;
+        }
+
         .badge {
             display: inline-block;
             font-size: 10px;
@@ -799,7 +808,10 @@
                             $kvlevaColor = $kvlevaColors[$kvleva] ?? '#e1e4e8';
                         @endphp
                         <tr>
-                            <td class="act-num">{{ $act['🔖 აქტის ნომერი'] ?? '—' }}</td>
+                            <td class="act-num">
+                                <a href="{{ $act['_url'] }}" target="_blank" rel="noopener"
+                                    class="act-link">{{ $act['🔖 აქტის ნომერი'] ?? '—' }}</a>
+                            </td>
                             <td>
                                 <span class="badge {{ $isComplete ? 'complete' : 'incomplete' }}">
                                     {{ $isComplete ? 'დასრულდა' : 'მიმდინარე' }}
