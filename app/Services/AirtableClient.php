@@ -1,7 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
+use App\Exceptions\AirtableException;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -22,6 +28,9 @@ class AirtableClient
 
     /**
      * Fetch all records from a table, handling pagination automatically.
+     * Retries temporary errors; throws instead of returning partial data.
+     *
+     * @throws AirtableException
      */
     public function get(string $tableId, array $params = []): array
     {
@@ -33,18 +42,15 @@ class AirtableClient
                 $params['offset'] = $offset;
             }
 
-            $response = Http::withToken($this->token)
-                ->get("{$this->baseUrl}/{$this->baseId}/{$tableId}", $params);
+            try {
+                $response = $this->request()
+                    ->get("{$this->baseUrl}/{$this->baseId}/{$tableId}", $params);
+            } catch (ConnectionException $e) {
+                $this->fail('GET', $tableId, 0, $e->getMessage());
+            }
 
             if ($response->failed()) {
-                Log::error('Airtable GET failed', [
-                    'table' => $tableId,
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                ]);
-
-                $this->notifyFailure('GET', $tableId, $response->status());
-                break;
+                $this->fail('GET', $tableId, $response->status(), $response->body());
             }
 
             $data = $response->json();
@@ -57,20 +63,20 @@ class AirtableClient
 
     /**
      * Fetch a single record by ID.
+     *
+     * @throws AirtableException
      */
     public function getRecord(string $tableId, string $recordId): array
     {
-        $response = Http::withToken($this->token)
-            ->get("{$this->baseUrl}/{$this->baseId}/{$tableId}/{$recordId}");
+        try {
+            $response = $this->request()
+                ->get("{$this->baseUrl}/{$this->baseId}/{$tableId}/{$recordId}");
+        } catch (ConnectionException $e) {
+            $this->fail('GET record', $tableId, 0, $e->getMessage());
+        }
 
         if ($response->failed()) {
-            Log::error('Airtable GET record failed', [
-                'table' => $tableId,
-                'record' => $recordId,
-                'status' => $response->status(),
-            ]);
-
-            return [];
+            $this->fail('GET record', $tableId, $response->status(), $response->body());
         }
 
         return $response->json() ?? [];
@@ -78,23 +84,23 @@ class AirtableClient
 
     /**
      * Update an existing record (PATCH — only changed fields).
+     * Safe to retry: setting the same values twice gives the same result.
+     *
+     * @throws AirtableException
      */
     public function patch(string $tableId, string $recordId, array $fields): array
     {
-        $response = Http::withToken($this->token)
-            ->patch("{$this->baseUrl}/{$this->baseId}/{$tableId}/{$recordId}", [
-                'fields' => $fields,
-            ]);
+        try {
+            $response = $this->request()
+                ->patch("{$this->baseUrl}/{$this->baseId}/{$tableId}/{$recordId}", [
+                    'fields' => $fields,
+                ]);
+        } catch (ConnectionException $e) {
+            $this->fail('PATCH', $tableId, 0, $e->getMessage());
+        }
 
         if ($response->failed()) {
-            Log::error('Airtable PATCH failed', [
-                'table' => $tableId,
-                'record' => $recordId,
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
-
-            $this->notifyFailure('PATCH', $tableId, $response->status());
+            $this->fail('PATCH', $tableId, $response->status(), $response->body());
         }
 
         return $response->json() ?? [];
@@ -102,27 +108,62 @@ class AirtableClient
 
     /**
      * Create a new record.
+     * NOT retried: if Airtable saved it but the reply was lost,
+     * a retry would create a duplicate.
+     *
+     * @throws AirtableException
      */
     public function post(string $tableId, array $fields): array
     {
-        $response = Http::withToken($this->token)
-            ->post("{$this->baseUrl}/{$this->baseId}/{$tableId}", [
-                'records' => [
-                    ['fields' => $fields],
-                ],
-            ]);
+        try {
+            $response = Http::withToken($this->token)
+                ->post("{$this->baseUrl}/{$this->baseId}/{$tableId}", [
+                    'records' => [
+                        ['fields' => $fields],
+                    ],
+                ]);
+        } catch (ConnectionException $e) {
+            $this->fail('POST', $tableId, 0, $e->getMessage());
+        }
 
         if ($response->failed()) {
-            Log::error('Airtable POST failed', [
-                'table' => $tableId,
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
-
-            $this->notifyFailure('POST', $tableId, $response->status());
+            $this->fail('POST', $tableId, $response->status(), $response->body());
         }
 
         return $response->json() ?? [];
+    }
+
+    /**
+     * HTTP client with retry on temporary failures (5xx, 429, timeouts).
+     */
+    private function request(): PendingRequest
+    {
+        return Http::withToken($this->token)->retry(
+            (int) config('vigil.airtable.retry_times'),
+            (int) config('vigil.airtable.retry_sleep_ms'),
+            fn (\Throwable $e) => $e instanceof ConnectionException
+                || ($e instanceof RequestException
+                    && ($e->response->serverError() || $e->response->status() === 429)),
+            throw: false,
+        );
+    }
+
+    /**
+     * Log, alert Zura, and throw — never let callers continue with bad data.
+     *
+     * @throws AirtableException
+     */
+    private function fail(string $method, string $tableId, int $status, string $body): never
+    {
+        Log::error("Airtable {$method} failed", [
+            'table' => $tableId,
+            'status' => $status,
+            'body' => $body,
+        ]);
+
+        $this->notifyFailure($method, $tableId, $status);
+
+        throw new AirtableException("Airtable {$method} {$tableId} failed with status {$status}");
     }
 
     /**

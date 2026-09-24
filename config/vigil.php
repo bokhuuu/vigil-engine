@@ -47,6 +47,8 @@ return [
         'token' => env('AIRTABLE_TOKEN'),
         'base_id' => env('AIRTABLE_BASE_ID', 'appuF9IUa53xy31el'),
         'base_url' => 'https://api.airtable.com/v0',
+        'retry_times' => 3,        // total attempts on 5xx / 429 / timeout
+        'retry_sleep_ms' => 500,   // pause between attempts
 
         'tables' => [
             'acts' => 'tblqVYQxgMXwgyY6r',
