@@ -72,6 +72,32 @@ class GoogleDriveService
     }
 
     /**
+     * Required subfolders of an ACT that are missing or have no files.
+     * An empty result means everything required has been uploaded.
+     *
+     * @return array<int, string>
+     */
+    public function emptyRequiredSubfolders(string $folderUrl, array $fields): array
+    {
+        $actFolderId = $this->folderIdFromUrl($folderUrl);
+
+        if ($actFolderId === null) {
+            throw new \InvalidArgumentException("Invalid Drive folder URL: {$folderUrl}");
+        }
+
+        $existing = $this->listChildFolders($actFolderId);
+        $empty = [];
+
+        foreach ($this->requirements->requiredSubfolders($fields) as $name) {
+            if (! isset($existing[$name]) || ! $this->folderHasFiles($existing[$name])) {
+                $empty[] = $name;
+            }
+        }
+
+        return $empty;
+    }
+
+    /**
      * Folder ID from a Drive folder URL, or null.
      */
     private function folderIdFromUrl(?string $url): ?string
@@ -136,6 +162,21 @@ class GoogleDriveService
         ]);
 
         return $folder->getId();
+    }
+
+    /**
+     * Whether a folder contains at least one file (subfolders don't count).
+     */
+    protected function folderHasFiles(string $folderId): bool
+    {
+        $response = $this->drive()->files->listFiles([
+            'q' => "'{$folderId}' in parents and trashed = false"
+                ." and mimeType != 'application/vnd.google-apps.folder'",
+            'fields' => 'files(id)',
+            'pageSize' => 1,
+        ]);
+
+        return count($response->getFiles()) > 0;
     }
 
     /**

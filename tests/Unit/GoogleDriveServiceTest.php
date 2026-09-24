@@ -94,3 +94,45 @@ test('correspondence folder is created only once', function () {
 
     expect($url)->toBe('https://drive.google.com/drive/folders/act1');
 });
+
+test('emptyRequiredSubfolders returns nothing when all required folders have files', function () {
+    $drive = fakeDrive();
+    $drive->shouldReceive('listChildFolders')->with('act1')->andReturn(['სკანი' => 's1', 'ფოტოები' => 'p1']);
+    $drive->shouldReceive('folderHasFiles')->andReturn(true);
+
+    expect($drive->emptyRequiredSubfolders('https://drive.google.com/drive/folders/act1', []))
+        ->toBe([]);
+});
+
+test('emptyRequiredSubfolders lists empty required folders', function () {
+    $drive = fakeDrive();
+    $drive->shouldReceive('listChildFolders')->with('act1')->andReturn([
+        'სკანი' => 's1',
+        'ფოტოები' => 'p1',
+        'ხარჯთაღრიცხვა' => 'c1',
+    ]);
+    $drive->shouldReceive('folderHasFiles')->with('s1')->andReturn(false);
+    $drive->shouldReceive('folderHasFiles')->with('p1')->andReturn(true);
+    $drive->shouldReceive('folderHasFiles')->with('c1')->andReturn(false);
+
+    expect($drive->emptyRequiredSubfolders(
+        'https://drive.google.com/drive/folders/act1',
+        ['🏠 ღობე - ჭიშკარი' => true]
+    ))->toBe(['სკანი', 'ხარჯთაღრიცხვა']);
+});
+
+test('emptyRequiredSubfolders counts a missing required folder as empty', function () {
+    $drive = fakeDrive();
+    $drive->shouldReceive('listChildFolders')->with('act1')->andReturn(['სკანი' => 's1', 'ფოტოები' => 'p1']);
+    $drive->shouldReceive('folderHasFiles')->andReturn(true);
+
+    expect($drive->emptyRequiredSubfolders(
+        'https://drive.google.com/drive/folders/act1',
+        ['🏠 შენობა/ნაგებობები' => true]
+    ))->toBe(['შიდა ნახაზები', 'ხარჯთაღრიცხვა']);
+});
+
+test('emptyRequiredSubfolders rejects an invalid folder URL', function () {
+    expect(fn () => fakeDrive()->emptyRequiredSubfolders('not-a-url', []))
+        ->toThrow(InvalidArgumentException::class);
+});
