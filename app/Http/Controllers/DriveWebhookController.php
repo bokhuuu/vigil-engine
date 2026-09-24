@@ -111,40 +111,9 @@ class DriveWebhookController
 
         $this->notifier->notify($message);
 
+        Log::info("Drive webhook: removal alert sent for [{$subfolder}] on ACT [{$actNumber}]");
+
         return response()->json(['ok' => true]);
-    }
-
-    /**
-     * GET /webhook/act-status?act_number=329&secret=...
-     * Returns whether ხელმოწერები is ticked for the given ACT.
-     * Used by Apps Script to determine root folder color.
-     */
-    public function actStatus(Request $request): JsonResponse
-    {
-        if (! $this->authorized($request)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
-        $actNumber = (string) $request->query('act_number', '');
-
-        if ($actNumber === '') {
-            return response()->json(['error' => 'Missing act_number'], 400);
-        }
-
-        $act = $this->airtable->getActByNumber($actNumber);
-
-        if (! $act) {
-            return response()->json(['error' => 'ACT not found'], 404);
-        }
-
-        $fields = $act['fields'];
-
-        $signatures = ! empty($fields['📥 ხელმოწერები']);
-
-        return response()->json([
-            'act_number' => $actNumber,
-            'signatures' => $signatures,
-        ]);
     }
 
     /**
