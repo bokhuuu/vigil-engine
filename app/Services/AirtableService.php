@@ -157,6 +157,14 @@ class AirtableService
     }
 
     /**
+     * A single ACT record by its Airtable record ID.
+     */
+    public function getAct(string $recordId): array
+    {
+        return $this->client->getRecord(config('vigil.airtable.tables.acts'), $recordId);
+    }
+
+    /**
      * Map of ACT number => whether 📥 ხელმოწერები is ticked.
      *
      * @return array<string, bool>
