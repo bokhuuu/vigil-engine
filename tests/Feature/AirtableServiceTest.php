@@ -111,3 +111,24 @@ test('untickActCheckbox patches the field to false', function () {
             $request['fields']['📥 ფოტოები'] === false
     );
 });
+
+test('getRecentlyChangedActsWithFolder filters by folder and last modified time', function () {
+    Http::fake([
+        '*' => Http::response([
+            'records' => [['id' => 'rec001', 'fields' => ['🔖 აქტის ნომერი' => '590']]],
+        ], 200),
+    ]);
+
+    $service = new AirtableService(new AirtableClient);
+    $results = $service->getRecentlyChangedActsWithFolder(30);
+
+    expect($results)->toHaveCount(1);
+
+    Http::assertSent(function ($request) {
+        $url = urldecode($request->url());
+
+        return str_contains($url, "{💼 საქაღალდე} != ''")
+            && str_contains($url, 'LAST_MODIFIED_TIME()')
+            && str_contains($url, '-30');
+    });
+});

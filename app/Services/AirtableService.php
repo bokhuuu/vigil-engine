@@ -122,6 +122,18 @@ class AirtableService
     }
 
     /**
+     * ACTs that already have a Drive folder and were modified recently —
+     * candidates for creating missing subfolders.
+     */
+    public function getRecentlyChangedActsWithFolder(int $minutes): array
+    {
+        return $this->client->get(config('vigil.airtable.tables.acts'), [
+            'filterByFormula' => "AND({💼 საქაღალდე} != '', "
+                ."IS_AFTER(LAST_MODIFIED_TIME(), DATEADD(NOW(), -{$minutes}, 'minutes')))",
+        ]);
+    }
+
+    /**
      * Write the Drive folder URL back to the ACT record.
      */
     public function updateActDriveFolder(string $recordId, string $folderUrl): void
