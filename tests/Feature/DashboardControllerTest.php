@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -141,4 +142,68 @@ test('dashboard requiredFields includes შიდა ნახაზები wh
         return in_array('📥 შიდა ნახაზები', $required)
             && in_array('📥 ხარჯთაღრიცხვა', $required);
     });
+});
+
+test('dashboard shows the real fetch time', function () {
+    Cache::flush();
+    $this->travelTo(Carbon::parse('2026-09-24 14:32:00', config('app.timezone')));
+
+    Http::fake([
+        'api.airtable.com/*' => Http::response([
+            'records' => [['id' => 'r1', 'fields' => ['🔖 აქტის ნომერი' => '329']]],
+        ], 200),
+    ]);
+
+    $this->withHeaders([
+        'Authorization' => 'Basic '.base64_encode('vigil:test-password'),
+    ])->get('/dashboard')
+        ->assertOk()
+        ->assertSee('განახლდა 14:32');
+});
+
+test('refreshing the page does not change the fetch time', function () {
+    Cache::flush();
+
+    Http::fake([
+        'api.airtable.com/*' => Http::response([
+            'records' => [['id' => 'r1', 'fields' => ['🔖 აქტის ნომერი' => '329']]],
+        ], 200),
+    ]);
+
+    $auth = ['Authorization' => 'Basic '.base64_encode('vigil:test-password')];
+
+    $this->travelTo(Carbon::parse('2026-09-24 14:32:00', config('app.timezone')));
+    $this->withHeaders($auth)->get('/dashboard')->assertSee('განახლდა 14:32');
+
+    $this->travelTo(Carbon::parse('2026-09-24 14:34:00', config('app.timezone')));
+    $this->withHeaders($auth)->get('/dashboard')->assertSee('განახლდა 14:32');
+});
+
+test('dashboard falls back to last good data when Airtable fails', function () {
+    Cache::flush();
+    config([
+        'vigil.airtable.retry_sleep_ms' => 0,
+        'vigil.telegram.bot_token' => 'test-token',
+        'vigil.telegram.my_chat_id' => '999',
+    ]);
+
+    Http::fake([
+        'api.airtable.com/*' => Http::sequence()
+            ->push(['records' => [['id' => 'r1', 'fields' => ['🔖 აქტის ნომერი' => '329']]]], 200)
+            ->push('unavailable', 503)
+            ->push('unavailable', 503)
+            ->push('unavailable', 503),
+        'api.telegram.org/*' => Http::response(['ok' => true], 200),
+    ]);
+
+    $auth = ['Authorization' => 'Basic '.base64_encode('vigil:test-password')];
+
+    $this->withHeaders($auth)->get('/dashboard')->assertOk();
+
+    Cache::forget('dashboard_snapshot'); // simulate the 5-minute cache expiring
+
+    $this->withHeaders($auth)->get('/dashboard')
+        ->assertOk()
+        ->assertSee('Airtable მიუწვდომელია')
+        ->assertSee('329');
 });

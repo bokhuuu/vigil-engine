@@ -622,12 +622,19 @@
         </div>
         <div class="header-right">
             <div class="timer">
-                <div class="timer-dot"></div>
-                <span id="timer-text">იტვირთება...</span>
+                <div class="timer-dot"
+                    @if ($isStale) style="background:#f59e0b;animation:none;" @endif></div>
+                <span>განახლდა {{ $fetchedAt->format('H:i') }}</span>
             </div>
             <a href="{{ $statsUrl }}" target="_blank" class="stats-link">Airtable სტატისტიკა →</a>
         </div>
     </div>
+
+    @if ($isStale)
+        <div style="background:#fef3c7;color:#92400e;padding:8px 24px;font-size:12px;border-bottom:1px solid #fcd34d;">
+            ⚠️ Airtable მიუწვდომელია — ნაჩვენებია {{ $fetchedAt->format('H:i') }}-ის მონაცემები
+        </div>
+    @endif
 
     {{-- Stats --}}
     <div class="stats-row">
@@ -971,37 +978,10 @@
         // ── Initial render ──────────────────────────────────────────────
         renderPage();
 
-        // ── Countdown timer ─────────────────────────────────────────────
-        const cachedAt = new Date({{ $cachedAt instanceof \Carbon\Carbon ? $cachedAt->timestamp : now()->timestamp }} *
-            1000);
-        const cacheMinutes = {{ $cacheMinutes }};
-
-        function updateTimer() {
-            const now = new Date();
-            const elapsedSec = Math.floor((now - cachedAt) / 1000);
-            const refreshInSec = (cacheMinutes * 60) - elapsedSec;
-
-            if (refreshInSec <= 0) {
-                document.getElementById('timer-text').textContent = 'განახლება...';
-                window.location.reload();
-                return;
-            }
-
-            const mins = Math.floor(refreshInSec / 60);
-            const secs = refreshInSec % 60;
-            const elapsedMins = Math.floor(elapsedSec / 60);
-            const el = document.getElementById('timer-text');
-
-            if (elapsedMins === 0) {
-                el.textContent = 'ახლახან განახლდა · განახლება ' + mins + ':' + String(secs).padStart(2, '0') + '-ში';
-            } else {
-                el.textContent = 'განახლდა ' + elapsedMins + ' წთ წინ · განახლება ' + mins + ':' + String(secs).padStart(2,
-                    '0') + '-ში';
-            }
-        }
-
-        updateTimer();
-        setInterval(updateTimer, 1000);
+        // ── Silent auto-reload ──────────────────────────────────────────
+        // Keeps an open dashboard fresh; the shown time only changes
+        // when new data is actually fetched.
+        setTimeout(() => window.location.reload(), {{ $cacheMinutes }} * 60 * 1000);
     </script>
 
 </body>

@@ -4,14 +4,25 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Services\AirtableClient;
+use App\Exceptions\AirtableException;
+use App\Services\ActRequirements;
 use App\Services\AirtableService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class DashboardController
 {
+    private const SNAPSHOT_KEY = 'dashboard_snapshot';
+
+    private const LAST_GOOD_KEY = 'dashboard_snapshot_last_good';
+
+    public function __construct(
+        private AirtableService $airtable,
+        private ActRequirements $requirements,
+    ) {}
+
     private array $docFields = [
         'ფოტო' => '📥 ფოტოები',
         'ხელმ.' => '📥 ხელმოწერები',
@@ -30,53 +41,48 @@ class DashboardController
         '🚫 უარი თქვა' => '#1a1f36',
     ];
 
-    private function requiredFields(array $fields): array
+    /**
+     * Acts + the moment they were fetched, cached as ONE entry so the
+     * time shown always matches the data. On Airtable failure, fall back
+     * to the last successful snapshot (marked stale).
+     *
+     * @return array{acts: array, fetched_at: int, stale: bool}
+     *
+     * @throws AirtableException when Airtable fails and no snapshot exists yet
+     */
+    private function loadSnapshot(int $ttlSeconds): array
     {
-        $required = [
-            '📥 ფოტოები',
-            '📥 ხელმოწერები',
-        ];
+        try {
+            $snapshot = Cache::remember(self::SNAPSHOT_KEY, $ttlSeconds, function () {
+                $fresh = [
+                    'acts' => $this->airtable->getAllActs(),
+                    'fetched_at' => now()->timestamp,
+                ];
 
-        if ($fields['🏠 შენობა/ნაგებობები'] ?? false) {
-            $required[] = '📥 შიდა ნახაზები';
+                Cache::forever(self::LAST_GOOD_KEY, $fresh);
+
+                return $fresh;
+            });
+
+            return $snapshot + ['stale' => false];
+        } catch (AirtableException $e) {
+            $lastGood = Cache::get(self::LAST_GOOD_KEY);
+
+            if ($lastGood === null) {
+                throw $e;
+            }
+
+            return $lastGood + ['stale' => true];
         }
-
-        if ($fields['📋 გამიჯვნა საჭიროა'] ?? false) {
-            $required[] = '📥 გამიჯვნები';
-        }
-
-        $needsCost = ($fields['🏠 შენობა/ნაგებობები'] ?? false)
-            || ($fields['🏠 ღობე - ჭიშკარი'] ?? false)
-            || ($fields['🏠 გადასატანი აქტივები'] ?? false)
-            || ($fields['🏠 ეზოს-მოპირკეთება'] ?? false)
-            || ($fields['🏠 სამ-ფაზიანი დენი'] ?? false);
-
-        if ($needsCost) {
-            $required[] = '📥 ხარჯთაღრიცხვა';
-        }
-
-        if (($fields['🏠 მრავალწლოვანი'] ?? false) || ($fields['🏠 ერთწლოვანი'] ?? false)) {
-            $required[] = '📥 ტოპო ნარგავები';
-        }
-
-        return $required;
     }
 
     public function index(Request $request): View
     {
-        $cacheMinutes = config('vigil.dashboard.cache_minutes', 5);
-        $cacheKey = 'dashboard_acts';
-        $cachedAtKey = 'dashboard_cached_at';
+        $cacheMinutes = (int) config('vigil.dashboard.cache_minutes', 5);
+        $snapshot = $this->loadSnapshot($cacheMinutes * 60);
 
-        if (! Cache::has($cacheKey)) {
-            Cache::put($cachedAtKey, now(), $cacheMinutes * 60);
-        }
-
-        $data = Cache::remember($cacheKey, $cacheMinutes * 60, function () {
-            return (new AirtableService(new AirtableClient))->getAllActs();
-        });
-
-        $cachedAt = Cache::get($cachedAtKey, now());
+        $data = $snapshot['acts'];
+        $fetchedAt = Carbon::createFromTimestamp($snapshot['fetched_at'], config('app.timezone'));
 
         $activeStatus = $request->query('status');
         $activeMissing = $request->query('missing');
@@ -89,7 +95,7 @@ class DashboardController
 
                 return array_merge($fields, [
                     '_id' => $act['id'],
-                    '_required' => $this->requiredFields($fields),
+                    '_required' => $this->requirements->requiredDocFields($fields),
                     '_biznes_count' => count($fields['🏢 ბიზნესი'] ?? []),
                     '_has_corr' => ! empty($fields['📨 კორესპონდენცია'] ?? []),
                     '_kvleva' => $fields['📊 კვლევა'] ?? null,
@@ -160,7 +166,8 @@ class DashboardController
             'total' => $total,
             'complete' => $complete,
             'incomplete' => $total - $complete,
-            'cachedAt' => $cachedAt,
+            'fetchedAt' => $fetchedAt,
+            'isStale' => $snapshot['stale'],
             'cacheMinutes' => $cacheMinutes,
             'statsUrl' => config('vigil.dashboard.airtable_stats_url'),
             'activeStatus' => $activeStatus,
