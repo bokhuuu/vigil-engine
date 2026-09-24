@@ -938,7 +938,7 @@
             const q = query.toLowerCase().trim();
             filteredRows = allRows.filter(row => {
                 const actNum = row.querySelector('.act-num');
-                return !q || (actNum && actNum.textContent.toLowerCase().includes(q));
+                return !q || (actNum && actNum.textContent.toLowerCase().trim().startsWith(q));
             });
             currentPage = 0;
             renderPage();
