@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ActCompleteController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DashboardFolderController;
 use App\Http\Controllers\DriveWebhookController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Middleware\BasicAuthMiddleware;
@@ -17,3 +18,8 @@ Route::middleware(VerifyWebhookSecret::class)->group(function () {
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(BasicAuthMiddleware::class);
+
+Route::post('/dashboard/acts/{recordId}/folder', [DashboardFolderController::class, 'store'])
+    ->where('recordId', 'rec[A-Za-z0-9]+')
+    ->middleware(BasicAuthMiddleware::class)
+    ->name('dashboard.folder');

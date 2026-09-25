@@ -14,7 +14,7 @@ use Illuminate\View\View;
 
 class DashboardController
 {
-    private const SNAPSHOT_KEY = 'dashboard_snapshot';
+    public const SNAPSHOT_KEY = 'dashboard_snapshot';
 
     private const LAST_GOOD_KEY = 'dashboard_snapshot_last_good';
 

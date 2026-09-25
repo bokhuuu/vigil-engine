@@ -489,6 +489,43 @@
             color: #2563eb;
         }
 
+        .folder-create-btn {
+            font-size: 10px;
+            font-family: 'IBM Plex Sans', sans-serif;
+            padding: 2px 8px;
+            border: 1px solid #d0d7de;
+            border-radius: 10px;
+            background: #fff;
+            color: #4b5563;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .folder-create-btn:hover:not(:disabled) {
+            border-color: #2563eb;
+            color: #2563eb;
+        }
+
+        .folder-create-btn:disabled {
+            cursor: wait;
+            opacity: 0.6;
+        }
+
+        .flash {
+            padding: 8px 24px;
+            font-size: 12px;
+        }
+
+        .flash.ok {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .flash.err {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
         .empty {
             padding: 48px;
             text-align: center;
@@ -646,6 +683,13 @@
         <div style="background:#fef3c7;color:#92400e;padding:8px 24px;font-size:12px;border-bottom:1px solid #fcd34d;">
             ⚠️ Airtable მიუწვდომელია — ნაჩვენებია {{ $fetchedAt->format('H:i') }}-ის მონაცემები
         </div>
+    @endif
+
+    @if (session('status'))
+        <div class="flash ok">{{ session('status') }}</div>
+    @endif
+    @if (session('error'))
+        <div class="flash err">{{ session('error') }}</div>
     @endif
 
     {{-- Stats --}}
@@ -853,7 +897,12 @@
                                 @if ($folder)
                                     <a href="{{ $folder }}" target="_blank" class="drive-link">📁</a>
                                 @else
-                                    <span style="color:#d0d7de;">—</span>
+                                    <form method="POST" action="{{ route('dashboard.folder', $act['_id']) }}"
+                                        onsubmit="const b = this.querySelector('button'); b.disabled = true; b.textContent = '…';">
+                                        @csrf
+                                        <button type="submit" class="folder-create-btn"
+                                            title="Drive საქაღალდის შექმნა">+ შექმნა</button>
+                                    </form>
                                 @endif
                             </td>
                         </tr>
