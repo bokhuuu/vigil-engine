@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Services\AirtableService;
 use App\Services\GoogleDriveService;
+use App\Services\TelegramService;
 
 test('create-drive-folders skips when no acts without folder', function () {
     $airtable = Mockery::mock(AirtableService::class);
@@ -97,6 +98,7 @@ test('create-drive-folders syncs recently changed ACTs using their saved folder'
         ->with('590', Mockery::type('array'), 'https://drive.google.com/drive/folders/f590')
         ->once()
         ->andReturn('https://drive.google.com/drive/folders/f590');
+    $drive->shouldReceive('pruneUnneededSubfolders')->andReturn([]);
 
     $this->app->instance(AirtableService::class, $airtable);
     $this->app->instance(GoogleDriveService::class, $drive);
@@ -124,6 +126,7 @@ test('create-drive-folders sync failure does not stop other ACTs', function () {
         ->with('2', Mockery::any(), Mockery::any())
         ->once()
         ->andReturn('https://drive.google.com/drive/folders/b');
+    $drive->shouldReceive('pruneUnneededSubfolders')->andReturn([]);
 
     $this->app->instance(AirtableService::class, $airtable);
     $this->app->instance(GoogleDriveService::class, $drive);
@@ -132,5 +135,44 @@ test('create-drive-folders sync failure does not stop other ACTs', function () {
 
     $this->artisan('vigil:create-drive-folders')
         ->expectsOutput('Synced: 1, Failed: 1 (changed in last 30 min)')
+        ->assertExitCode(0);
+});
+
+test('create-drive-folders alerts Zura when an unneeded folder still has files', function () {
+    $airtable = Mockery::mock(AirtableService::class);
+    $airtable->shouldReceive('getActsWithoutDriveFolder')->andReturn([]);
+    $airtable->shouldReceive('getRecentlyChangedActsWithFolder')->andReturn([
+        ['id' => 'r662', 'fields' => [
+            '🔖 აქტის ნომერი' => '662',
+            '💼 საქაღალდე' => 'https://drive.google.com/drive/folders/f662',
+        ]],
+    ]);
+
+    $drive = Mockery::mock(GoogleDriveService::class);
+    $drive->shouldReceive('ensureActFolders')->andReturn('https://drive.google.com/drive/folders/f662');
+    $drive->shouldReceive('pruneUnneededSubfolders')->andReturn(['გამიჯვნები']);
+
+    $telegram = Mockery::mock(TelegramService::class);
+    $telegram->shouldReceive('sendToMe')
+        ->once()
+        ->withArgs(fn ($msg) => str_contains($msg, 'ACT 662') && str_contains($msg, 'გამიჯვნები'));
+
+    $this->app->instance(AirtableService::class, $airtable);
+    $this->app->instance(GoogleDriveService::class, $drive);
+    $this->app->instance(TelegramService::class, $telegram);
+
+    $this->artisan('vigil:create-drive-folders')->assertExitCode(0);
+});
+
+test('create-drive-folders --limit=0 skips new ACTs and --sync-minutes overrides the window', function () {
+    $airtable = Mockery::mock(AirtableService::class);
+    $airtable->shouldNotReceive('getActsWithoutDriveFolder');
+    $airtable->shouldReceive('getRecentlyChangedActsWithFolder')->with(1440)->once()->andReturn([]);
+
+    $this->app->instance(AirtableService::class, $airtable);
+    $this->app->instance(GoogleDriveService::class, Mockery::mock(GoogleDriveService::class));
+
+    $this->artisan('vigil:create-drive-folders', ['--limit' => 0, '--sync-minutes' => 1440])
+        ->expectsOutput('Synced: 0, Failed: 0 (changed in last 1440 min)')
         ->assertExitCode(0);
 });

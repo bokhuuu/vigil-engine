@@ -74,8 +74,6 @@ class GoogleDriveService
     /**
      * Required subfolders of an ACT that are missing or have no files.
      * An empty result means everything required has been uploaded.
-     *
-     * @return array<int, string>
      */
     public function emptyRequiredSubfolders(string $folderUrl, array $fields): array
     {
@@ -95,6 +93,41 @@ class GoogleDriveService
         }
 
         return $empty;
+    }
+
+    /**
+     * Tracked subfolders that are no longer required: empty ones are moved to
+     * the trash (restorable), ones with files are left alone and returned so a
+     * human can check them. Untracked folders (კორესპონდენცია, ბიზნესი) are
+     * never touched.
+     */
+    public function pruneUnneededSubfolders(string $folderUrl, array $fields): array
+    {
+        $actFolderId = $this->folderIdFromUrl($folderUrl);
+
+        if ($actFolderId === null) {
+            throw new \InvalidArgumentException("Invalid Drive folder URL: {$folderUrl}");
+        }
+
+        $tracked = array_keys(config('vigil.drive.tracked_subfolders'));
+        $required = $this->requirements->requiredSubfolders($fields);
+        $keptWithFiles = [];
+
+        foreach ($this->listChildFolders($actFolderId) as $name => $folderId) {
+            if (! in_array($name, $tracked, true) || in_array($name, $required, true)) {
+                continue;
+            }
+
+            if ($this->folderHasFiles($folderId)) {
+                $keptWithFiles[] = $name;
+
+                continue;
+            }
+
+            $this->trashFolder($folderId);
+        }
+
+        return $keptWithFiles;
     }
 
     /**
@@ -177,6 +210,14 @@ class GoogleDriveService
         ]);
 
         return count($response->getFiles()) > 0;
+    }
+
+    /**
+     * Move a folder to the Drive trash (restorable from Bin).
+     */
+    protected function trashFolder(string $folderId): void
+    {
+        $this->drive()->files->update($folderId, new DriveFile(['trashed' => true]));
     }
 
     /**

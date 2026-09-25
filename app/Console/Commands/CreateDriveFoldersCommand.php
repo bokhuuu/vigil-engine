@@ -6,17 +6,21 @@ namespace App\Console\Commands;
 
 use App\Services\AirtableService;
 use App\Services\GoogleDriveService;
+use App\Services\TelegramService;
 use Illuminate\Console\Command;
 
 class CreateDriveFoldersCommand extends Command
 {
-    protected $signature = 'vigil:create-drive-folders {--limit= : Maximum number of ACTs to process}';
+    protected $signature = 'vigil:create-drive-folders
+        {--limit= : Maximum number of new ACTs to process}
+        {--sync-minutes= : Override the sync window (default from config)}';
 
-    protected $description = 'Create Drive folders for new ACTs and add missing subfolders for recently changed ones';
+    protected $description = 'Create Drive folders for new ACTs, add missing and trash unneeded empty subfolders for recently changed ones';
 
     public function __construct(
         private AirtableService $airtable,
         private GoogleDriveService $drive,
+        private TelegramService $telegram,
     ) {
         parent::__construct();
     }
@@ -38,6 +42,10 @@ class CreateDriveFoldersCommand extends Command
      */
     private function createMissing(?int $limit): void
     {
+        if ($limit === 0) {
+            return;
+        }
+
         $acts = $this->airtable->getActsWithoutDriveFolder($limit);
 
         if (empty($acts)) {
@@ -71,12 +79,16 @@ class CreateDriveFoldersCommand extends Command
     }
 
     /**
-     * ACTs with a folder that changed recently (flag ticked, business or
-     * correspondence linked later): create only their missing subfolders.
+     * ACTs with a folder that changed recently (flag ticked/unticked, business
+     * or correspondence linked later): create missing subfolders, trash empty
+     * ones that are no longer required, alert Zura about unneeded ones with files.
      */
     private function syncRecentlyChanged(): void
     {
-        $minutes = (int) config('vigil.drive.sync_window_minutes');
+        $minutes = $this->option('sync-minutes') !== null
+            ? (int) $this->option('sync-minutes')
+            : (int) config('vigil.drive.sync_window_minutes');
+
         $acts = $this->airtable->getRecentlyChangedActsWithFolder($minutes);
 
         $synced = 0;
@@ -87,7 +99,19 @@ class CreateDriveFoldersCommand extends Command
             $actNumber = (string) ($fields['🔖 აქტის ნომერი'] ?? $act['id']);
 
             try {
-                $this->drive->ensureActFolders($actNumber, $fields, $fields['💼 საქაღალდე'] ?? null);
+                $folderUrl = $fields['💼 საქაღალდე'];
+                $this->drive->ensureActFolders($actNumber, $fields, $folderUrl);
+
+                $keptWithFiles = $this->drive->pruneUnneededSubfolders($folderUrl, $fields);
+
+                if ($keptWithFiles !== []) {
+                    $this->telegram->sendToMe(
+                        '⚠️ <b>ACT '.e($actNumber).'</b>: '.e(implode(', ', $keptWithFiles))
+                            ." აღარ არის საჭირო, მაგრამ შეიცავს ფაილებს — შეამოწმე.\n"
+                            .'🔗 <a href="'.e($folderUrl).'">საქაღალდე</a>'
+                    );
+                }
+
                 $synced++;
             } catch (\Throwable $e) {
                 $this->error("❌ sync {$actNumber} — {$e->getMessage()}");

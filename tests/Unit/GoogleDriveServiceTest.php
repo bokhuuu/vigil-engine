@@ -136,3 +136,48 @@ test('emptyRequiredSubfolders rejects an invalid folder URL', function () {
     expect(fn () => fakeDrive()->emptyRequiredSubfolders('not-a-url', []))
         ->toThrow(InvalidArgumentException::class);
 });
+
+test('prune trashes empty unneeded tracked folders and never touches untracked ones', function () {
+    $drive = fakeDrive();
+    $drive->shouldReceive('listChildFolders')->with('act1')->andReturn([
+        'სკანი' => 's1',
+        'ფოტოები' => 'p1',
+        'გამიჯვნები' => 'g1',
+        'კორესპონდენცია' => 'k1',
+    ]);
+    $drive->shouldReceive('folderHasFiles')->with('g1')->andReturn(false);
+    $drive->shouldReceive('trashFolder')->with('g1')->once();
+
+    expect($drive->pruneUnneededSubfolders('https://drive.google.com/drive/folders/act1', []))
+        ->toBe([]);
+});
+
+test('prune keeps unneeded folders that have files and reports them', function () {
+    $drive = fakeDrive();
+    $drive->shouldReceive('listChildFolders')->with('act1')->andReturn([
+        'სკანი' => 's1',
+        'ფოტოები' => 'p1',
+        'გამიჯვნები' => 'g1',
+    ]);
+    $drive->shouldReceive('folderHasFiles')->with('g1')->andReturn(true);
+    $drive->shouldNotReceive('trashFolder');
+
+    expect($drive->pruneUnneededSubfolders('https://drive.google.com/drive/folders/act1', []))
+        ->toBe(['გამიჯვნები']);
+});
+
+test('prune never checks or trashes required folders', function () {
+    $drive = fakeDrive();
+    $drive->shouldReceive('listChildFolders')->with('act1')->andReturn([
+        'სკანი' => 's1',
+        'ფოტოები' => 'p1',
+        'გამიჯვნები' => 'g1',
+    ]);
+    $drive->shouldNotReceive('folderHasFiles');
+    $drive->shouldNotReceive('trashFolder');
+
+    expect($drive->pruneUnneededSubfolders(
+        'https://drive.google.com/drive/folders/act1',
+        ['📋 გამიჯვნა საჭიროა' => true]
+    ))->toBe([]);
+});
