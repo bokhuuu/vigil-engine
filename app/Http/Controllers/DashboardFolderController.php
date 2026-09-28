@@ -24,7 +24,9 @@ class DashboardFolderController
     {
         $act = $this->airtable->getAct($recordId);
         $fields = $act['fields'] ?? [];
-        $number = (string) ($fields['🔖 აქტის ნომერი'] ?? $recordId);
+        $number = AirtableService::normalizeActNumber(
+            (string) ($fields['🔖 აქტის ნომერი'] ?? $recordId)
+        );
 
         if (! empty($fields['💼 საქაღალდე'])) {
             return back()->with('status', "ACT {$number}-ს საქაღალდე უკვე აქვს.");

@@ -148,6 +148,8 @@ class AirtableService
      */
     public function getActByNumber(string $actNumber): ?array
     {
+        $actNumber = self::normalizeActNumber($actNumber);
+
         $records = $this->client->get(config('vigil.airtable.tables.acts'), [
             'filterByFormula' => "{🔖 აქტის ნომერი} = '{$actNumber}'",
             'maxRecords' => 1,
@@ -309,5 +311,14 @@ class AirtableService
             config('vigil.airtable.tables.teams'),
             $recordId
         );
+    }
+
+    /**
+     * Normalize an ACT number: strip spaces around hyphens.
+     * "7 -1" and "7- 1" both become "7-1".
+     */
+    public static function normalizeActNumber(string $number): string
+    {
+        return preg_replace('/\s*-\s*/', '-', trim($number));
     }
 }

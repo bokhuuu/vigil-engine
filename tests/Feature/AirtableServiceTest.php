@@ -132,3 +132,11 @@ test('getRecentlyChangedActsWithFolder filters by folder and last modified time'
             && str_contains($url, '-30');
     });
 });
+
+test('normalizeActNumber strips spaces around hyphens', function () {
+    expect(AirtableService::normalizeActNumber('7 -1'))->toBe('7-1');
+    expect(AirtableService::normalizeActNumber('7- 1'))->toBe('7-1');
+    expect(AirtableService::normalizeActNumber('7 - 1'))->toBe('7-1');
+    expect(AirtableService::normalizeActNumber('329'))->toBe('329');
+    expect(AirtableService::normalizeActNumber('  329  '))->toBe('329');
+});
