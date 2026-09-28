@@ -356,7 +356,7 @@
             background: #fff;
             border: 1px solid #e4e8f0;
             border-radius: 8px;
-            overflow: visible;
+            overflow: hidden;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
         }
 
@@ -373,9 +373,6 @@
 
         thead tr {
             background: #f8f9fc;
-            position: sticky;
-            top: 157px;
-            z-index: 10;
         }
 
         th {
