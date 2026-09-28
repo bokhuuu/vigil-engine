@@ -996,7 +996,7 @@
         }
 
         function applySearch(query) {
-            const q = query.toLowerCase().trim();
+            const q = query.toLowerCase().trim().replace(/\s*-\s*/g, '-');
             filteredRows = allRows.filter(row => {
                 const actNum = row.querySelector('.act-num');
                 return !q || (actNum && actNum.textContent.toLowerCase().trim().startsWith(q));
