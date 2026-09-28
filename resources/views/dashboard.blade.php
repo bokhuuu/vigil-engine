@@ -372,11 +372,15 @@
             min-width: 700px;
         }
 
+        thead {
+            position: sticky;
+            top: 64px;
+            z-index: 10;
+            background: #f8f9fc;
+        }
+
         thead tr {
             background: #f8f9fc;
-            position: sticky;
-            top: 57px;
-            z-index: 10;
         }
 
         th {
