@@ -356,12 +356,13 @@
             background: #fff;
             border: 1px solid #e4e8f0;
             border-radius: 8px;
-            overflow: hidden;
+            overflow: visible;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
         }
 
         .table-scroll {
             overflow-x: auto;
+            overflow-y: visible;
             -webkit-overflow-scrolling: touch;
         }
 
@@ -373,6 +374,9 @@
 
         thead tr {
             background: #f8f9fc;
+            position: sticky;
+            top: 57px;
+            z-index: 10;
         }
 
         th {
