@@ -340,6 +340,10 @@
             padding: 0 24px 8px;
             align-items: center;
             flex-wrap: wrap;
+            position: sticky;
+            top: 64px;
+            z-index: 50;
+            background: #f0f2f5;
         }
 
         .legend-item {
