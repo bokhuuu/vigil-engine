@@ -38,6 +38,8 @@ return [
     'google_drive' => [
         'credentials' => env('GOOGLE_DRIVE_CREDENTIALS'),
         'act_folder_id' => env('GOOGLE_DRIVE_ACT_FOLDER_ID'),
+        'oauth_client' => env('GOOGLE_DRIVE_OAUTH_CLIENT'),
+        'oauth_token' => env('GOOGLE_DRIVE_OAUTH_TOKEN'),
     ],
 
 ];
