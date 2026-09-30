@@ -12,6 +12,8 @@ class GoogleDriveService
 {
     private ?Drive $drive = null;
 
+    private ?Drive $userDrive = null;
+
     public function __construct(
         private ActRequirements $requirements,
     ) {}
@@ -26,6 +28,34 @@ class GoogleDriveService
         }
 
         return $this->drive;
+    }
+
+    private function userDrive(): Drive
+    {
+        if ($this->userDrive === null) {
+            $clientFile = config('services.google_drive.oauth_client');
+            $tokenFile = config('services.google_drive.oauth_token');
+
+            $client = new Client;
+            $client->setAuthConfig($clientFile);
+            $client->addScope(Drive::DRIVE);
+            $client->setAccessType('offline');
+
+            $token = json_decode(file_get_contents($tokenFile), true);
+            $client->setAccessToken($token);
+
+            if ($client->isAccessTokenExpired()) {
+                $newToken = $client->fetchAccessTokenWithRefreshToken(
+                    $client->getRefreshToken()
+                );
+                file_put_contents($tokenFile, json_encode($newToken, JSON_PRETTY_PRINT));
+                $client->setAccessToken($newToken);
+            }
+
+            $this->userDrive = new Drive($client);
+        }
+
+        return $this->userDrive;
     }
 
     /**
