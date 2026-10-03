@@ -452,6 +452,11 @@
             background: #fee2e2;
         }
 
+        .badge.warn {
+            color: #92400e;
+            background: #fef3c7;
+        }
+
         .col-status {
             width: 90px;
         }
@@ -857,8 +862,15 @@
                                     class="act-link">{{ $act['🔖 აქტის ნომერი'] ?? '—' }}</a>
                             </td>
                             <td>
-                                <span class="badge {{ $isComplete ? 'complete' : 'incomplete' }}">
-                                    {{ $isComplete ? 'დასრულდა' : 'მიმდინარე' }}
+                                @php
+                                    $docsIncomplete =
+                                        $isComplete &&
+                                        collect($required)->contains(fn($field) => empty($act[$field] ?? false));
+                                @endphp
+                                <span
+                                    class="badge {{ $isComplete ? ($docsIncomplete ? 'warn' : 'complete') : 'incomplete' }}"
+                                    @if ($docsIncomplete) title="დასრულებული მაგრამ დოკუმენტები არასრულია" @endif>
+                                    {{ $isComplete ? ($docsIncomplete ? '⚠️ დასრულდა' : 'დასრულდა') : 'მიმდინარე' }}
                                 </span>
                             </td>
                             <td class="center">
