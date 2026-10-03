@@ -290,4 +290,53 @@ class GoogleDriveService
             'fields' => 'id,folderColorRgb',
         ]);
     }
+
+    /**
+     * Get basic metadata for a Drive item: id, name, mimeType, parents.
+     * Returns null if the item doesn't exist or is trashed.
+     */
+    public function getFileMetadata(string $fileId): ?array
+    {
+        try {
+            $file = $this->getUserDrive()->files->get($fileId, [
+                'fields' => 'id,name,mimeType,parents,trashed',
+            ]);
+
+            if ($file->getTrashed()) {
+                return null;
+            }
+
+            return [
+                'id' => $file->getId(),
+                'name' => $file->getName(),
+                'mimeType' => $file->getMimeType(),
+                'parents' => $file->getParents() ?? [],
+            ];
+        } catch (\Exception $e) {
+            Log::warning("GoogleDriveService: could not get metadata for [{$fileId}] — ".$e->getMessage());
+
+            return null;
+        }
+    }
+
+    /**
+     * List tracked subfolders of an ACT folder.
+     * Returns subfolderId => name for subfolders matching the tracked list.
+     *
+     * @param  array<string>  $tracked
+     * @return array<string, string>
+     */
+    public function listTrackedSubfolders(string $actFolderId, array $tracked): array
+    {
+        $all = $this->listChildFolders($actFolderId);
+        $result = [];
+
+        foreach ($all as $name => $id) {
+            if (in_array($name, $tracked, true)) {
+                $result[$id] = $name;
+            }
+        }
+
+        return $result;
+    }
 }

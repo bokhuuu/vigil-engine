@@ -48,9 +48,11 @@ class DriveWatcherService
             $subfolder = $this->state->getSubfolder($id);
 
             if ($subfolder === null) {
-                // Could be a new subfolder not yet indexed — skip for now
-                // The seed command will pick it up on next baseline run
-                continue;
+                $this->maybeIndexNewSubfolder($id);
+                $subfolder = $this->state->getSubfolder($id);
+                if ($subfolder === null) {
+                    continue;
+                }
             }
 
             $actFolderId = $subfolder['act_folder_id'];
@@ -152,8 +154,8 @@ class DriveWatcherService
 
     /**
      * Seed the folder index from Airtable.
-     * Reads all ACTs that have a Drive folder URL and builds the index.
-     * Also initialises the Drive changes page token.
+     * Reads all ACTs that have a Drive folder URL, builds the ACT folder index,
+     * then walks each ACT folder's subfolders to build the subfolder index.
      */
     public function seedFromAirtable(): int
     {
@@ -182,6 +184,25 @@ class DriveWatcherService
 
         $this->state->setFolderIndex($index);
         Log::info("DriveWatcherService: seeded {$count} ACT folders from Airtable");
+
+        // Walk subfolders for each ACT folder and build subfolder index
+        $tracked = array_keys(config('vigil.drive.tracked_subfolders'));
+        $subfolderCount = 0;
+
+        foreach ($index as $actFolderId => $actInfo) {
+            try {
+                $subfolders = $this->driveService->listTrackedSubfolders($actFolderId, $tracked);
+
+                foreach ($subfolders as $subfolderId => $name) {
+                    $this->state->addSubfolder($subfolderId, $actFolderId, $name);
+                    $subfolderCount++;
+                }
+            } catch (\Exception $e) {
+                Log::warning("DriveWatcherService: could not walk subfolders for ACT [{$actInfo['act_number']}] — ".$e->getMessage());
+            }
+        }
+
+        Log::info("DriveWatcherService: seeded {$subfolderCount} subfolders");
 
         return $count;
     }
@@ -350,6 +371,31 @@ class DriveWatcherService
         if (! $dryRun) {
             $this->driveService->setFolderColorAsUser($actFolderId, $color);
             $this->state->setFolderColor($actFolderId, $color);
+        }
+    }
+
+    private function maybeIndexNewSubfolder(string $id): void
+    {
+        $tracked = array_keys(config('vigil.drive.tracked_subfolders'));
+        $meta = $this->driveService->getFileMetadata($id);
+
+        if ($meta === null) {
+            return;
+        }
+
+        $isFolder = $meta['mimeType'] === 'application/vnd.google-apps.folder';
+
+        if (! $isFolder || ! in_array($meta['name'], $tracked, true)) {
+            return;
+        }
+
+        foreach ($meta['parents'] as $parentId) {
+            if ($this->state->getActByFolderId($parentId) !== null) {
+                $this->state->addSubfolder($id, $parentId, $meta['name']);
+                Log::info("DriveWatcherService: auto-indexed new subfolder [{$meta['name']}] under ACT [{$parentId}]");
+
+                return;
+            }
         }
     }
 }

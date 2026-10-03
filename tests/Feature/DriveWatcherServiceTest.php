@@ -33,9 +33,12 @@ afterEach(function (): void {
 });
 
 it('skips changed ids not in subfolder index', function (): void {
-    $service = makeWatcherService($this->state);
+    $drive = Mockery::mock(GoogleDriveService::class);
+    $drive->shouldReceive('getFileMetadata')->with('unknown-id')->andReturn(null);
+
+    $service = makeWatcherService($this->state, drive: $drive);
     $service->process(['unknown-id']);
-    // no exception, no state change
+
     expect($this->state->getSubfolderState('unknown-id'))->toBeNull();
 });
 
