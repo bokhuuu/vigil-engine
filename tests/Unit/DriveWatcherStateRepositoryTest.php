@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Repositories\DriveWatcherStateRepository;
 
 beforeEach(function (): void {
-    $this->path = storage_path('app/google/drive-watcher-state-test.json');
+    $this->path = sys_get_temp_dir().'/drive-watcher-state-test-'.uniqid().'.json';
     $this->repo = new DriveWatcherStateRepository($this->path);
 });
 

@@ -30,7 +30,7 @@ class GoogleDriveService
         return $this->drive;
     }
 
-    private function userDrive(): Drive
+    public function getUserDrive(): Drive
     {
         if ($this->userDrive === null) {
             $clientFile = config('services.google_drive.oauth_client');
