@@ -413,39 +413,47 @@ class DriveWatcherService
                 }
             }
         } else {
-            // A file was uploaded — find its parent subfolder
-            foreach ($meta['parents'] as $parentId) {
+            // A file was uploaded — walk up the parent chain to find a tracked subfolder
+            $parentId = $meta['parents'][0] ?? null;
+
+            while ($parentId !== null) {
+                // Already indexed as a tracked subfolder
                 $subfolder = $this->state->getSubfolder($parentId);
 
                 if ($subfolder !== null) {
-                    // Parent subfolder is already indexed — add the file's ID
-                    // pointing to the same subfolder so next lookup works
                     $this->state->addSubfolder($id, $subfolder['act_folder_id'], $subfolder['name']);
-                    Log::info("DriveWatcherService: mapped file to subfolder [{$subfolder['name']}]");
+                    Log::info("DriveWatcherService: mapped file to subfolder [{$subfolder['name']}] via parent chain");
 
                     return;
                 }
 
-                // Parent subfolder not indexed yet — check if it's a tracked subfolder
+                // Not indexed — fetch its metadata and check if it's tracked
                 $parentMeta = $this->driveService->getFileMetadata($parentId);
 
                 if ($parentMeta === null) {
-                    continue;
+                    break;
                 }
 
-                if (! in_array($parentMeta['name'], $tracked, true)) {
-                    continue;
-                }
+                if (in_array($parentMeta['name'], $tracked, true)) {
+                    // Found a tracked subfolder — find its ACT folder parent
+                    foreach ($parentMeta['parents'] as $grandParentId) {
+                        if ($this->state->getActByFolderId($grandParentId) !== null) {
+                            $this->state->addSubfolder($parentId, $grandParentId, $parentMeta['name']);
+                            $this->state->addSubfolder($id, $grandParentId, $parentMeta['name']);
+                            Log::info("DriveWatcherService: auto-indexed subfolder [{$parentMeta['name']}] via parent chain");
 
-                // Find the ACT folder (grandparent)
-                foreach ($parentMeta['parents'] as $grandParentId) {
-                    if ($this->state->getActByFolderId($grandParentId) !== null) {
-                        $this->state->addSubfolder($parentId, $grandParentId, $parentMeta['name']);
-                        Log::info("DriveWatcherService: auto-indexed subfolder [{$parentMeta['name']}] and mapped file to it");
-
-                        return;
+                            return;
+                        }
                     }
                 }
+
+                // Stop if we've reached an ACT folder
+                if ($this->state->getActByFolderId($parentId) !== null) {
+                    break;
+                }
+
+                // Walk up one more level
+                $parentId = $parentMeta['parents'][0] ?? null;
             }
         }
     }
