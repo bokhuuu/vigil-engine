@@ -15,6 +15,12 @@ Schedule::command('vigil:act-alert')->dailyAt('20:00')->days([1, 2, 3, 4, 5]);
 // Update reminders - every min
 Schedule::command('vigil:send-update-reminders')->everyMinute();
 
+// Drive watcher — every min, dry-run alongside Apps Script
+Schedule::command('vigil:drive-watch --dry-run')
+    ->everyMinute()
+    ->withoutOverlapping(2)
+    ->runInBackground();
+
 // Weekly backup - Sunday 11:00 Georgia
 Schedule::command('vigil:backup')->weeklyOn(0, '11:00');
 
