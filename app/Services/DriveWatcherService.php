@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Repositories\DriveWatcherStateRepository;
-use Google\Service\Drive\Resource\Files;
 use Illuminate\Support\Facades\Log;
 
 class DriveWatcherService
@@ -23,6 +22,7 @@ class DriveWatcherService
         private GoogleDriveService $driveService,
         private DriveWatcherStateRepository $state,
         private ManagerNotifier $notifier,
+        private DriveEventService $events,
     ) {}
 
     /**
@@ -38,7 +38,6 @@ class DriveWatcherService
             return;
         }
 
-        $tracked = config('vigil.drive.tracked_subfolders');
         $nowMs = (int) (microtime(true) * 1000);
 
         // Collect which ACT folders need a color update after processing
@@ -56,7 +55,6 @@ class DriveWatcherService
                     foreach ($meta['parents'] as $parentId) {
                         $subfolder = $this->state->getSubfolder($parentId);
                         if ($subfolder !== null) {
-                            // Use the parent subfolder for reconciliation
                             $id = $parentId;
                             break;
                         }
@@ -138,7 +136,6 @@ class DriveWatcherService
             $hasFiles = $this->driveService->subfolderHasFiles($subfolderId);
 
             if ($hasFiles) {
-                // Files came back — cancel grace
                 if (! $dryRun) {
                     $this->state->setSubfolderState($subfolderId, 'full');
                 }
@@ -157,7 +154,7 @@ class DriveWatcherService
             Log::info("DriveWatcherService: grace expired for [{$subfolder['name']}] on ACT [{$actInfo['act_number']}]".($dryRun ? ' [DRY RUN]' : ''));
 
             if (! $dryRun) {
-                $this->sendRemovalAlert($actInfo['act_number'], $subfolder['name'], $subfolder['act_folder_id']);
+                $this->events->fileRemoved($actInfo['act_number'], $subfolder['name']);
                 $this->state->setSubfolderState($subfolderId, 'removed');
             }
 
@@ -246,22 +243,15 @@ class DriveWatcherService
         int $nowMs,
         bool $dryRun,
     ): string {
-        $tracked = config('vigil.drive.tracked_subfolders');
-        $field = $tracked[$name] ?? null;
-
         if ($hasFiles) {
             if ($prev === 'full') {
                 return 'full'; // no change
             }
 
-            // Files appeared (or came back from grace)
             Log::info("DriveWatcherService: files added in [{$name}] on ACT [{$actNumber}]".($dryRun ? ' [DRY RUN]' : ''));
 
-            if (! $dryRun && $field !== null) {
-                $act = $this->airtable->getActByNumber($actNumber);
-                if ($act) {
-                    $this->airtable->tickActCheckbox($act['id'], $field);
-                }
+            if (! $dryRun) {
+                $this->events->fileAdded($actNumber, $name);
             }
 
             return 'full';
@@ -275,42 +265,19 @@ class DriveWatcherService
         }
 
         if ($prev !== null && str_starts_with($prev, 'grace:')) {
-            return $prev; // still in grace — processGraceTimers handles expiry
+            return $prev;
         }
 
         if ($prev === 'removed') {
-            return 'removed'; // already handled
+            return 'removed';
         }
 
-        return 'empty'; // new empty folder
+        return 'empty';
     }
 
     private function sendRemovalAlert(string $actNumber, string $subfolderName, string $actFolderId): void
     {
-        $act = $this->airtable->getActByNumber($actNumber);
-
-        if (! $act) {
-            Log::warning("DriveWatcherService: ACT [{$actNumber}] not found for removal alert");
-
-            return;
-        }
-
-        $tracked = config('vigil.drive.tracked_subfolders');
-        $field = $tracked[$subfolderName] ?? null;
-
-        if ($field !== null) {
-            $this->airtable->untickActCheckbox($act['id'], $field);
-        }
-
-        $message = '⚠️ <b>ACT '.e($actNumber).'</b> — '.e($subfolderName)." ცარიელია\n"
-            .'ფაილები წაიშალა Drive-იდან.';
-
-        $folderUrl = $act['fields']['💼 საქაღალდე'] ?? null;
-        if ($folderUrl) {
-            $message .= "\n🔗 <a href=\"".e($folderUrl).'">საქაღალდე</a>';
-        }
-
-        $this->notifier->notify($message);
+        $this->events->fileRemoved($actNumber, $subfolderName);
     }
 
     private function updateSubfolderColor(string $subfolderId, bool $hasFiles, bool $dryRun): void
@@ -399,7 +366,6 @@ class DriveWatcherService
         $isFolder = $meta['mimeType'] === 'application/vnd.google-apps.folder';
 
         if ($isFolder) {
-            // A new tracked subfolder was created
             if (! in_array($meta['name'], $tracked, true)) {
                 return;
             }
@@ -413,11 +379,9 @@ class DriveWatcherService
                 }
             }
         } else {
-            // A file was uploaded — walk up the parent chain to find a tracked subfolder
             $parentId = $meta['parents'][0] ?? null;
 
             while ($parentId !== null) {
-                // Already indexed as a tracked subfolder
                 $subfolder = $this->state->getSubfolder($parentId);
 
                 if ($subfolder !== null) {
@@ -427,7 +391,6 @@ class DriveWatcherService
                     return;
                 }
 
-                // Not indexed — fetch its metadata and check if it's tracked
                 $parentMeta = $this->driveService->getFileMetadata($parentId);
 
                 if ($parentMeta === null) {
@@ -435,7 +398,6 @@ class DriveWatcherService
                 }
 
                 if (in_array($parentMeta['name'], $tracked, true)) {
-                    // Found a tracked subfolder — find its ACT folder parent
                     foreach ($parentMeta['parents'] as $grandParentId) {
                         if ($this->state->getActByFolderId($grandParentId) !== null) {
                             $this->state->addSubfolder($parentId, $grandParentId, $parentMeta['name']);
@@ -447,12 +409,10 @@ class DriveWatcherService
                     }
                 }
 
-                // Stop if we've reached an ACT folder
                 if ($this->state->getActByFolderId($parentId) !== null) {
                     break;
                 }
 
-                // Walk up one more level
                 $parentId = $parentMeta['parents'][0] ?? null;
             }
         }

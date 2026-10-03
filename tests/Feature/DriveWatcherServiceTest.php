@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Repositories\DriveWatcherStateRepository;
 use App\Services\AirtableService;
+use App\Services\DriveEventService;
 use App\Services\DriveWatcherService;
 use App\Services\GoogleDriveService;
 use App\Services\ManagerNotifier;
@@ -13,12 +14,14 @@ function makeWatcherService(
     ?AirtableService $airtable = null,
     ?GoogleDriveService $drive = null,
     ?ManagerNotifier $notifier = null,
+    ?DriveEventService $events = null,
 ): DriveWatcherService {
     $airtable ??= Mockery::mock(AirtableService::class);
     $drive ??= Mockery::mock(GoogleDriveService::class);
     $notifier ??= Mockery::mock(ManagerNotifier::class);
+    $events ??= Mockery::mock(DriveEventService::class);
 
-    return new DriveWatcherService($airtable, $drive, $state, $notifier);
+    return new DriveWatcherService($airtable, $drive, $state, $notifier, $events);
 }
 
 beforeEach(function (): void {
@@ -47,20 +50,21 @@ it('ticks checkbox when files appear in subfolder', function (): void {
     $this->state->addSubfolder('sub-1', 'act-folder-1', 'ფოტოები');
     $this->state->setSubfolderState('sub-1', 'empty');
 
-    $act = ['id' => 'recABC', 'fields' => ['💼 საქაღალდე' => 'https://drive.google.com/drive/folders/act-folder-1']];
+    $events = Mockery::mock(DriveEventService::class);
+    $events->shouldReceive('fileAdded')->with('15', 'ფოტოები')->once();
 
     $airtable = Mockery::mock(AirtableService::class);
-    $airtable->shouldReceive('getActByNumber')->with('15')->andReturn($act);
-    $airtable->shouldReceive('tickActCheckbox')->with('recABC', '📥 ფოტოები')->once();
+    $airtable->shouldReceive('getActByNumber')->with('15')->andReturn([
+        'id' => 'recABC',
+        'fields' => ['💼 საქაღალდე' => 'https://drive.google.com/drive/folders/act-folder-1'],
+    ])->byDefault();
+    $airtable->shouldReceive('getManagers')->andReturn([])->byDefault();
 
     $drive = Mockery::mock(GoogleDriveService::class);
     $drive->shouldReceive('subfolderHasFiles')->with('sub-1')->andReturn(true);
-    $drive->shouldReceive('getFolderColor')->andReturn(null)->byDefault();
     $drive->shouldReceive('setFolderColorAsUser')->andReturn(null)->byDefault();
-    $airtable->shouldReceive('getActByNumber')->with('15')->andReturn($act)->byDefault();
-    $airtable->shouldReceive('getManagers')->andReturn([])->byDefault();
 
-    $service = makeWatcherService($this->state, $airtable, $drive);
+    $service = makeWatcherService($this->state, $airtable, $drive, events: $events);
     $service->process(['sub-1']);
 
     expect($this->state->getSubfolderState('sub-1'))->toBe('full');
@@ -91,10 +95,15 @@ it('does not tick checkbox in dry run mode', function (): void {
     $this->state->addSubfolder('sub-1', 'act-folder-1', 'ფოტოები');
     $this->state->setSubfolderState('sub-1', 'empty');
 
-    $act = ['id' => 'recABC', 'fields' => ['💼 საქაღალდე' => 'https://drive.google.com/drive/folders/act-folder-1']];
+    $act = [
+        'id' => 'recABC',
+        'fields' => ['💼 საქაღალდე' => 'https://drive.google.com/drive/folders/act-folder-1'],
+    ];
+
+    $events = Mockery::mock(DriveEventService::class);
+    $events->shouldNotReceive('fileAdded');
 
     $airtable = Mockery::mock(AirtableService::class);
-    $airtable->shouldNotReceive('tickActCheckbox');
     $airtable->shouldReceive('getActByNumber')->with('15')->andReturn($act)->byDefault();
     $airtable->shouldReceive('getManagers')->andReturn([])->byDefault();
 
@@ -102,9 +111,8 @@ it('does not tick checkbox in dry run mode', function (): void {
     $drive->shouldReceive('subfolderHasFiles')->with('sub-1')->andReturn(true);
     $drive->shouldReceive('setFolderColorAsUser')->andReturn(null)->byDefault();
 
-    $service = makeWatcherService($this->state, $airtable, $drive);
+    $service = makeWatcherService($this->state, $airtable, $drive, events: $events);
     $service->process(['sub-1'], dryRun: true);
 
-    // State not updated in dry run
     expect($this->state->getSubfolderState('sub-1'))->toBe('empty');
 });
