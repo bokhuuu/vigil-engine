@@ -1,0 +1,355 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services;
+
+use App\Repositories\DriveWatcherStateRepository;
+use Google\Service\Drive\Resource\Files;
+use Illuminate\Support\Facades\Log;
+
+class DriveWatcherService
+{
+    private const GRACE_MS = 300_000; // 5 minutes in milliseconds
+
+    private const COLOR_GREEN = '#00843D';
+
+    private const COLOR_YELLOW = '#F6C026';
+
+    private const COLOR_NONE = '';
+
+    public function __construct(
+        private AirtableService $airtable,
+        private GoogleDriveService $driveService,
+        private DriveWatcherStateRepository $state,
+        private ManagerNotifier $notifier,
+    ) {}
+
+    /**
+     * Process a set of changed Drive item IDs.
+     * Each ID is looked up in the subfolder index; unknown IDs are skipped.
+     * Dry-run mode logs what would happen without touching Airtable or colors.
+     *
+     * @param  array<string>  $changedIds
+     */
+    public function process(array $changedIds, bool $dryRun = false): void
+    {
+        if (empty($changedIds)) {
+            return;
+        }
+
+        $tracked = config('vigil.drive.tracked_subfolders');
+        $nowMs = (int) (microtime(true) * 1000);
+
+        // Collect which ACT folders need a color update after processing
+        $actFoldersDirty = [];
+
+        foreach ($changedIds as $id) {
+            $subfolder = $this->state->getSubfolder($id);
+
+            if ($subfolder === null) {
+                // Could be a new subfolder not yet indexed — skip for now
+                // The seed command will pick it up on next baseline run
+                continue;
+            }
+
+            $actFolderId = $subfolder['act_folder_id'];
+            $name = $subfolder['name'];
+
+            $actInfo = $this->state->getActByFolderId($actFolderId);
+
+            if ($actInfo === null) {
+                Log::warning("DriveWatcherService: subfolder [{$name}] has no ACT entry");
+
+                continue;
+            }
+
+            $actNumber = $actInfo['act_number'];
+            $hasFiles = $this->driveService->subfolderHasFiles($id);
+            $prevState = $this->state->getSubfolderState($id);
+
+            $newState = $this->reconcileSubfolder(
+                $actNumber,
+                $name,
+                $id,
+                $hasFiles,
+                $prevState,
+                $nowMs,
+                $dryRun
+            );
+
+            if ($newState !== $prevState) {
+                if (! $dryRun) {
+                    $this->state->setSubfolderState($id, $newState);
+                }
+                $actFoldersDirty[$actFolderId] = true;
+            }
+
+            // Update subfolder color
+            $this->updateSubfolderColor($id, $hasFiles, $dryRun);
+        }
+
+        // Check grace timers even when no new changes arrived for them
+        $this->processGraceTimers($nowMs, $dryRun, $actFoldersDirty);
+
+        // Update root ACT folder colors for all affected ACTs
+        foreach (array_keys($actFoldersDirty) as $actFolderId) {
+            $this->updateRootFolderColor($actFolderId, $dryRun);
+        }
+    }
+
+    /**
+     * Check all subfolder states that are in grace period,
+     * even if they didn't appear in the current change set.
+     *
+     * @param  array<string, bool>  $dirty  Accumulated dirty ACT folder IDs
+     */
+    public function processGraceTimers(int $nowMs, bool $dryRun, array &$dirty = []): void
+    {
+        foreach ($this->state->getSubfolderIndex() as $subfolderId => $subfolder) {
+            $stateVal = $this->state->getSubfolderState($subfolderId);
+
+            if ($stateVal === null || ! str_starts_with($stateVal, 'grace:')) {
+                continue;
+            }
+
+            $since = (int) explode(':', $stateVal)[1];
+
+            if ($nowMs - $since < self::GRACE_MS) {
+                continue;
+            }
+
+            // Grace period expired — confirm folder is still empty
+            $hasFiles = $this->driveService->subfolderHasFiles($subfolderId);
+
+            if ($hasFiles) {
+                // Files came back — cancel grace
+                if (! $dryRun) {
+                    $this->state->setSubfolderState($subfolderId, 'full');
+                }
+                Log::info("DriveWatcherService: grace cancelled for [{$subfolder['name']}] — files returned");
+                $dirty[$subfolder['act_folder_id']] = true;
+
+                continue;
+            }
+
+            $actInfo = $this->state->getActByFolderId($subfolder['act_folder_id']);
+
+            if ($actInfo === null) {
+                continue;
+            }
+
+            Log::info("DriveWatcherService: grace expired for [{$subfolder['name']}] on ACT [{$actInfo['act_number']}]".($dryRun ? ' [DRY RUN]' : ''));
+
+            if (! $dryRun) {
+                $this->sendRemovalAlert($actInfo['act_number'], $subfolder['name'], $subfolder['act_folder_id']);
+                $this->state->setSubfolderState($subfolderId, 'removed');
+            }
+
+            $dirty[$subfolder['act_folder_id']] = true;
+        }
+    }
+
+    /**
+     * Seed the folder index from Airtable.
+     * Reads all ACTs that have a Drive folder URL and builds the index.
+     * Also initialises the Drive changes page token.
+     */
+    public function seedFromAirtable(): int
+    {
+        $acts = $this->airtable->getAllActs();
+        $index = [];
+        $count = 0;
+
+        foreach ($acts as $act) {
+            $folderUrl = $act['fields']['💼 საქაღალდე'] ?? null;
+            $actNumber = (string) ($act['fields']['🔖 აქტის ნომერი'] ?? '');
+
+            if (! $folderUrl || $actNumber === '') {
+                continue;
+            }
+
+            if (! preg_match('#folders/([A-Za-z0-9_-]+)#', $folderUrl, $m)) {
+                continue;
+            }
+
+            $index[$m[1]] = [
+                'act_number' => AirtableService::normalizeActNumber($actNumber),
+                'act_record_id' => $act['id'],
+            ];
+            $count++;
+        }
+
+        $this->state->setFolderIndex($index);
+        Log::info("DriveWatcherService: seeded {$count} ACT folders from Airtable");
+
+        return $count;
+    }
+
+    /**
+     * Initialise the Drive changes page token to "now",
+     * so the watcher only sees changes going forward.
+     */
+    public function initPageToken(): void
+    {
+        $drive = $this->driveService->getUserDrive();
+        $response = $drive->changes->getStartPageToken();
+        $token = $response->getStartPageToken();
+        $this->state->setPageToken($token);
+        Log::info("DriveWatcherService: page token initialised to [{$token}]");
+    }
+
+    // ----------------------------------------------------------------
+    // Private helpers
+    // ----------------------------------------------------------------
+
+    private function reconcileSubfolder(
+        string $actNumber,
+        string $name,
+        string $subfolderId,
+        bool $hasFiles,
+        ?string $prev,
+        int $nowMs,
+        bool $dryRun,
+    ): string {
+        $tracked = config('vigil.drive.tracked_subfolders');
+        $field = $tracked[$name] ?? null;
+
+        if ($hasFiles) {
+            if ($prev === 'full') {
+                return 'full'; // no change
+            }
+
+            // Files appeared (or came back from grace)
+            Log::info("DriveWatcherService: files added in [{$name}] on ACT [{$actNumber}]".($dryRun ? ' [DRY RUN]' : ''));
+
+            if (! $dryRun && $field !== null) {
+                $act = $this->airtable->getActByNumber($actNumber);
+                if ($act) {
+                    $this->airtable->tickActCheckbox($act['id'], $field);
+                }
+            }
+
+            return 'full';
+        }
+
+        // Folder is empty
+        if ($prev === 'full') {
+            Log::info("DriveWatcherService: [{$name}] went empty on ACT [{$actNumber}] — grace started".($dryRun ? ' [DRY RUN]' : ''));
+
+            return 'grace:'.$nowMs;
+        }
+
+        if ($prev !== null && str_starts_with($prev, 'grace:')) {
+            return $prev; // still in grace — processGraceTimers handles expiry
+        }
+
+        if ($prev === 'removed') {
+            return 'removed'; // already handled
+        }
+
+        return 'empty'; // new empty folder
+    }
+
+    private function sendRemovalAlert(string $actNumber, string $subfolderName, string $actFolderId): void
+    {
+        $act = $this->airtable->getActByNumber($actNumber);
+
+        if (! $act) {
+            Log::warning("DriveWatcherService: ACT [{$actNumber}] not found for removal alert");
+
+            return;
+        }
+
+        $tracked = config('vigil.drive.tracked_subfolders');
+        $field = $tracked[$subfolderName] ?? null;
+
+        if ($field !== null) {
+            $this->airtable->untickActCheckbox($act['id'], $field);
+        }
+
+        $message = '⚠️ <b>ACT '.e($actNumber).'</b> — '.e($subfolderName)." ცარიელია\n"
+            .'ფაილები წაიშალა Drive-იდან.';
+
+        $folderUrl = $act['fields']['💼 საქაღალდე'] ?? null;
+        if ($folderUrl) {
+            $message .= "\n🔗 <a href=\"".e($folderUrl).'">საქაღალდე</a>';
+        }
+
+        $this->notifier->notify($message);
+    }
+
+    private function updateSubfolderColor(string $subfolderId, bool $hasFiles, bool $dryRun): void
+    {
+        $color = $hasFiles ? self::COLOR_GREEN : self::COLOR_NONE;
+        $prev = $this->state->getFolderColor($subfolderId);
+
+        if ($prev === $color) {
+            return;
+        }
+
+        Log::info("DriveWatcherService: subfolder color → [{$color}]".($dryRun ? ' [DRY RUN]' : ''));
+
+        if (! $dryRun) {
+            $this->driveService->setFolderColorAsUser($subfolderId, $color);
+            $this->state->setFolderColor($subfolderId, $color);
+        }
+    }
+
+    private function updateRootFolderColor(string $actFolderId, bool $dryRun): void
+    {
+        $actInfo = $this->state->getActByFolderId($actFolderId);
+
+        if ($actInfo === null) {
+            return;
+        }
+
+        $actNumber = $actInfo['act_number'];
+        $subfolders = $this->state->getSubfolderIndex();
+        $tracked = array_keys(config('vigil.drive.tracked_subfolders'));
+
+        $totalTracked = 0;
+        $fullCount = 0;
+
+        foreach ($subfolders as $subId => $sub) {
+            if ($sub['act_folder_id'] !== $actFolderId) {
+                continue;
+            }
+            if (! in_array($sub['name'], $tracked, true)) {
+                continue;
+            }
+            $totalTracked++;
+            $state = $this->state->getSubfolderState($subId);
+            if ($state === 'full') {
+                $fullCount++;
+            }
+        }
+
+        // Also check signatures from Airtable
+        $act = $this->airtable->getActByNumber($actNumber);
+        $hasSig = ! empty($act['fields']['📥 ხელმოწერები'] ?? false);
+
+        if ($totalTracked === 0) {
+            $color = self::COLOR_NONE;
+        } elseif ($fullCount === $totalTracked && $hasSig) {
+            $color = self::COLOR_GREEN;
+        } elseif ($fullCount > 0) {
+            $color = self::COLOR_YELLOW;
+        } else {
+            $color = self::COLOR_NONE;
+        }
+
+        $prev = $this->state->getFolderColor($actFolderId);
+
+        if ($prev === $color) {
+            return;
+        }
+
+        Log::info("DriveWatcherService: root color for ACT [{$actNumber}] → [{$color}]".($dryRun ? ' [DRY RUN]' : ''));
+
+        if (! $dryRun) {
+            $this->driveService->setFolderColorAsUser($actFolderId, $color);
+            $this->state->setFolderColor($actFolderId, $color);
+        }
+    }
+}

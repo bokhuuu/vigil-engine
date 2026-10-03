@@ -268,4 +268,26 @@ class GoogleDriveService
             'fields' => 'id,folderColorRgb',
         ]);
     }
+
+    /**
+     * Whether a folder contains at least one file — public version for watcher.
+     */
+    public function subfolderHasFiles(string $folderId): bool
+    {
+        return $this->folderHasFiles($folderId);
+    }
+
+    /**
+     * Set folder color as the account owner (OAuth) so the color is visible.
+     * Empty string removes the color.
+     */
+    public function setFolderColorAsUser(string $folderId, string $color): void
+    {
+        $metadata = new DriveFile;
+        $metadata->setFolderColorRgb($color);
+
+        $this->getUserDrive()->files->update($folderId, $metadata, [
+            'fields' => 'id,folderColorRgb',
+        ]);
+    }
 }
