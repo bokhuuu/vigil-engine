@@ -21,6 +21,9 @@ Schedule::command('vigil:drive-watch --dry-run')
     ->withoutOverlapping(2)
     ->runInBackground();
 
+// Rebuild Drive watcher folder index hourly (picks up new ACT folders)
+Schedule::command('vigil:drive-watch --seed')->hourly();
+
 // Weekly backup - Sunday 11:00 Georgia
 Schedule::command('vigil:backup')->weeklyOn(0, '11:00');
 

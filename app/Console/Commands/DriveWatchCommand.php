@@ -72,8 +72,13 @@ class DriveWatchCommand extends Command
         $count = $this->watcher->seedFromAirtable();
         $this->info("Seeded {$count} ACT folders.");
 
-        $this->info('Initialising Drive page token...');
-        $this->watcher->initPageToken();
+        if ($this->state->getPageToken() === null) {
+            $this->info('Initialising Drive page token...');
+            $this->watcher->initPageToken();
+        } else {
+            $this->info('Page token already exists — skipping init.');
+        }
+
         $this->info('Done. The watcher is ready to run.');
 
         return self::SUCCESS;
