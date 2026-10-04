@@ -12,8 +12,8 @@ class BusinessUserSeeder extends Seeder
     public function run(): void
     {
         User::create([
-            'name'     => 'Zura',
-            'email'    => 'zura.colliers.bypass@gmail.com',
+            'name' => 'Zura',
+            'email' => 'zura.colliers.bypass@gmail.com',
             'password' => 'vigil2026',
         ]);
     }
