@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Business\Models;
 
+use Database\Factories\Business\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;

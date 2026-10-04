@@ -15,6 +15,21 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: vigil_business_test
+          POSTGRES_USER: vigil_business
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - uses: actions/checkout@v4.2.2
 
@@ -22,7 +37,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.4"
-          extensions: mbstring, xml, curl, bcmath
+          extensions: mbstring, xml, curl, bcmath, pdo_pgsql
 
       - name: Copy environment file
         run: |
@@ -38,6 +53,14 @@ jobs:
           echo "GOOGLE_DRIVE_ACT_FOLDER_ID=fakeFolderId" >> .env
           echo "DASHBOARD_USER=vigil" >> .env
           echo "DASHBOARD_PASSWORD=fake" >> .env
+          echo "GOOGLE_DRIVE_OAUTH_CLIENT=/tmp/fake-oauth-client.json" >> .env
+          echo "GOOGLE_DRIVE_OAUTH_TOKEN=/tmp/fake-oauth-token.json" >> .env
+
+          echo "BUSINESS_DB_HOST=127.0.0.1" >> .env
+          echo "BUSINESS_DB_PORT=5432" >> .env
+          echo "BUSINESS_DB_DATABASE=vigil_business_test" >> .env
+          echo "BUSINESS_DB_USERNAME=vigil_business" >> .env
+          echo "BUSINESS_DB_PASSWORD=test_password" >> .env
 
       - name: Install PHP dependencies
         run: composer install --no-interaction --optimize-autoloader
