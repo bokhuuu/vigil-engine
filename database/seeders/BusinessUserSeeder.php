@@ -12,9 +12,9 @@ class BusinessUserSeeder extends Seeder
     public function run(): void
     {
         User::create([
-            'name' => 'Zura',
-            'email' => 'zura.colliers.bypass@gmail.com',
-            'password' => 'vigil2026',
+            'name' => env('BUSINESS_SEED_NAME', 'Zura'),
+            'email' => env('BUSINESS_SEED_EMAIL'),
+            'password' => env('BUSINESS_SEED_PASSWORD'),
         ]);
     }
 }
