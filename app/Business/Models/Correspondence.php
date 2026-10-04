@@ -11,6 +11,8 @@ class Correspondence extends Model
 {
     protected $table = 'business_correspondence';
 
+    protected $connection = 'business';
+
     protected $fillable = [
         'business_id',
         'round',
