@@ -9,6 +9,9 @@ use App\Http\Middleware\BasicAuthMiddleware;
 use App\Http\Middleware\VerifyWebhookSecret;
 use Illuminate\Support\Facades\Route;
 
+Route::redirect('/', '/dashboard');
+Route::redirect('/business', '/business/login');
+
 Route::middleware(VerifyWebhookSecret::class)->group(function () {
     Route::post('/webhook/airtable', [WebhookController::class, 'handle']);
     Route::post('/webhook/drive', [DriveWebhookController::class, 'handle']);
