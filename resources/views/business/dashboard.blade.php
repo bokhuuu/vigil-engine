@@ -638,7 +638,9 @@
                             <tr data-name="{{ mb_strtolower($business->name) }}"
                                 data-code="{{ $business->registration_code }}" data-act="{{ $business->act_number }}"
                                 data-status="{{ $business->status }}" data-type="{{ $business->type }}"
-                                data-lot="{{ $business->lot_number }}">
+                                data-lot="{{ $business->lot_number }}"
+                                onclick="window.location='{{ route('business.show', $business) }}'"
+                                style="cursor:pointer;">
                                 <td class="td-name">{{ $business->name }}</td>
                                 <td class="td-code">{{ $business->registration_code }}</td>
                                 <td><span class="type-pill">{{ $business->type }}</span></td>
@@ -670,7 +672,8 @@
                                 <td>
                                     @if ($business->drive_folder_url)
                                         <a href="{{ $business->drive_folder_url }}" target="_blank"
-                                            class="drive-link">📁 Drive</a>
+                                            class="drive-link">📁
+                                            Drive</a>
                                     @else
                                         <span class="td-empty">—</span>
                                     @endif

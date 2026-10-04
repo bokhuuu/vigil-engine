@@ -1,0 +1,52 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Business\Http\Controllers;
+
+use App\Business\Models\Business;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Illuminate\View\View;
+
+class BusinessController extends Controller
+{
+    public function show(Business $business): View
+    {
+        $business->load('correspondence');
+
+        return view('business.show', compact('business'));
+    }
+
+    public function update(Request $request, Business $business): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'registration_code' => ['required', 'string', 'max:20'],
+            'act_number' => ['nullable', 'string', 'max:20'],
+            'lot_number' => ['required', 'integer'],
+            'type' => ['required', 'in:მეპატრონე,მოიჯარე,მეიჯარე,სხვა'],
+            'status' => ['required', 'in:active,pending,complete'],
+            'owner_name' => ['nullable', 'string', 'max:255'],
+            'owner_phone' => ['nullable', 'string', 'max:50'],
+            'owner_email' => ['nullable', 'email', 'max:255'],
+            'accountant_name' => ['nullable', 'string', 'max:255'],
+            'accountant_phone' => ['nullable', 'string', 'max:50'],
+            'accountant_email' => ['nullable', 'email', 'max:255'],
+            'notes' => ['nullable', 'string'],
+            'drive_folder_url' => ['nullable', 'url'],
+        ]);
+
+        $business->update($validated);
+
+        return redirect()->route('business.show', $business)->with('success', 'ბიზნესი განახლდა');
+    }
+
+    public function destroy(Business $business): RedirectResponse
+    {
+        $business->delete();
+
+        return redirect()->route('business.dashboard')->with('success', 'ბიზნესი წაიშალა');
+    }
+}
