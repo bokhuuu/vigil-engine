@@ -15,8 +15,16 @@ class Business extends Model
         'name',
         'registration_code',
         'lot_number',
+        'type',
         'status',
         'drive_folder_url',
+        'owner_name',
+        'owner_phone',
+        'owner_email',
+        'accountant_name',
+        'accountant_phone',
+        'accountant_email',
+        'notes',
     ];
 
     public function correspondence(): HasMany
