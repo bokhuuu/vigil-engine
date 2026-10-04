@@ -26,9 +26,12 @@ class AuthController extends Controller
 
         if (Auth::guard('business')->attempt($credentials)) {
             $request->session()->regenerate();
+            dd('authenticated - redirecting to business dashboard');
 
             return redirect()->route('business.dashboard');
         }
+
+        dd('authentication failed', $credentials);
 
         return back()->withErrors([
             'email' => 'ელ-ფოსტა ან პაროლი არასწორია.',
