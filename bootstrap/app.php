@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'webhook/*',
         ]);
         $middleware->redirectGuestsTo(fn () => route('business.login'));
+        $middleware->redirectUsersTo(fn () => route('business.dashboard'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
