@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Correspondence extends Model
 {
-    protected $connection = 'business';
+    protected $table = 'business_correspondence';
 
     protected $fillable = [
         'business_id',
