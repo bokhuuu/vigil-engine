@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Business\Http\Controllers\AuthController;
+use App\Business\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('business')->name('business.')->group(function () {
@@ -14,6 +15,6 @@ Route::prefix('business')->name('business.')->group(function () {
 
     Route::middleware('auth:business')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-        Route::get('/dashboard', fn () => 'Business Dashboard — coming soon')->name('dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     });
 });

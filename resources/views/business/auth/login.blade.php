@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vigil · Business</title>
+    <title>Vigil · ბიზნესები</title>
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💼</text></svg>">
     <style>
@@ -21,6 +21,13 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                margin: 1rem;
+                border-radius: 12px;
+            }
         }
 
         .card {
@@ -85,14 +92,13 @@
 
 <body>
     <div class="card">
-        <h1>🛡️ Vigil · Business</h1>
         @if ($errors->any())
             <div class="error">{{ $errors->first() }}</div>
         @endif
         <form method="POST" action="{{ route('business.login') }}">
             @csrf
             <label>ელ-ფოსტა</label>
-            <input type="email" name="email" value="{{ old('email') }}" required autofocus>
+            <input type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="email">
             <label>პაროლი</label>
             <input type="password" name="password" required>
             <button type="submit">შესვლა</button>

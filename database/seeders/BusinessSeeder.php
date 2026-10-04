@@ -28,7 +28,7 @@ class BusinessSeeder extends Seeder
                 'registration_code' => '123456789',
                 'lot_number' => 3,
                 'type' => 'მოიჯარე',
-                'status' => 'pending',
+                'status' => 'active',
                 'owner_name' => 'ნინო ბერიძე',
                 'owner_phone' => '555654321',
                 'owner_email' => null,
