@@ -26,4 +26,4 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 storage/backups/*
-!storage/backups/.gitkeep
+!storage/backups/.gitkeepphpunit.xml
