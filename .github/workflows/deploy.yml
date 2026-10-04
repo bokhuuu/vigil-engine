@@ -75,6 +75,9 @@ jobs:
         env:
           APP_ENV: testing
           QUEUE_CONNECTION: sync
+          BUSINESS_DB_DATABASE: vigil_business_test
+          BUSINESS_DB_USERNAME: vigil_business
+          BUSINESS_DB_PASSWORD: test_password
         run: php artisan test
 
   deploy:
