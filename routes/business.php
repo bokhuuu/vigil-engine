@@ -14,5 +14,6 @@ Route::prefix('business')->name('business.')->group(function () {
 
     Route::middleware('auth:business')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+        Route::get('/dashboard', fn () => 'Business Dashboard — coming soon')->name('dashboard');
     });
 });
