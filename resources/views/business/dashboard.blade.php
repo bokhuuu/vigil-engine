@@ -628,6 +628,7 @@
                             <th>კოდი</th>
                             <th>ტიპი</th>
                             <th>ლოტი</th>
+                            <th>ACT</th>
                             <th>სტატუსი</th>
                             <th>Drive</th>
                         </tr>
@@ -635,14 +636,18 @@
                     <tbody id="tbody">
                         @forelse($businesses as $business)
                             <tr data-name="{{ mb_strtolower($business->name) }}"
-                                data-code="{{ $business->registration_code }}" data-status="{{ $business->status }}"
-                                data-type="{{ $business->type }}" data-lot="{{ $business->lot_number }}">
+                                data-code="{{ $business->registration_code }}" data-act="{{ $business->act_number }}"
+                                data-status="{{ $business->status }}" data-type="{{ $business->type }}"
+                                data-lot="{{ $business->lot_number }}">
                                 <td class="td-name">{{ $business->name }}</td>
                                 <td class="td-code">{{ $business->registration_code }}</td>
                                 <td><span class="type-pill">{{ $business->type }}</span></td>
                                 <td><span class="lot-chip">{{ $business->lot_number }}</span></td>
+                                <td class="td-code td-act" style="white-space:nowrap;">
+                                    {{ $business->act_number ?? '—' }}</td>
                                 <td>
-                                    <span class="badge badge-{{ $business->status }}">
+                                    <span
+                                        class="badge {{ $business->correspondence->where('status', 'overdue')->count() > 0 ? 'badge-overdue' : 'badge-' . $business->status }}">
                                         @switch($business->status)
                                             @case('active')
                                                 მიმდინარე
@@ -658,8 +663,8 @@
                                         @endswitch
                                     </span>
                                     @if ($business->correspondence->where('status', 'overdue')->count() > 0)
-                                        <span class="badge badge-overdue" style="margin-left:0.375rem;">⚠️
-                                            ვადაგადაცილებული</span>
+                                        <span class="badge badge-overdue" style="margin-left:0.375rem;"
+                                            title="ვადაგადაცილებული მიმოწერა">⚠️</span>
                                     @endif
                                 </td>
                                 <td>
@@ -699,8 +704,12 @@
             const rows = Array.from(document.querySelectorAll('#tbody tr[data-name]'));
             const total = rows.length;
 
+            function normalize(str) {
+                return (str || '').toLowerCase().replace(/\s*-\s*/g, '-').trim();
+            }
+
             function applyFilters() {
-                const q = search.value.toLowerCase().trim();
+                const q = normalize(search.value);
                 const status = filterStatus.value;
                 const type = filterType.value;
                 const lot = filterLot.value;
@@ -708,9 +717,17 @@
                 let visible = 0;
 
                 rows.forEach(row => {
+                    const name = normalize(row.dataset.name);
+                    const code = row.dataset.code || '';
+                    const act = normalize(row.dataset.act);
+
                     const matchSearch = !q ||
-                        row.dataset.name.includes(q) ||
-                        row.dataset.code.includes(q);
+                        name.includes(q) ||
+                        code === q ||
+                        code.startsWith(q) ||
+                        act === q ||
+                        act.includes(q);
+
                     const matchStatus = !status || row.dataset.status === status;
                     const matchType = !type || row.dataset.type === type;
                     const matchLot = !lot || row.dataset.lot === lot;
@@ -723,12 +740,10 @@
                     `${visible} / ${total} ბიზნესი` :
                     `${total} ბიზნესი`;
 
-                // show/hide clear buttons
                 searchClear.style.display = q ? 'block' : 'none';
                 const hasFilter = status || type || lot;
                 btnClear.style.display = hasFilter ? 'inline-flex' : 'none';
 
-                // highlight active filters
                 filterStatus.classList.toggle('active', !!status);
                 filterType.classList.toggle('active', !!type);
                 filterLot.classList.toggle('active', !!lot);

@@ -14,6 +14,7 @@ class Business extends Model
     protected $fillable = [
         'name',
         'registration_code',
+        'act_number',
         'lot_number',
         'type',
         'status',
