@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Business\Models;
 
+use Database\Factories\Business\CorrespondenceFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Correspondence extends Model
 {
+    use HasFactory;
+
     protected $table = 'business_correspondence';
 
     protected $connection = 'business';
@@ -36,5 +40,10 @@ class Correspondence extends Model
     public function business(): BelongsTo
     {
         return $this->belongsTo(Business::class);
+    }
+
+    protected static function newFactory(): CorrespondenceFactory
+    {
+        return CorrespondenceFactory::new();
     }
 }

@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Business\Models;
 
+use Database\Factories\Business\BusinessFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Business extends Model
 {
+    use HasFactory;
+
     protected $connection = 'business';
 
     protected $fillable = [
@@ -36,5 +40,10 @@ class Business extends Model
     public function emails(): HasMany
     {
         return $this->hasMany(BusinessEmail::class);
+    }
+
+    protected static function newFactory(): BusinessFactory
+    {
+        return BusinessFactory::new();
     }
 }
