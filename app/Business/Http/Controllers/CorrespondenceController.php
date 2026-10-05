@@ -42,4 +42,26 @@ class CorrespondenceController extends Controller
 
         return redirect()->route('business.show', $business)->with('success', 'მიმოწერა-'.$correspondence->round.' მიღებულად მოინიშნა');
     }
+
+    public function update(Request $request, Business $business, Correspondence $correspondence): RedirectResponse
+    {
+        $validated = $request->validate([
+            'sent_at' => ['required', 'date'],
+            'deadline_at' => ['required', 'date'],
+            'received_at' => ['nullable', 'date'],
+            'status' => ['required', 'in:pending,received,overdue'],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        $correspondence->update($validated);
+
+        return redirect()->route('business.show', $business)->with('success', 'მიმოწერა-'.$correspondence->round.' განახლდა');
+    }
+
+    public function destroy(Business $business, Correspondence $correspondence): RedirectResponse
+    {
+        $correspondence->delete();
+
+        return redirect()->route('business.show', $business)->with('success', 'მიმოწერა-'.$correspondence->round.' წაიშალა');
+    }
 }

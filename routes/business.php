@@ -26,5 +26,7 @@ Route::prefix('business')->name('business.')->group(function () {
         Route::delete('/{business}', [BusinessController::class, 'destroy'])->name('destroy');
         Route::post('/{business}/correspondence', [CorrespondenceController::class, 'store'])->name('correspondence.store');
         Route::patch('/{business}/correspondence/{correspondence}/received', [CorrespondenceController::class, 'markReceived'])->name('correspondence.received');
+        Route::put('/{business}/correspondence/{correspondence}', [CorrespondenceController::class, 'update'])->name('correspondence.update');
+        Route::delete('/{business}/correspondence/{correspondence}', [CorrespondenceController::class, 'destroy'])->name('correspondence.destroy');
     });
 });
