@@ -613,7 +613,7 @@
 
             <button class="btn-clear-filters" id="btn-clear">✕ გასუფთავება</button>
 
-            <button class="btn-add" onclick="alert('მალე იქნება ხელმისაწვდომი')">+ ბიზნესის დამატება</button>
+            <a href="{{ route('business.create') }}" class="btn-add">+ ბიზნესის დამატება</a>
         </div>
 
         {{-- COUNT --}}
