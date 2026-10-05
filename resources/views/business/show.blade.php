@@ -730,67 +730,117 @@
                     </div>
                 </div>
 
-                {{-- CORRESPONDENCE CARD --}}
-                <div class="card" style="grid-column: span 2;">
-                    <div class="card-header">მიმოწერა</div>
-                    <div class="card-body">
-                        @forelse($business->correspondence->sortBy('round') as $corr)
-                            <div class="corr-item">
-                                <div class="corr-header">
-                                    <span class="corr-title">მიმოწერა-{{ $corr->round }}</span>
-                                    <span class="badge badge-{{ $corr->status }}">
-                                        @switch($corr->status)
-                                            @case('received')
-                                                მიღებულია
-                                            @break
+            </div>
+        </form>
 
-                                            @case('pending')
-                                                მოლოდინში
-                                            @break
+        <div class="grid">
 
-                                            @case('overdue')
-                                                ვადაგადაცილებული
-                                            @break
-                                        @endswitch
-                                    </span>
-                                </div>
-                                <div class="corr-meta">
-                                    @if ($corr->sent_at)
-                                        <div class="corr-meta-item">
-                                            <span>გაგზავნილია:</span>{{ $corr->sent_at->format('d.m.Y') }}
-                                        </div>
-                                    @endif
-                                    @if ($corr->deadline_at)
-                                        <div class="corr-meta-item">
-                                            <span>ვადა:</span>{{ $corr->deadline_at->format('d.m.Y') }}
-                                        </div>
-                                    @endif
-                                    @if ($corr->received_at)
-                                        <div class="corr-meta-item">
-                                            <span>მიღებულია:</span>{{ $corr->received_at->format('d.m.Y') }}
-                                        </div>
-                                    @endif
-                                    @if ($corr->drive_folder_url)
-                                        <div class="corr-meta-item"><a href="{{ $corr->drive_folder_url }}"
-                                                target="_blank" style="color:var(--blue);">📁 Drive</a></div>
-                                    @endif
-                                </div>
-                                @if ($corr->notes)
-                                    <div class="corr-notes">{{ $corr->notes }}</div>
+            {{-- CORRESPONDENCE CARD --}}
+            <div class="card" style="grid-column: span 2;">
+                <div class="card-header">მიმოწერა</div>
+                <div class="card-body">
+                    @forelse($business->correspondence->sortBy('round') as $corr)
+                        <div class="corr-item">
+                            <div class="corr-header">
+                                <span class="corr-title">მიმოწერა-{{ $corr->round }}</span>
+                                <span class="badge badge-{{ $corr->status }}">
+                                    @switch($corr->status)
+                                        @case('received')
+                                            მიღებულია
+                                        @break
+
+                                        @case('pending')
+                                            მოლოდინში
+                                        @break
+
+                                        @case('overdue')
+                                            ვადაგადაცილებული
+                                        @break
+                                    @endswitch
+                                </span>
+                                @if ($corr->status === 'pending' || $corr->status === 'overdue')
+                                    <form method="POST"
+                                        action="{{ route('business.correspondence.received', [$business, $corr]) }}"
+                                        style="display:inline;">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="btn btn-edit"
+                                            style="font-size:0.75rem;padding:0.25rem 0.625rem;">✅
+                                            მიღებულია</button>
+                                    </form>
                                 @endif
                             </div>
-                            @empty
-                                <p style="color:var(--text-3);font-size:0.875rem;">მიმოწერა არ არის</p>
-                            @endforelse
-
-                            <button type="button" class="btn-add-corr" onclick="alert('მალე იქნება ხელმისაწვდომი')">+
-                                მიმოწერის დამატება</button>
+                            <div class="corr-meta">
+                                @if ($corr->sent_at)
+                                    <div class="corr-meta-item">
+                                        <span>გაგზავნილია:</span>{{ $corr->sent_at->format('d.m.Y') }}
+                                    </div>
+                                @endif
+                                @if ($corr->deadline_at)
+                                    <div class="corr-meta-item">
+                                        <span>ვადა:</span>{{ $corr->deadline_at->format('d.m.Y') }}
+                                    </div>
+                                @endif
+                                @if ($corr->received_at)
+                                    <div class="corr-meta-item">
+                                        <span>მიღებულია:</span>{{ $corr->received_at->format('d.m.Y') }}
+                                    </div>
+                                @endif
+                                @if ($corr->drive_folder_url)
+                                    <div class="corr-meta-item"><a href="{{ $corr->drive_folder_url }}"
+                                            target="_blank" style="color:var(--blue);">📁 Drive</a></div>
+                                @endif
+                            </div>
+                            @if ($corr->notes)
+                                <div class="corr-notes">{{ $corr->notes }}</div>
+                            @endif
                         </div>
-                    </div>
+                        @empty
+                            <p style="color:var(--text-3);font-size:0.875rem;">მიმოწერა არ არის</p>
+                        @endforelse
 
+                        <div id="corr-form" style="display:none;margin-top:0.75rem;">
+                            <form method="POST" action="{{ route('business.correspondence.store', $business) }}">
+                                @csrf
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                                    <div style="display:flex;flex-direction:column;gap:0.375rem;">
+                                        <label style="font-size:0.78rem;font-weight:500;color:var(--text-2);">გაგზავნის
+                                            თარიღი <span style="color:var(--red);">*</span></label>
+                                        <input type="date" name="sent_at" required
+                                            style="font-family:inherit;font-size:0.875rem;padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:8px;outline:none;">
+                                    </div>
+                                    <div style="display:flex;flex-direction:column;gap:0.375rem;">
+                                        <label style="font-size:0.78rem;font-weight:500;color:var(--text-2);">ვადა
+                                            <span style="color:var(--red);">*</span></label>
+                                        <input type="date" name="deadline_at" required
+                                            style="font-family:inherit;font-size:0.875rem;padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:8px;outline:none;">
+                                    </div>
+                                </div>
+                                <div style="display:flex;flex-direction:column;gap:0.375rem;margin-bottom:1rem;">
+                                    <label
+                                        style="font-size:0.78rem;font-weight:500;color:var(--text-2);">შენიშვნები</label>
+                                    <textarea name="notes" rows="2"
+                                        style="font-family:inherit;font-size:0.875rem;padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:8px;outline:none;resize:vertical;"></textarea>
+                                </div>
+                                <div style="display:flex;gap:0.5rem;">
+                                    <button type="submit" class="btn btn-edit"
+                                        style="font-size:0.82rem;">შენახვა</button>
+                                    <button type="button"
+                                        onclick="document.getElementById('corr-form').style.display='none';document.getElementById('btn-add-corr').style.display='block';"
+                                        class="btn btn-cancel"
+                                        style="display:inline-flex;font-size:0.82rem;">გაუქმება</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <button type="button" class="btn-add-corr" id="btn-add-corr"
+                            onclick="document.getElementById('corr-form').style.display='block';this.style.display='none';">+
+                            მიმოწერის დამატება</button>
+                    </div>
                 </div>
 
-            </form>
+            </div>
+
 
         </div>
 

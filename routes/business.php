@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Business\Http\Controllers\AuthController;
 use App\Business\Http\Controllers\BusinessController;
 use App\Business\Http\Controllers\BusinessCreateController;
+use App\Business\Http\Controllers\CorrespondenceController;
 use App\Business\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,5 +24,7 @@ Route::prefix('business')->name('business.')->group(function () {
         Route::get('/{business}', [BusinessController::class, 'show'])->name('show');
         Route::put('/{business}', [BusinessController::class, 'update'])->name('update');
         Route::delete('/{business}', [BusinessController::class, 'destroy'])->name('destroy');
+        Route::post('/{business}/correspondence', [CorrespondenceController::class, 'store'])->name('correspondence.store');
+        Route::patch('/{business}/correspondence/{correspondence}/received', [CorrespondenceController::class, 'markReceived'])->name('correspondence.received');
     });
 });
