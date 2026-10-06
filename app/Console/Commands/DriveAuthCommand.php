@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use Google\Client;
 use Google\Service\Drive;
+use Google\Service\Gmail;
 use Illuminate\Console\Command;
 
 class DriveAuthCommand extends Command
@@ -33,6 +34,7 @@ class DriveAuthCommand extends Command
 
         $this->client->setAuthConfig($clientFile);
         $this->client->addScope(Drive::DRIVE);
+        $this->client->addScope(Gmail::GMAIL_MODIFY);
         $this->client->setAccessType('offline');
         $this->client->setPrompt('consent');
 

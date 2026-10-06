@@ -21,7 +21,7 @@ it('fails if google returns an error for the code', function (): void {
 
     $mockClient = Mockery::mock(Client::class);
     $mockClient->shouldReceive('setAuthConfig')->once();
-    $mockClient->shouldReceive('addScope')->once();
+    $mockClient->shouldReceive('addScope')->twice();
     $mockClient->shouldReceive('setAccessType')->once();
     $mockClient->shouldReceive('setPrompt')->once();
     $mockClient->shouldReceive('createAuthUrl')->once()->andReturn('https://accounts.google.com/fake');
@@ -49,7 +49,7 @@ it('saves token file on success', function (): void {
 
     $mockClient = Mockery::mock(Client::class);
     $mockClient->shouldReceive('setAuthConfig')->once();
-    $mockClient->shouldReceive('addScope')->once();
+    $mockClient->shouldReceive('addScope')->twice();
     $mockClient->shouldReceive('setAccessType')->once();
     $mockClient->shouldReceive('setPrompt')->once();
     $mockClient->shouldReceive('createAuthUrl')->once()->andReturn('https://accounts.google.com/fake');
