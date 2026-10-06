@@ -90,7 +90,7 @@ class WatchGmail extends Command
                     "<b>{$business->name}</b>\n".
                     "საქაღალდე: {$roundFolder}\n".
                     "ფაილები: {$count}\n".
-                    "From: {$from}"
+                    'From: '.htmlspecialchars($from, ENT_QUOTES)
             );
 
             $this->info("Matched: {$business->name} — {$count} attachments");
