@@ -490,6 +490,19 @@
             .info-label {
                 min-width: unset;
             }
+
+            .corr-header {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .corr-header>div {
+                flex-wrap: wrap;
+            }
+
+            .corr-item {
+                padding: 0.75rem;
+            }
         }
 
         @media (max-width: 768px) {
