@@ -1,0 +1,174 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services;
+
+use Google\Client;
+use Google\Service\Gmail;
+use Google\Service\Gmail\Label;
+use Google\Service\Gmail\Message;
+use Google\Service\Gmail\ModifyMessageRequest;
+use Illuminate\Support\Facades\Log;
+
+class GmailService
+{
+    private Gmail $gmail;
+
+    private string $userId = 'me';
+
+    public function __construct(private readonly Client $client) {}
+
+    private function connect(): void
+    {
+        if (isset($this->gmail)) {
+            return;
+        }
+
+        $tokenFile = config('services.google_drive.oauth_token');
+        $this->client->setAuthConfig(config('services.google_drive.oauth_client'));
+        $this->client->addScope(Gmail::GMAIL_MODIFY);
+        $this->client->setAccessType('offline');
+
+        $token = json_decode(file_get_contents($tokenFile), true);
+        $this->client->setAccessToken($token);
+
+        if ($this->client->isAccessTokenExpired()) {
+            $this->client->fetchAccessTokenWithRefreshToken($this->client->getRefreshToken());
+            file_put_contents($tokenFile, json_encode($this->client->getAccessToken(), JSON_PRETTY_PRINT));
+        }
+
+        $this->gmail = new Gmail($this->client);
+    }
+
+    public function getUnreadMessages(string $query = ''): array
+    {
+        $this->connect();
+
+        $results = $this->gmail->users_messages->listUsersMessages($this->userId, [
+            'q' => 'is:unread '.$query,
+            'maxResults' => 50,
+        ]);
+
+        return $results->getMessages() ?? [];
+    }
+
+    public function getMessage(string $messageId): Message
+    {
+        $this->connect();
+
+        return $this->gmail->users_messages->get($this->userId, $messageId, [
+            'format' => 'full',
+        ]);
+    }
+
+    public function getMessageSubject(Message $message): string
+    {
+        foreach ($message->getPayload()->getHeaders() as $header) {
+            if ($header->getName() === 'Subject') {
+                return $header->getValue();
+            }
+        }
+
+        return '';
+    }
+
+    public function getMessageFrom(Message $message): string
+    {
+        foreach ($message->getPayload()->getHeaders() as $header) {
+            if ($header->getName() === 'From') {
+                return $header->getValue();
+            }
+        }
+
+        return '';
+    }
+
+    public function getMessageBody(Message $message): string
+    {
+        $payload = $message->getPayload();
+
+        if ($payload->getParts()) {
+            foreach ($payload->getParts() as $part) {
+                if ($part->getMimeType() === 'text/plain') {
+                    return base64_decode(strtr($part->getBody()->getData(), '-_', '+/'));
+                }
+            }
+        }
+
+        if ($payload->getBody()->getData()) {
+            return base64_decode(strtr($payload->getBody()->getData(), '-_', '+/'));
+        }
+
+        return '';
+    }
+
+    public function getAttachments(Message $message): array
+    {
+        $this->connect();
+
+        $attachments = [];
+        $payload = $message->getPayload();
+
+        if (! $payload->getParts()) {
+            return $attachments;
+        }
+
+        foreach ($payload->getParts() as $part) {
+            if ($part->getFilename() && $part->getBody()->getAttachmentId()) {
+                $attachmentData = $this->gmail->users_messages_attachments->get(
+                    $this->userId,
+                    $message->getId(),
+                    $part->getBody()->getAttachmentId()
+                );
+
+                $attachments[] = [
+                    'filename' => $part->getFilename(),
+                    'mimeType' => $part->getMimeType(),
+                    'data' => base64_decode(strtr($attachmentData->getData(), '-_', '+/')),
+                ];
+            }
+        }
+
+        return $attachments;
+    }
+
+    public function applyLabel(string $messageId, string $labelId): void
+    {
+        $this->connect();
+
+        $request = new ModifyMessageRequest;
+        $request->setAddLabelIds([$labelId]);
+        $this->gmail->users_messages->modify($this->userId, $messageId, $request);
+    }
+
+    public function markAsRead(string $messageId): void
+    {
+        $this->connect();
+
+        $request = new ModifyMessageRequest;
+        $request->setRemoveLabelIds(['UNREAD']);
+        $this->gmail->users_messages->modify($this->userId, $messageId, $request);
+    }
+
+    public function getOrCreateLabel(string $name): string
+    {
+        $this->connect();
+
+        $labels = $this->gmail->users_labels->listUsersLabels($this->userId);
+
+        foreach ($labels->getLabels() as $label) {
+            if ($label->getName() === $name) {
+                return $label->getId();
+            }
+        }
+
+        $label = new Label;
+        $label->setName($name);
+        $created = $this->gmail->users_labels->create($this->userId, $label);
+
+        Log::info("GmailService: created label [{$name}]");
+
+        return $created->getId();
+    }
+}

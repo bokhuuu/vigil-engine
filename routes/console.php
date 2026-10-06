@@ -30,6 +30,9 @@ Schedule::command('vigil:drive-watch --seed')->hourly();
 // Weekly backup - Sunday 11:00 Georgia
 Schedule::command('vigil:backup')->weeklyOn(0, '11:00');
 
+// Business module — Gmail watcher
+Schedule::command('business:watch-gmail')->everyFiveMinutes();
+
 // Drive folders — every 15 min, all days: new ACTs (limited per run) + sync recently changed
 // Schedule::command('vigil:create-drive-folders', [
 //     '--limit' => config('vigil.drive.create_limit_per_run'),
