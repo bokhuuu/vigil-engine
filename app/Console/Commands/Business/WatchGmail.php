@@ -28,7 +28,7 @@ class WatchGmail extends Command
     {
         $labelId = $this->gmail->getOrCreateLabel('ბიზნეს მოდული');
         $matcher = new BusinessEmailMatcher;
-        $messages = $this->gmail->getUnreadMessages();
+        $messages = $this->gmail->getUnreadMessages('label:ბიზნეს-მოდული');
 
         if (empty($messages)) {
             $this->info('No unread messages.');
@@ -70,15 +70,23 @@ class WatchGmail extends Command
                 'processed_at' => now(),
             ]);
 
-            // Get attachments
-            $attachments = $this->gmail->getAttachments($message);
-            $count = count($attachments);
-
             // Find latest pending correspondence round
             $latestCorr = $business->correspondence()
                 ->whereIn('status', ['pending', 'overdue'])
                 ->orderByDesc('round')
                 ->first();
+
+            $nextRound = ($business->correspondence()->max('round') ?? 0) + 1;
+            $business->correspondence()->create([
+                'round' => $nextRound,
+                'sent_at' => now(),
+                'status' => 'pending',
+                'notes' => $subject,
+            ]);
+
+            // Get attachments
+            $attachments = $this->gmail->getAttachments($message);
+            $count = count($attachments);
 
             $roundFolder = $latestCorr
                 ? "მიმოწერა-{$latestCorr->round}/შემომავალი"
