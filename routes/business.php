@@ -24,6 +24,7 @@ Route::prefix('business')->name('business.')->group(function () {
         Route::get('/{business}', [BusinessController::class, 'show'])->name('show');
         Route::put('/{business}', [BusinessController::class, 'update'])->name('update');
         Route::delete('/{business}', [BusinessController::class, 'destroy'])->name('destroy');
+        Route::post('/{business}/drive', [BusinessController::class, 'createDriveFolder'])->name('drive.create');
         Route::post('/{business}/correspondence', [CorrespondenceController::class, 'store'])->name('correspondence.store');
         Route::patch('/{business}/correspondence/{correspondence}/received', [CorrespondenceController::class, 'markReceived'])->name('correspondence.received');
         Route::put('/{business}/correspondence/{correspondence}', [CorrespondenceController::class, 'update'])->name('correspondence.update');

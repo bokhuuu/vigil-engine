@@ -663,7 +663,12 @@
                                     <a href="{{ $business->drive_folder_url }}" target="_blank"
                                         style="color:var(--blue);">📁 Drive</a>
                                 @else
-                                    <span class="info-empty">—</span>
+                                    <form method="POST" action="{{ route('business.drive.create', $business) }}"
+                                        style="display:inline;">
+                                        @csrf
+                                        <button type="submit" class="btn btn-edit"
+                                            style="font-size:0.78rem;padding:0.25rem 0.75rem;">📁 Drive შექმნა</button>
+                                    </form>
                                 @endif
                             </span>
                             <input class="edit-input" name="drive_folder_url"
