@@ -75,27 +75,25 @@ class WatchGmail extends Command
                 'processed_at' => now(),
             ]);
 
-            // Find latest pending correspondence round
-            $latestCorr = $business->correspondence()
+            $openCorr = $business->correspondence()
                 ->whereIn('status', ['pending', 'overdue'])
                 ->orderByDesc('round')
                 ->first();
 
-            $nextRound = ($business->correspondence()->max('round') ?? 0) + 1;
-            $business->correspondence()->create([
-                'round' => $nextRound,
-                'sent_at' => now(),
-                'status' => 'pending',
-                'notes' => $subject,
-            ]);
+            if (! $openCorr) {
+                $nextRound = ($business->correspondence()->max('round') ?? 0) + 1;
+                $openCorr = $business->correspondence()->create([
+                    'round' => $nextRound,
+                    'sent_at' => now(),
+                    'status' => 'pending',
+                    'notes' => $subject,
+                ]);
+            }
 
-            // Get attachments
             $attachments = $this->gmail->getAttachments($message);
             $count = count($attachments);
 
-            $roundFolder = $latestCorr
-                ? "მიმოწერა-{$latestCorr->round}/შემომავალი"
-                : 'შემომავალი';
+            $roundFolder = "მიმოწერა/{$openCorr->round}/შემომავალი";
 
             if ($count > 0 && $business->drive_folder_url) {
                 foreach ($attachments as $attachment) {
