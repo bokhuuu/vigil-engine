@@ -10,6 +10,7 @@ use App\Services\GmailService;
 use App\Services\GoogleDriveService;
 use App\Services\TelegramService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class WatchGmail extends Command
 {
@@ -46,14 +47,17 @@ class WatchGmail extends Command
             $matchedBy = $matcher->matchedBy($subject, $body);
 
             if (! $business) {
-                // Unmatched — alert Zura only
-                $this->telegram->sendToMe(
-                    "❓ გამოუცნობი ელ-ფოსტა\n\n".
-                        "<b>From:</b> {$from}\n".
-                        "<b>Subject:</b> {$subject}"
-                );
-
                 $this->gmail->markAsRead($msg->getId());
+
+                try {
+                    $this->telegram->sendToMe(
+                        "❓ გამოუცნობი ელ-ფოსტა\n\n".
+                            '<b>From:</b> '.str_replace(['<', '>'], ['', ''], $from)."\n".
+                            "<b>Subject:</b> {$subject}"
+                    );
+                } catch (\Throwable $e) {
+                    Log::error('WatchGmail: Telegram failed', ['error' => $e->getMessage()]);
+                }
 
                 continue;
             }
@@ -106,15 +110,17 @@ class WatchGmail extends Command
             }
 
             // Telegram alert
-            $this->telegram->sendToMe(
-                "📥 ახალი ელ-ფოსტა\n\n".
-                    "<b>{$business->name}</b>\n".
-                    "საქაღალდე: {$roundFolder}\n".
-                    "ფაილები: {$count}\n".
-                    'From: '.htmlspecialchars($from, ENT_QUOTES)
-            );
-
-            $this->info("Matched: {$business->name} — {$count} attachments");
+            try {
+                $this->telegram->sendToMe(
+                    "📥 ახალი ელ-ფოსტა\n\n".
+                        "<b>{$business->name}</b>\n".
+                        "საქაღალდე: {$roundFolder}\n".
+                        "ფაილები: {$count}\n".
+                        'From: '.str_replace(['<', '>'], ['', ''], $from)
+                );
+            } catch (\Throwable $e) {
+                Log::error('WatchGmail: Telegram failed', ['error' => $e->getMessage()]);
+            }
         }
     }
 }
