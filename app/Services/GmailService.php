@@ -46,7 +46,7 @@ class GmailService
         $this->connect();
 
         $results = $this->gmail->users_messages->listUsersMessages($this->userId, [
-            'q' => 'is:unread '.$query,
+            'q' => 'is:unread in:anywhere '.$query,
             'maxResults' => 50,
         ]);
 
