@@ -108,17 +108,22 @@ class GmailService
         $this->connect();
 
         $attachments = [];
-        $payload = $message->getPayload();
+        $this->collectAttachments($message->getPayload()->getParts() ?? [], $message->getId(), $attachments);
 
-        if (! $payload->getParts()) {
-            return $attachments;
-        }
+        return $attachments;
+    }
 
-        foreach ($payload->getParts() as $part) {
+    private function collectAttachments(array $parts, string $messageId, array &$attachments): void
+    {
+        foreach ($parts as $part) {
+            if ($part->getParts()) {
+                $this->collectAttachments($part->getParts(), $messageId, $attachments);
+            }
+
             if ($part->getFilename() && $part->getBody()->getAttachmentId()) {
                 $attachmentData = $this->gmail->users_messages_attachments->get(
                     $this->userId,
-                    $message->getId(),
+                    $messageId,
                     $part->getBody()->getAttachmentId()
                 );
 
@@ -129,8 +134,6 @@ class GmailService
                 ];
             }
         }
-
-        return $attachments;
     }
 
     public function applyLabel(string $messageId, string $labelId): void

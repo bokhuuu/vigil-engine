@@ -35,6 +35,10 @@ it('does not mark correspondence as overdue when deadline has not passed', funct
         'status' => 'pending',
     ]);
 
+    $this->mock(TelegramService::class)
+        ->shouldReceive('sendToMe')
+        ->zeroOrMoreTimes();
+
     $this->artisan('business:check-overdue')->assertExitCode(0);
 
     expect($corr->fresh()->status)->toBe('pending');
