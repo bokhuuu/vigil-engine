@@ -663,12 +663,10 @@
                                     <a href="{{ $business->drive_folder_url }}" target="_blank"
                                         style="color:var(--blue);">📁 Drive</a>
                                 @else
-                                    <form method="POST" action="{{ route('business.drive.create', $business) }}"
-                                        style="display:inline;">
-                                        @csrf
-                                        <button type="submit" class="btn btn-edit"
-                                            style="font-size:0.78rem;padding:0.25rem 0.75rem;">📁 Drive შექმნა</button>
-                                    </form>
+                                    <button type="button" class="btn btn-edit"
+                                        style="font-size:0.78rem;padding:0.25rem 0.75rem;"
+                                        onclick="document.getElementById('drive-create-form').submit()">📁 Drive
+                                        შექმნა</button>
                                 @endif
                             </span>
                             <input class="edit-input" name="drive_folder_url"
@@ -749,6 +747,10 @@
                 </div>
 
             </div>
+        </form>
+
+        <form id="drive-create-form" method="POST" action="{{ route('business.drive.create', $business) }}">
+            @csrf
         </form>
 
         <div class="grid">
