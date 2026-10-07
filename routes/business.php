@@ -20,7 +20,7 @@ Route::prefix('business')->name('business.')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/create', [BusinessCreateController::class, 'create'])->name('create');
-        Route::post('/create', [BusinessCreateController::class, 'store']);
+        Route::post('/create', [BusinessCreateController::class, 'store'])->name('store');
         Route::get('/{business}', [BusinessController::class, 'show'])->name('show');
         Route::put('/{business}', [BusinessController::class, 'update'])->name('update');
         Route::delete('/{business}', [BusinessController::class, 'destroy'])->name('destroy');

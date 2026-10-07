@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Business\Http\Controllers;
 
 use App\Business\Models\Business;
+use App\Business\Services\BusinessDriveService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -12,6 +13,8 @@ use Illuminate\View\View;
 
 class BusinessCreateController extends Controller
 {
+    public function __construct(private readonly BusinessDriveService $driveService) {}
+
     public function create(): View
     {
         return view('business.create');
@@ -37,6 +40,10 @@ class BusinessCreateController extends Controller
         ]);
 
         $business = Business::create($validated);
+
+        if (empty($validated['drive_folder_url'])) {
+            $this->driveService->createBusinessFolder($business);
+        }
 
         return redirect()->route('business.show', $business)->with('success', 'ბიზნესი დაემატა');
     }
