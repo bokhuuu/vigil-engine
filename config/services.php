@@ -40,6 +40,7 @@ return [
         'act_folder_id' => env('GOOGLE_DRIVE_ACT_FOLDER_ID'),
         'oauth_client' => env('GOOGLE_DRIVE_OAUTH_CLIENT'),
         'oauth_token' => env('GOOGLE_DRIVE_OAUTH_TOKEN'),
+        'business_folder_id' => env('GOOGLE_DRIVE_BUSINESS_FOLDER_ID'),
     ],
 
 ];

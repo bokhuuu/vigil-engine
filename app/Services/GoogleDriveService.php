@@ -339,4 +339,35 @@ class GoogleDriveService
 
         return $result;
     }
+
+    // app/Services/GoogleDriveService.php
+    // Add before the final closing }
+
+    /**
+     * Find a child folder by name, creating it if it doesn't exist.
+     */
+    public function findOrCreateFolder(string $name, string $parentId): string
+    {
+        return $this->findChildFolder($name, $parentId) ?? $this->createFolder($name, $parentId);
+    }
+
+    /**
+     * Upload a file to a Drive folder and return its file ID.
+     */
+    public function uploadFile(string $parentFolderId, string $filename, string $content, string $mimeType): string
+    {
+        $metadata = new DriveFile([
+            'name' => $filename,
+            'parents' => [$parentFolderId],
+        ]);
+
+        $file = $this->drive()->files->create($metadata, [
+            'data' => $content,
+            'mimeType' => $mimeType,
+            'uploadType' => 'multipart',
+            'fields' => 'id',
+        ]);
+
+        return $file->getId();
+    }
 }
