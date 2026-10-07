@@ -370,4 +370,38 @@ class GoogleDriveService
 
         return $file->getId();
     }
+
+    /**
+     * Upload a file into a Drive folder by folder URL + subfolder path.
+     * Creates the subfolder chain if missing. Returns the uploaded file ID.
+     */
+    public function uploadFileToSubfolder(string $folderUrl, string $subfolderPath, string $filename, string $mimeType, string $data): string
+    {
+        $actFolderId = $this->folderIdFromUrl($folderUrl);
+
+        if ($actFolderId === null) {
+            throw new \InvalidArgumentException("Invalid Drive folder URL: {$folderUrl}");
+        }
+
+        // Walk/create the subfolder chain (e.g. "მიმოწერა-1/შემომავალი")
+        $parentId = $actFolderId;
+        foreach (explode('/', $subfolderPath) as $segment) {
+            $parentId = $this->findChildFolder($segment, $parentId)
+                ?? $this->createFolder($segment, $parentId);
+        }
+
+        $metadata = new DriveFile([
+            'name' => $filename,
+            'parents' => [$parentId],
+        ]);
+
+        $file = $this->drive()->files->create($metadata, [
+            'data' => $data,
+            'mimeType' => $mimeType,
+            'uploadType' => 'multipart',
+            'fields' => 'id',
+        ]);
+
+        return $file->getId();
+    }
 }

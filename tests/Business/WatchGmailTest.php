@@ -7,6 +7,7 @@ namespace Tests\Business;
 use App\Business\Models\Business;
 use App\Console\Commands\Business\WatchGmail;
 use App\Services\GmailService;
+use App\Services\GoogleDriveService;
 use App\Services\TelegramService;
 use Google\Service\Gmail\Message;
 
@@ -66,7 +67,8 @@ class WatchGmailTest extends BusinessTestCase
         $telegram = \Mockery::mock(TelegramService::class);
         $telegram->shouldReceive('sendToMe')->once();
 
-        $command = new WatchGmail($gmail, $telegram);
+        $drive = \Mockery::mock(GoogleDriveService::class);
+        $command = new WatchGmail($gmail, $telegram, $drive);
         $this->app['Illuminate\Contracts\Console\Kernel']->registerCommand($command);
 
         $this->artisan('business:watch-gmail')->assertSuccessful();
@@ -96,7 +98,8 @@ class WatchGmailTest extends BusinessTestCase
         $telegram = \Mockery::mock(TelegramService::class);
         $telegram->shouldReceive('sendToMe')->once();
 
-        $command = new WatchGmail($gmail, $telegram);
+        $drive = \Mockery::mock(GoogleDriveService::class);
+        $command = new WatchGmail($gmail, $telegram, $drive);
         $this->app['Illuminate\Contracts\Console\Kernel']->registerCommand($command);
 
         $this->artisan('business:watch-gmail')->assertSuccessful();

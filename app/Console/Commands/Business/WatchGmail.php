@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Console\Commands\Business;
 
-use App\Business\Models\Business;
 use App\Business\Models\BusinessEmail;
 use App\Business\Services\BusinessEmailMatcher;
 use App\Services\GmailService;
+use App\Services\GoogleDriveService;
 use App\Services\TelegramService;
 use Illuminate\Console\Command;
 
@@ -20,6 +20,7 @@ class WatchGmail extends Command
     public function __construct(
         private readonly GmailService $gmail,
         private readonly TelegramService $telegram,
+        private readonly GoogleDriveService $drive,
     ) {
         parent::__construct();
     }
@@ -91,6 +92,18 @@ class WatchGmail extends Command
             $roundFolder = $latestCorr
                 ? "მიმოწერა-{$latestCorr->round}/შემომავალი"
                 : 'შემომავალი';
+
+            if ($count > 0 && $business->drive_folder_url) {
+                foreach ($attachments as $attachment) {
+                    $this->drive->uploadFileToSubfolder(
+                        $business->drive_folder_url,
+                        $roundFolder,
+                        $attachment['filename'],
+                        $attachment['mimeType'],
+                        $attachment['data'],
+                    );
+                }
+            }
 
             // Telegram alert
             $this->telegram->sendToMe(
