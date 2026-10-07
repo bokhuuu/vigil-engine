@@ -54,7 +54,7 @@ class WatchGmailTest extends BusinessTestCase
 
         $gmail = \Mockery::mock(GmailService::class);
         $gmail->shouldReceive('getOrCreateLabel')->once()->andReturn('label-id');
-        $gmail->shouldReceive('getUnreadMessages')->with('label:ბიზნეს-მოდული')->once()->andReturn([$message]);
+        $gmail->shouldReceive('getUnreadMessages')->once()->andReturn([$message]);
         $gmail->shouldReceive('getMessage')->once()->andReturn($message);
         $gmail->shouldReceive('getMessageSubject')->once()->andReturn('შპს ტესტი — პასუხი');
         $gmail->shouldReceive('getMessageFrom')->once()->andReturn('sender@example.com');

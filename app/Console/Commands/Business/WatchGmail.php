@@ -28,7 +28,7 @@ class WatchGmail extends Command
     {
         $labelId = $this->gmail->getOrCreateLabel('ბიზნეს მოდული');
         $matcher = new BusinessEmailMatcher;
-        $messages = $this->gmail->getUnreadMessages('label:ბიზნეს-მოდული');
+        $messages = $this->gmail->getUnreadMessages();
 
         if (empty($messages)) {
             $this->info('No unread messages.');
