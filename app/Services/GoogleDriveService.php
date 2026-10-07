@@ -383,11 +383,27 @@ class GoogleDriveService
             throw new \InvalidArgumentException("Invalid Drive folder URL: {$folderUrl}");
         }
 
-        // Walk/create the subfolder chain (e.g. "მიმოწერა-1/შემომავალი")
         $parentId = $actFolderId;
         foreach (explode('/', $subfolderPath) as $segment) {
-            $parentId = $this->findChildFolder($segment, $parentId)
-                ?? $this->createFolder($segment, $parentId);
+            $escaped = str_replace(['\\', "'"], ['\\\\', "\\'"], $segment);
+            $response = $this->getUserDrive()->files->listFiles([
+                'q' => "name = '{$escaped}' and '{$parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
+                'fields' => 'files(id)',
+                'pageSize' => 1,
+            ]);
+
+            $existing = ($response->getFiles()[0] ?? null)?->getId();
+
+            if ($existing) {
+                $parentId = $existing;
+            } else {
+                $folder = $this->getUserDrive()->files->create(new DriveFile([
+                    'name' => $segment,
+                    'mimeType' => 'application/vnd.google-apps.folder',
+                    'parents' => [$parentId],
+                ]), ['fields' => 'id']);
+                $parentId = $folder->getId();
+            }
         }
 
         $metadata = new DriveFile([
@@ -395,7 +411,7 @@ class GoogleDriveService
             'parents' => [$parentId],
         ]);
 
-        $file = $this->drive()->files->create($metadata, [
+        $file = $this->getUserDrive()->files->create($metadata, [
             'data' => $data,
             'mimeType' => $mimeType,
             'uploadType' => 'multipart',
