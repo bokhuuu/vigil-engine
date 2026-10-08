@@ -322,9 +322,6 @@ class GoogleDriveService
     /**
      * List tracked subfolders of an ACT folder.
      * Returns subfolderId => name for subfolders matching the tracked list.
-     *
-     * @param  array<string>  $tracked
-     * @return array<string, string>
      */
     public function listTrackedSubfolders(string $actFolderId, array $tracked): array
     {
@@ -371,11 +368,7 @@ class GoogleDriveService
         return $file->getId();
     }
 
-    /**
-     * Upload a file into a Drive folder by folder URL + subfolder path.
-     * Creates the subfolder chain if missing. Returns the uploaded file ID.
-     */
-    public function uploadFileToSubfolder(string $folderUrl, string $subfolderPath, string $filename, string $mimeType, string $data): string
+    public function ensureSubfolderPath(string $folderUrl, string $subfolderPath): string
     {
         $actFolderId = $this->folderIdFromUrl($folderUrl);
 
@@ -406,9 +399,16 @@ class GoogleDriveService
             }
         }
 
+        return $parentId;
+    }
+
+    public function uploadFileToSubfolder(string $folderUrl, string $subfolderPath, string $filename, string $mimeType, string $data): string
+    {
+        $folderId = $this->ensureSubfolderPath($folderUrl, $subfolderPath);
+
         $metadata = new DriveFile([
             'name' => $filename,
-            'parents' => [$parentId],
+            'parents' => [$folderId],
         ]);
 
         $file = $this->getUserDrive()->files->create($metadata, [

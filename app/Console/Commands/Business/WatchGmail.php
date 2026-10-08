@@ -77,6 +77,14 @@ class WatchGmail extends Command
             $roundFolder = "მიმოწერა/{$openCorr->round}/შემომავალი";
 
             if ($business->drive_folder_url) {
+                $subfolderFolderId = $this->drive->ensureSubfolderPath(
+                    $business->drive_folder_url,
+                    $roundFolder,
+                );
+                $subfolderUrl = "https://drive.google.com/drive/folders/{$subfolderFolderId}";
+
+                $openCorr->update(['drive_folder_url' => $subfolderUrl]);
+
                 $filename = now()->format('Y-m-d_H-i').'_email.txt';
                 $textContent = "From: {$from}\nSubject: {$subject}\n\n{$body}";
 
