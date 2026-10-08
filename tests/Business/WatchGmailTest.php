@@ -48,7 +48,11 @@ class WatchGmailTest extends BusinessTestCase
 
     public function test_matched_email_creates_correspondence_and_sends_telegram(): void
     {
-        $business = Business::factory()->create(['name' => 'შპს ტესტი', 'registration_code' => '123456789']);
+        $business = Business::factory()->create([
+            'name' => 'შპს ტესტი',
+            'registration_code' => '123456789',
+            'drive_folder_url' => 'https://drive.google.com/drive/folders/fake-folder-id',
+        ]);
 
         $message = \Mockery::mock(Message::class);
         $message->shouldReceive('getId')->andReturn('msg-001');
@@ -68,6 +72,7 @@ class WatchGmailTest extends BusinessTestCase
         $telegram->shouldReceive('sendToMe')->once();
 
         $drive = \Mockery::mock(GoogleDriveService::class);
+        $drive->shouldReceive('uploadFileToSubfolder')->once();
         $command = new WatchGmail($gmail, $telegram, $drive);
         $this->app['Illuminate\Contracts\Console\Kernel']->registerCommand($command);
 
@@ -81,7 +86,7 @@ class WatchGmailTest extends BusinessTestCase
         ], 'business');
     }
 
-    public function test_unmatched_email_sends_telegram_and_marks_read(): void
+    public function test_unmatched_email_is_skipped_silently(): void
     {
         $message = \Mockery::mock(Message::class);
         $message->shouldReceive('getId')->andReturn('msg-002');
@@ -93,10 +98,10 @@ class WatchGmailTest extends BusinessTestCase
         $gmail->shouldReceive('getMessageSubject')->once()->andReturn('უცხო ელ-ფოსტა');
         $gmail->shouldReceive('getMessageFrom')->once()->andReturn('unknown@example.com');
         $gmail->shouldReceive('getMessageBody')->once()->andReturn('no match here');
-        $gmail->shouldReceive('markAsRead')->once();
+        $gmail->shouldReceive('markAsRead')->never();
 
         $telegram = \Mockery::mock(TelegramService::class);
-        $telegram->shouldReceive('sendToMe')->once();
+        $telegram->shouldReceive('sendToMe')->never();
 
         $drive = \Mockery::mock(GoogleDriveService::class);
         $command = new WatchGmail($gmail, $telegram, $drive);

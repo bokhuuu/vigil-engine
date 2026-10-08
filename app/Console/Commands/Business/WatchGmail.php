@@ -47,18 +47,6 @@ class WatchGmail extends Command
             $matchedBy = $matcher->matchedBy($subject, $body);
 
             if (! $business) {
-                $this->gmail->markAsRead($msg->getId());
-
-                try {
-                    $this->telegram->sendToMe(
-                        "❓ გამოუცნობი ელ-ფოსტა\n\n".
-                            '<b>From:</b> '.str_replace(['<', '>'], ['', ''], $from)."\n".
-                            "<b>Subject:</b> {$subject}"
-                    );
-                } catch (\Throwable $e) {
-                    Log::error('WatchGmail: Telegram failed', ['error' => $e->getMessage()]);
-                }
-
                 continue;
             }
 
@@ -75,27 +63,31 @@ class WatchGmail extends Command
                 'processed_at' => now(),
             ]);
 
-            $openCorr = $business->correspondence()
-                ->whereIn('status', ['pending', 'overdue'])
-                ->orderByDesc('round')
-                ->first();
-
-            if (! $openCorr) {
-                $nextRound = ($business->correspondence()->max('round') ?? 0) + 1;
-                $openCorr = $business->correspondence()->create([
-                    'round' => $nextRound,
-                    'sent_at' => now(),
-                    'status' => 'pending',
-                    'notes' => $subject,
-                ]);
-            }
+            $nextRound = ($business->correspondence()->max('round') ?? 0) + 1;
+            $openCorr = $business->correspondence()->create([
+                'round' => $nextRound,
+                'sent_at' => now(),
+                'status' => 'pending',
+                'notes' => $subject,
+            ]);
 
             $attachments = $this->gmail->getAttachments($message);
             $count = count($attachments);
 
             $roundFolder = "მიმოწერა/{$openCorr->round}/შემომავალი";
 
-            if ($count > 0 && $business->drive_folder_url) {
+            if ($business->drive_folder_url) {
+                $filename = now()->format('Y-m-d_H-i').'_email.txt';
+                $textContent = "From: {$from}\nSubject: {$subject}\n\n{$body}";
+
+                $this->drive->uploadFileToSubfolder(
+                    $business->drive_folder_url,
+                    $roundFolder,
+                    $filename,
+                    'text/plain',
+                    $textContent,
+                );
+
                 foreach ($attachments as $attachment) {
                     $this->drive->uploadFileToSubfolder(
                         $business->drive_folder_url,
@@ -113,7 +105,7 @@ class WatchGmail extends Command
                     "📥 ახალი ელ-ფოსტა\n\n".
                         "<b>{$business->name}</b>\n".
                         "საქაღალდე: {$roundFolder}\n".
-                        "ფაილები: {$count}\n".
+                        'ფაილები: '.($count + 1)."\n".
                         'From: '.str_replace(['<', '>'], ['', ''], $from)
                 );
             } catch (\Throwable $e) {
