@@ -66,7 +66,7 @@ class WatchGmail extends Command
             $nextRound = ($business->correspondence()->max('round') ?? 0) + 1;
             $openCorr = $business->correspondence()->create([
                 'round' => $nextRound,
-                'sent_at' => now(),
+                'received_at' => now(),
                 'status' => 'pending',
                 'notes' => $subject,
             ]);
