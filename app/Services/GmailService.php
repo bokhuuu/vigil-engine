@@ -88,16 +88,30 @@ class GmailService
     {
         $payload = $message->getPayload();
 
-        if ($payload->getParts()) {
-            foreach ($payload->getParts() as $part) {
-                if ($part->getMimeType() === 'text/plain') {
-                    return base64_decode(strtr($part->getBody()->getData(), '-_', '+/'));
-                }
-            }
+        $text = $this->extractTextPlain($payload->getParts() ?? []);
+        if ($text !== '') {
+            return $text;
         }
 
         if ($payload->getBody()->getData()) {
             return base64_decode(strtr($payload->getBody()->getData(), '-_', '+/'));
+        }
+
+        return '';
+    }
+
+    private function extractTextPlain(array $parts): string
+    {
+        foreach ($parts as $part) {
+            if ($part->getMimeType() === 'text/plain' && $part->getBody()->getData()) {
+                return base64_decode(strtr($part->getBody()->getData(), '-_', '+/'));
+            }
+            if ($part->getParts()) {
+                $nested = $this->extractTextPlain($part->getParts());
+                if ($nested !== '') {
+                    return $nested;
+                }
+            }
         }
 
         return '';
