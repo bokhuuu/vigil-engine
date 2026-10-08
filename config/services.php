@@ -43,4 +43,7 @@ return [
         'business_folder_id' => env('GOOGLE_DRIVE_BUSINESS_FOLDER_ID'),
     ],
 
+    'business' => [
+        'own_email' => env('BUSINESS_SEED_EMAIL'),
+    ],
 ];

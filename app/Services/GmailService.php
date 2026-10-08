@@ -84,6 +84,17 @@ class GmailService
         return '';
     }
 
+    public function getMessageCc(Message $message): string
+    {
+        foreach ($message->getPayload()->getHeaders() as $header) {
+            if ($header->getName() === 'Cc') {
+                return $header->getValue();
+            }
+        }
+
+        return '';
+    }
+
     public function getMessageBody(Message $message): string
     {
         $payload = $message->getPayload();
