@@ -108,6 +108,10 @@ class DashboardController
             ->when($activeStatus === 'incomplete', fn ($col) => $col->filter(
                 fn ($f) => ($f['🚦სტატუსი'] ?? '') === '⏳ მიმდინარე'
             ))
+            ->when($activeStatus === 'closed', fn ($col) => $col->filter(
+                fn ($f) => ($f['🚦სტატუსი'] ?? '') === '✅ დასრულებული'
+                    && collect($f['_required'])->every(fn ($field) => $f[$field] ?? false)
+            ))
             ->when($activeMissing, function ($col) use ($activeMissing) {
                 $fieldMap = [
                     'photo' => '📥 ფოტოები',
