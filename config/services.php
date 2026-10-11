@@ -45,5 +45,6 @@ return [
 
     'business' => [
         'own_email' => env('BUSINESS_SEED_EMAIL'),
+        'internal_emails' => array_map('trim', explode(',', env('BUSINESS_INTERNAL_EMAILS', ''))),
     ],
 ];
