@@ -73,9 +73,9 @@ class WatchGmail extends Command
 
             $attachments = $this->gmail->getAttachments($message);
             $count = count($attachments);
-            $cc = $this->gmail->getMessageCc($message);
+            $to = $this->gmail->getMessageTo($message);
             $ownEmail = config('services.business.own_email');
-            $isOutbound = str_contains($cc, $ownEmail);
+            $isOutbound = ! str_contains($to, $ownEmail);
             $roundFolder = 'მიმოწერა/'.$openCorr->round.'/'.($isOutbound ? 'გამავალი' : 'შემომავალი');
 
             $roundFolder = "მიმოწერა/{$openCorr->round}/შემომავალი";

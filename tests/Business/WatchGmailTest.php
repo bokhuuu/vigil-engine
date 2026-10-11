@@ -63,7 +63,7 @@ class WatchGmailTest extends BusinessTestCase
         $gmail->shouldReceive('getMessage')->once()->andReturn($message);
         $gmail->shouldReceive('getMessageSubject')->once()->andReturn('შპს ტესტი — პასუხი');
         $gmail->shouldReceive('getMessageFrom')->once()->andReturn('sender@example.com');
-        $gmail->shouldReceive('getMessageCc')->once()->andReturn('');
+        $gmail->shouldReceive('getMessageTo')->once()->andReturn('zura.colliers.bypass@gmail.com');
         $gmail->shouldReceive('getMessageBody')->once()->andReturn('123456789');
         $gmail->shouldReceive('applyLabel')->once();
         $gmail->shouldReceive('markAsRead')->once();

@@ -95,6 +95,17 @@ class GmailService
         return '';
     }
 
+    public function getMessageTo(Message $message): string
+    {
+        foreach ($message->getPayload()->getHeaders() as $header) {
+            if ($header->getName() === 'To') {
+                return $header->getValue();
+            }
+        }
+
+        return '';
+    }
+
     public function getMessageBody(Message $message): string
     {
         $payload = $message->getPayload();
