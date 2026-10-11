@@ -77,8 +77,6 @@ class WatchGmail extends Command
             $isOutbound = collect($internalEmails)->contains(fn (string $e): bool => str_contains($from, $e));
             $roundFolder = 'მიმოწერა/'.$openCorr->round.'/'.($isOutbound ? 'გამავალი' : 'შემომავალი');
 
-            $roundFolder = "მიმოწერა/{$openCorr->round}/შემომავალი";
-
             if ($business->drive_folder_url) {
                 $subfolderFolderId = $this->drive->ensureSubfolderPath(
                     $business->drive_folder_url,
