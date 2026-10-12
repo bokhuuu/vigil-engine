@@ -10,6 +10,7 @@ use App\Services\AirtableService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
 use Illuminate\View\View;
 
 class DashboardController
@@ -45,10 +46,6 @@ class DashboardController
      * Acts + the moment they were fetched, cached as ONE entry so the
      * time shown always matches the data. On Airtable failure, fall back
      * to the last successful snapshot (marked stale).
-     *
-     * @return array{acts: array, fetched_at: int, stale: bool}
-     *
-     * @throws AirtableException when Airtable fails and no snapshot exists yet
      */
     private function loadSnapshot(int $ttlSeconds): array
     {
@@ -76,10 +73,49 @@ class DashboardController
         }
     }
 
+    /**
+     * Build a map of act_record_id → CSS background-color string
+     * by reading the drive-watcher state file. Returns [] if file missing/unreadable.
+     */
+    private function loadDriveColors(): array
+    {
+        $path = config('vigil.drive.state_file');
+
+        if (! File::exists($path)) {
+            return [];
+        }
+
+        try {
+            $state = json_decode(File::get($path), true, 512, JSON_THROW_ON_ERROR);
+        } catch (\Throwable) {
+            return [];
+        }
+
+        $folderColors = $state['folder_colors'] ?? [];
+        $folderIndex = $state['folder_index'] ?? [];
+
+        $map = [];
+        foreach ($folderIndex as $folderId => $meta) {
+            $recordId = $meta['act_record_id'] ?? null;
+            $hex = $folderColors[$folderId] ?? '';
+
+            if ($recordId === null || $hex === '') {
+                continue;
+            }
+
+            $map[$recordId] = $hex === '#00843D'
+                ? '#d1fae5'
+                : '#fef9c3';
+        }
+
+        return $map;
+    }
+
     public function index(Request $request): View
     {
         $cacheMinutes = (int) config('vigil.dashboard.cache_minutes', 5);
         $snapshot = $this->loadSnapshot($cacheMinutes * 60);
+        $driveColors = $this->loadDriveColors();
 
         $data = $snapshot['acts'];
         $fetchedAt = Carbon::createFromTimestamp($snapshot['fetched_at'], config('app.timezone'));
@@ -173,6 +209,7 @@ class DashboardController
             'incomplete' => $total - $complete,
             'fetchedAt' => $fetchedAt,
             'isStale' => $snapshot['stale'],
+            'driveColors' => $driveColors,
             'cacheMinutes' => $cacheMinutes,
             'statsUrl' => config('vigil.dashboard.airtable_stats_url'),
             'activeStatus' => $activeStatus,

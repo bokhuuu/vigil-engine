@@ -242,3 +242,53 @@ test('dashboard links each ACT number to its Airtable record', function () {
         ->assertOk()
         ->assertSee($expected, false);
 });
+
+test('dashboard passes driveColors map to view', function () {
+    Cache::flush();
+
+    $statePath = storage_path('app/google/drive-watcher-state.json');
+    @mkdir(dirname($statePath), 0755, true);
+    file_put_contents($statePath, json_encode([
+        'page_token' => '123',
+        'folder_colors' => [
+            'folder-green' => '#00843D',
+            'folder-yellow' => '#F6C026',
+            'folder-empty' => '',
+        ],
+        'folder_index' => [
+            'folder-green' => ['act_record_id' => 'recGREEN'],
+            'folder-yellow' => ['act_record_id' => 'recYELLOW'],
+            'folder-empty' => ['act_record_id' => 'recEMPTY'],
+        ],
+    ]));
+
+    Http::fake([
+        'api.airtable.com/*' => Http::response(['records' => []], 200),
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Basic '.base64_encode('vigil:test-password')])
+        ->get('/dashboard')
+        ->assertOk()
+        ->assertViewHas('driveColors', function ($colors) {
+            return $colors['recGREEN'] === '#d1fae5'
+                && $colors['recYELLOW'] === '#fef9c3'
+                && ! isset($colors['recEMPTY']);
+        });
+
+    @unlink($statePath);
+});
+
+test('dashboard passes empty driveColors when state file missing', function () {
+    Cache::flush();
+
+    config(['vigil.drive.state_file' => storage_path('app/google/nonexistent-state.json')]);
+
+    Http::fake([
+        'api.airtable.com/*' => Http::response(['records' => []], 200),
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Basic '.base64_encode('vigil:test-password')])
+        ->get('/dashboard')
+        ->assertOk()
+        ->assertViewHas('driveColors', []);
+});

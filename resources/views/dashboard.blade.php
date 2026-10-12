@@ -908,7 +908,8 @@
                                     <span style="color:#d0d7de;">—</span>
                                 @endif
                             </td>
-                            <td class="center col-drive">
+                            <td class="center col-drive"
+                                @if (!empty($driveColors[$act['_id']])) style="background-color:{{ $driveColors[$act['_id']] }};" @endif>
                                 @if ($folder)
                                     <a href="{{ $folder }}" target="_blank" class="drive-link">📁</a>
                                     <button class="upload-btn" data-act-id="{{ $act['_id'] }}"
