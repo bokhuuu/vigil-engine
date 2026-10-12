@@ -180,6 +180,7 @@ class DashboardController
             'activeKvleva' => $activeKvleva,
             'activeBiznes' => $activeBiznes,
             'hasActiveFilter' => $hasActiveFilter,
+            'role' => $request->attributes->get('vigil_role', 'manager'),
             'filteredTotal' => $filteredTotal,
             'filteredComplete' => $filteredComplete,
             'filteredIncomplete' => $filteredIncomplete,

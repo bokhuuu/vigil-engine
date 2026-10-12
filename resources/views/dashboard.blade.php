@@ -911,7 +911,9 @@
                             <td class="center col-drive">
                                 @if ($folder)
                                     <a href="{{ $folder }}" target="_blank" class="drive-link">📁</a>
-                                @else
+                                    <button class="upload-btn" data-act-id="{{ $act['_id'] }}"
+                                        title="ფაილების ატვირთვა">⬆️</button>
+                                @elseif ($role === 'manager')
                                     <form method="POST" action="{{ route('dashboard.folder', $act['_id']) }}"
                                         onsubmit="const b = this.querySelector('button'); b.disabled = true; b.textContent = '…';">
                                         @csrf
@@ -1059,6 +1061,109 @@
         // Keeps an open dashboard fresh; the shown time only changes
         // when new data is actually fetched.
         setTimeout(() => window.location.reload(), {{ $cacheMinutes }} * 60 * 1000);
+    </script>
+    {{-- Upload modal --}}
+    <div id="upload-modal"
+        style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
+        <div
+            style="background:#fff;border-radius:10px;padding:28px 32px;min-width:340px;max-width:460px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.25);position:relative;">
+            <button onclick="closeUploadModal()"
+                style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#666;">✕</button>
+            <h3 style="margin:0 0 18px;font-size:1.05rem;">📁 ფაილების ატვირთვა</h3>
+            <label style="display:block;margin-bottom:6px;font-size:.85rem;color:#555;">საქაღალდე</label>
+            <select id="upload-folder"
+                style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:6px;font-size:.9rem;margin-bottom:14px;">
+                <option value="">იტვირთება…</option>
+            </select>
+            <label style="display:block;margin-bottom:6px;font-size:.85rem;color:#555;">ფაილები</label>
+            <input type="file" id="upload-files" multiple style="display:block;width:100%;margin-bottom:18px;">
+            <div id="upload-progress" style="display:none;margin-bottom:12px;font-size:.85rem;color:#555;"></div>
+            <button onclick="submitUpload()"
+                style="width:100%;padding:10px;background:#1a56db;color:#fff;border:none;border-radius:6px;font-size:.95rem;cursor:pointer;font-weight:600;">ატვირთვა</button>
+        </div>
+    </div>
+
+    <script>
+        let _uploadActId = null;
+
+        document.querySelectorAll('.upload-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                openUploadModal(btn.dataset.actId);
+            });
+        });
+
+        async function openUploadModal(actId) {
+            _uploadActId = actId;
+            const modal = document.getElementById('upload-modal');
+            const select = document.getElementById('upload-folder');
+            const files = document.getElementById('upload-files');
+            const progress = document.getElementById('upload-progress');
+
+            files.value = '';
+            progress.style.display = 'none';
+            progress.textContent = '';
+            select.innerHTML = '<option value="">იტვირთება…</option>';
+            modal.style.display = 'flex';
+
+            try {
+                const res = await fetch(`/upload/folders?record_id=${encodeURIComponent(actId)}`);
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error ?? 'შეცდომა');
+                select.innerHTML = data.folders.length ?
+                    data.folders.map(f => `<option value="${f.id}">${f.name}</option>`).join('') :
+                    '<option value="">საქაღალდე ვერ მოიძებნა</option>';
+            } catch (err) {
+                select.innerHTML = `<option value="">შეცდომა: ${err.message}</option>`;
+            }
+        }
+
+        function closeUploadModal() {
+            document.getElementById('upload-modal').style.display = 'none';
+            _uploadActId = null;
+        }
+
+        async function submitUpload() {
+            const select = document.getElementById('upload-folder');
+            const files = document.getElementById('upload-files');
+            const progress = document.getElementById('upload-progress');
+            const folderId = select.value;
+            const fileList = files.files;
+
+            if (!folderId) {
+                alert('აირჩიე საქაღალდე');
+                return;
+            }
+            if (!fileList.length) {
+                alert('აირჩიე ფაილ(ებ)ი');
+                return;
+            }
+
+            const form = new FormData();
+            form.append('folder_id', folderId);
+            for (const f of fileList) form.append('files[]', f);
+
+            progress.style.display = 'block';
+            progress.textContent = 'იტვირთება…';
+
+            try {
+                const res = await fetch('/upload', {
+                    method: 'POST',
+                    body: form
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error ?? 'სერვერის შეცდომა');
+                progress.textContent = `✅ ${data.uploaded} ფაილი ატვირთულია`;
+                files.value = '';
+                setTimeout(closeUploadModal, 1500);
+            } catch (err) {
+                progress.textContent = `❌ ${err.message}`;
+            }
+        }
+
+        document.getElementById('upload-modal').addEventListener('click', e => {
+            if (e.target === document.getElementById('upload-modal')) closeUploadModal();
+        });
     </script>
 
 </body>
