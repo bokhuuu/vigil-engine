@@ -420,4 +420,20 @@ class GoogleDriveService
 
         return $file->getId();
     }
+
+    /**
+     * Find or create a named subfolder inside an ACT folder URL.
+     * Returns the subfolder ID.
+     */
+    public function findOrCreateSubfolder(string $folderUrl, string $subfolderName): string
+    {
+        $actFolderId = $this->folderIdFromUrl($folderUrl);
+
+        if ($actFolderId === null) {
+            throw new \InvalidArgumentException("Invalid Drive folder URL: {$folderUrl}");
+        }
+
+        return $this->findChildFolder($subfolderName, $actFolderId)
+            ?? $this->createFolder($subfolderName, $actFolderId);
+    }
 }

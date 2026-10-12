@@ -3,6 +3,7 @@
 use App\Http\Controllers\ActCompleteController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DashboardFolderController;
+use App\Http\Controllers\DriveUploadController;
 use App\Http\Controllers\DriveWebhookController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Middleware\BasicAuthMiddleware;
@@ -26,3 +27,10 @@ Route::post('/dashboard/acts/{recordId}/folder', [DashboardFolderController::cla
     ->where('recordId', 'rec[A-Za-z0-9]+')
     ->middleware(BasicAuthMiddleware::class)
     ->name('dashboard.folder');
+
+Route::get('/upload', [DriveUploadController::class, 'index'])
+    ->middleware(BasicAuthMiddleware::class);
+Route::get('/upload/folders', [DriveUploadController::class, 'folders'])
+    ->middleware(BasicAuthMiddleware::class);
+Route::post('/upload', [DriveUploadController::class, 'upload'])
+    ->middleware(BasicAuthMiddleware::class);

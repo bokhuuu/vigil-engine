@@ -1,0 +1,107 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers;
+
+use App\Services\ActRequirements;
+use App\Services\AirtableService;
+use App\Services\GoogleDriveService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\View\View;
+
+class DriveUploadController
+{
+    public function __construct(
+        private AirtableService $airtable,
+        private ActRequirements $requirements,
+        private GoogleDriveService $drive,
+    ) {}
+
+    private function cachedActs(): array
+    {
+        $snapshot = Cache::get(DashboardController::SNAPSHOT_KEY);
+
+        if ($snapshot === null) {
+            $snapshot = ['acts' => $this->airtable->getAllActs()];
+        }
+
+        return $snapshot['acts'];
+    }
+
+    public function index(Request $request): View
+    {
+        $acts = collect($this->cachedActs())
+            ->map(fn (array $a) => [
+                'id' => $a['id'],
+                'number' => $a['fields']['🔖 აქტის ნომერი'] ?? '—',
+                'folder' => $a['fields']['💼 საქაღალდე'] ?? null,
+            ])
+            ->filter(fn (array $a) => $a['folder'] !== null)
+            ->sortBy(function (array $a) {
+                $parts = explode('-', $a['number']);
+
+                return [(int) ($parts[0] ?? 0), (int) ($parts[1] ?? 0)];
+            })
+            ->values();
+
+        return view('upload', [
+            'acts' => $acts,
+            'role' => $request->attributes->get('vigil_role'),
+        ]);
+    }
+
+    public function folders(Request $request): JsonResponse
+    {
+        $recordId = $request->query('act');
+        $act = collect($this->cachedActs())->firstWhere('id', $recordId);
+
+        if (! $act) {
+            return response()->json(['error' => 'ACT not found'], 404);
+        }
+
+        $folders = $this->requirements->requiredSubfolders($act['fields']);
+
+        return response()->json(['folders' => $folders]);
+    }
+
+    public function upload(Request $request): JsonResponse
+    {
+        $request->validate([
+            'act_id' => ['required', 'string'],
+            'folder' => ['required', 'string'],
+            'files' => ['required', 'array', 'min:1'],
+            'files.*' => ['required', 'file', 'max:102400'],
+        ]);
+
+        $act = collect($this->cachedActs())->firstWhere('id', $request->act_id);
+
+        if (! $act) {
+            return response()->json(['error' => 'ACT not found'], 404);
+        }
+
+        $folderUrl = $act['fields']['💼 საქაღალდე'] ?? null;
+
+        if (! $folderUrl) {
+            return response()->json(['error' => 'ACT has no Drive folder'], 422);
+        }
+
+        $subfolderId = $this->drive->findOrCreateSubfolder($folderUrl, $request->folder);
+        $uploaded = [];
+
+        foreach ($request->file('files') as $file) {
+            $this->drive->uploadFile(
+                $subfolderId,
+                $file->getClientOriginalName(),
+                file_get_contents($file->getRealPath()),
+                $file->getMimeType() ?? 'application/octet-stream',
+            );
+
+            $uploaded[] = $file->getClientOriginalName();
+        }
+
+        return response()->json(['uploaded' => $uploaded]);
+    }
+}
