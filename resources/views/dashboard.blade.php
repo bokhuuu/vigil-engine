@@ -912,7 +912,8 @@
                                 @if ($folder)
                                     <a href="{{ $folder }}" target="_blank" class="drive-link">📁</a>
                                     <button class="upload-btn" data-act-id="{{ $act['_id'] }}"
-                                        title="ფაილების ატვირთვა">⬆️</button>
+                                        title="ფაილების ატვირთვა"
+                                        style="cursor:pointer;background:none;border:none;padding:0;margin-left:6px;">⬆️</button>
                                 @elseif ($role === 'manager')
                                     <form method="POST" action="{{ route('dashboard.folder', $act['_id']) }}"
                                         onsubmit="const b = this.querySelector('button'); b.disabled = true; b.textContent = '…';">
@@ -1107,11 +1108,11 @@
             modal.style.display = 'flex';
 
             try {
-                const res = await fetch(`/upload/folders?record_id=${encodeURIComponent(actId)}`);
+                const res = await fetch(`/upload/folders?act=${encodeURIComponent(actId)}`);
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error ?? 'შეცდომა');
                 select.innerHTML = data.folders.length ?
-                    data.folders.map(f => `<option value="${f.id}">${f.name}</option>`).join('') :
+                    data.folders.map(f => `<option value="${f}">${f}</option>`).join('') :
                     '<option value="">საქაღალდე ვერ მოიძებნა</option>';
             } catch (err) {
                 select.innerHTML = `<option value="">შეცდომა: ${err.message}</option>`;
@@ -1127,10 +1128,10 @@
             const select = document.getElementById('upload-folder');
             const files = document.getElementById('upload-files');
             const progress = document.getElementById('upload-progress');
-            const folderId = select.value;
+            const folder = select.value;
             const fileList = files.files;
 
-            if (!folderId) {
+            if (!folder) {
                 alert('აირჩიე საქაღალდე');
                 return;
             }
@@ -1140,7 +1141,8 @@
             }
 
             const form = new FormData();
-            form.append('folder_id', folderId);
+            form.append('act_id', _uploadActId);
+            form.append('folder', folder);
             for (const f of fileList) form.append('files[]', f);
 
             progress.style.display = 'block';
@@ -1153,7 +1155,7 @@
                 });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error ?? 'სერვერის შეცდომა');
-                progress.textContent = `✅ ${data.uploaded} ფაილი ატვირთულია`;
+                progress.textContent = `✅ ${data.uploaded.length} ფაილი ატვირთულია`;
                 files.value = '';
                 setTimeout(closeUploadModal, 1500);
             } catch (err) {
