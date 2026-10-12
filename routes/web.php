@@ -28,8 +28,6 @@ Route::post('/dashboard/acts/{recordId}/folder', [DashboardFolderController::cla
     ->middleware(BasicAuthMiddleware::class)
     ->name('dashboard.folder');
 
-Route::get('/upload', [DriveUploadController::class, 'index'])
-    ->middleware(BasicAuthMiddleware::class);
 Route::get('/upload/folders', [DriveUploadController::class, 'folders'])
     ->middleware(BasicAuthMiddleware::class);
 Route::post('/upload', [DriveUploadController::class, 'upload'])

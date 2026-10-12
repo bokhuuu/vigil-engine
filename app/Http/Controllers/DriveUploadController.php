@@ -10,7 +10,6 @@ use App\Services\GoogleDriveService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\View\View;
 
 class DriveUploadController
 {
@@ -29,28 +28,6 @@ class DriveUploadController
         }
 
         return $snapshot['acts'];
-    }
-
-    public function index(Request $request): View
-    {
-        $acts = collect($this->cachedActs())
-            ->map(fn (array $a) => [
-                'id' => $a['id'],
-                'number' => $a['fields']['🔖 აქტის ნომერი'] ?? '—',
-                'folder' => $a['fields']['💼 საქაღალდე'] ?? null,
-            ])
-            ->filter(fn (array $a) => $a['folder'] !== null)
-            ->sortBy(function (array $a) {
-                $parts = explode('-', $a['number']);
-
-                return [(int) ($parts[0] ?? 0), (int) ($parts[1] ?? 0)];
-            })
-            ->values();
-
-        return view('upload', [
-            'acts' => $acts,
-            'role' => $request->attributes->get('vigil_role'),
-        ]);
     }
 
     public function folders(Request $request): JsonResponse
