@@ -282,6 +282,12 @@ class DriveWatcherService
 
     private function updateSubfolderColor(string $subfolderId, bool $hasFiles, bool $dryRun): void
     {
+        $meta = $this->driveService->getFileMetadata($subfolderId);
+
+        if ($meta === null || $meta['mimeType'] !== 'application/vnd.google-apps.folder') {
+            return;
+        }
+
         $color = $hasFiles ? self::COLOR_GREEN : self::COLOR_NONE;
         $prev = $this->state->getFolderColor($subfolderId);
 

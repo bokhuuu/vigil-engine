@@ -63,6 +63,12 @@ it('ticks checkbox when files appear in subfolder', function (): void {
     $drive = Mockery::mock(GoogleDriveService::class);
     $drive->shouldReceive('subfolderHasFiles')->with('sub-1')->andReturn(true);
     $drive->shouldReceive('setFolderColorAsUser')->andReturn(null)->byDefault();
+    $drive->shouldReceive('getFileMetadata')->with('sub-1')->andReturn([
+        'id' => 'sub-1',
+        'name' => 'ფოტოები',
+        'mimeType' => 'application/vnd.google-apps.folder',
+        'parents' => ['act-folder-1'],
+    ])->byDefault();
 
     $service = makeWatcherService($this->state, $airtable, $drive, events: $events);
     $service->process(['sub-1']);
@@ -78,6 +84,12 @@ it('starts grace timer when folder goes empty', function (): void {
     $drive = Mockery::mock(GoogleDriveService::class);
     $drive->shouldReceive('subfolderHasFiles')->with('sub-1')->andReturn(false);
     $drive->shouldReceive('setFolderColorAsUser')->andReturn(null)->byDefault();
+    $drive->shouldReceive('getFileMetadata')->with('sub-1')->andReturn([
+        'id' => 'sub-1',
+        'name' => 'ფოტოები',
+        'mimeType' => 'application/vnd.google-apps.folder',
+        'parents' => ['act-folder-1'],
+    ])->byDefault();
 
     $airtable = Mockery::mock(AirtableService::class);
     $airtable->shouldReceive('getActByNumber')->andReturn(null)->byDefault();
@@ -110,6 +122,12 @@ it('does not tick checkbox in dry run mode', function (): void {
     $drive = Mockery::mock(GoogleDriveService::class);
     $drive->shouldReceive('subfolderHasFiles')->with('sub-1')->andReturn(true);
     $drive->shouldReceive('setFolderColorAsUser')->andReturn(null)->byDefault();
+    $drive->shouldReceive('getFileMetadata')->with('sub-1')->andReturn([
+        'id' => 'sub-1',
+        'name' => 'ფოტოები',
+        'mimeType' => 'application/vnd.google-apps.folder',
+        'parents' => ['act-folder-1'],
+    ])->byDefault();
 
     $service = makeWatcherService($this->state, $airtable, $drive, events: $events);
     $service->process(['sub-1'], dryRun: true);
