@@ -911,10 +911,6 @@
                             <td class="center col-drive">
                                 @if ($folder)
                                     <a href="{{ $folder }}" target="_blank" class="drive-link">📁</a>
-                                    @if (isset($driveColors[$act['_id']]))
-                                        <span
-                                            style="margin-left:4px;">{{ $driveColors[$act['_id']] === '#d1fae5' ? '🟢' : '🟡' }}</span>
-                                    @endif
                                     <button class="upload-btn" data-act-id="{{ $act['_id'] }}"
                                         data-act-number="{{ $act['🔖 აქტის ნომერი'] ?? '' }}"
                                         title="ფაილების ატვირთვა"
