@@ -912,6 +912,7 @@
                                 @if ($folder)
                                     <a href="{{ $folder }}" target="_blank" class="drive-link">📁</a>
                                     <button class="upload-btn" data-act-id="{{ $act['_id'] }}"
+                                        data-act-number="{{ $act['🔖 აქტის ნომერი'] ?? '' }}"
                                         title="ფაილების ატვირთვა"
                                         style="cursor:pointer;background:none;border:none;padding:0;margin-left:6px;">⬆️</button>
                                 @elseif ($role === 'manager')
@@ -1090,11 +1091,11 @@
         document.querySelectorAll('.upload-btn').forEach(btn => {
             btn.addEventListener('click', e => {
                 e.stopPropagation();
-                openUploadModal(btn.dataset.actId);
+                openUploadModal(btn.dataset.actId, btn.dataset.actNumber);
             });
         });
 
-        async function openUploadModal(actId) {
+        async function openUploadModal(actId, actNumber) {
             _uploadActId = actId;
             const modal = document.getElementById('upload-modal');
             const select = document.getElementById('upload-folder');
@@ -1106,6 +1107,8 @@
             progress.textContent = '';
             select.innerHTML = '<option value="">იტვირთება…</option>';
             modal.style.display = 'flex';
+
+            modal.querySelector('h3').textContent = '📁 ACT ' + actNumber + ' — ფაილების ატვირთვა';
 
             try {
                 const res = await fetch(`/upload/folders?act=${encodeURIComponent(actId)}`);
