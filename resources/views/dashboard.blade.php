@@ -908,270 +908,273 @@
                                     <span style="color:#d0d7de;">—</span>
                                 @endif
                             </td>
-                            <td class="center col-drive"
-                                @if ($folder) <a href="{{ $folder }}" target="_blank" class="drive-link">📁</a>
+                            <td class="center col-drive">
+                                @if ($folder)
+                                    <a href="{{ $folder }}" target="_blank" class="drive-link">📁</a>
                                     @if (isset($driveColors[$act['_id']]))
-                                        <span style="margin-left:4px;">{{ $driveColors[$act['_id']] === '#d1fae5' ? '🟢' : '🟡' }}</span> @endif
-                                <button class="upload-btn" data-act-id="{{ $act['_id'] }}"
-                                data-act-number="{{ $act['🔖 აქტის ნომერი'] ?? '' }}" title="ფაილების ატვირთვა"
-                                style="cursor:pointer;background:none;border:none;padding:0;margin-left:6px;">
-                                ⬆️</button>
-                            @elseif ($role === 'manager')
-                                <form method="POST" action="{{ route('dashboard.folder', $act['_id']) }}"
-                                    onsubmit="const b = this.querySelector('button'); b.disabled = true; b.textContent = '…';">
-                                    @csrf
-                                    <button type="submit" class="folder-create-btn"
-                                        title="Drive საქაღალდის შექმნა">+ შექმნა</button>
-                                </form>
-                    @endif
-                    </td>
-                    </tr>
+                                        <span
+                                            style="margin-left:4px;">{{ $driveColors[$act['_id']] === '#d1fae5' ? '🟢' : '🟡' }}</span>
+                                    @endif
+                                    <button class="upload-btn" data-act-id="{{ $act['_id'] }}"
+                                        data-act-number="{{ $act['🔖 აქტის ნომერი'] ?? '' }}"
+                                        title="ფაილების ატვირთვა"
+                                        style="cursor:pointer;background:none;border:none;padding:0;margin-left:6px;">⬆️</button>
+                                @elseif ($role === 'manager')
+                                    <form method="POST" action="{{ route('dashboard.folder', $act['_id']) }}"
+                                        onsubmit="const b = this.querySelector('button'); b.disabled = true; b.textContent = '…';">
+                                        @csrf
+                                        <button type="submit" class="folder-create-btn"
+                                            title="Drive საქაღალდის შექმნა">+ შექმნა</button>
+                                    </form>
+                                @endif
+                            </td>
+                        </tr>
                     @empty
                         <tr>
                             <td colspan="{{ count($docFields) + 6 }}" class="empty">ACT-ები ვერ მოიძებნა</td>
                         </tr>
-                        @endforelse
-                        <tr id="search-empty-row" style="display:none;">
-                            <td colspan="{{ count($docFields) + 6 }}" class="empty">
-                                🔍 ACT ვერ მოიძებნა
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                    @endforelse
+                    <tr id="search-empty-row" style="display:none;">
+                        <td colspan="{{ count($docFields) + 6 }}" class="empty">
+                            🔍 ACT ვერ მოიძებნა
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
+    </div>
 
 
-        <div class="footer-bar">
-            ნაჩვენები: <strong id="visible-count">{{ $acts->count() }}</strong>
-            &nbsp;·&nbsp;
-            <a id="prev-page" href="#" style="color:#7c9df7;text-decoration:none;font-size:11px;display:none;">←
-                წინა</a>
-            <span id="page-info" style="font-size:11px;color:#8892a4;"></span>
-            <a id="next-page" href="#"
-                style="color:#7c9df7;text-decoration:none;font-size:11px;display:none;">შემდეგი →</a>
-        </div>
+    <div class="footer-bar">
+        ნაჩვენები: <strong id="visible-count">{{ $acts->count() }}</strong>
+        &nbsp;·&nbsp;
+        <a id="prev-page" href="#" style="color:#7c9df7;text-decoration:none;font-size:11px;display:none;">←
+            წინა</a>
+        <span id="page-info" style="font-size:11px;color:#8892a4;"></span>
+        <a id="next-page" href="#"
+            style="color:#7c9df7;text-decoration:none;font-size:11px;display:none;">შემდეგი →</a>
+    </div>
 
-        <script>
-            // ── Filter dropdowns ────────────────────────────────────────────
-            function toggleFilter(name) {
-                const dropdown = document.getElementById('fd-' + name);
-                const isOpen = dropdown.classList.contains('open');
+    <script>
+        // ── Filter dropdowns ────────────────────────────────────────────
+        function toggleFilter(name) {
+            const dropdown = document.getElementById('fd-' + name);
+            const isOpen = dropdown.classList.contains('open');
+            document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('open'));
+            if (!isOpen) dropdown.classList.add('open');
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.filter-group')) {
                 document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('open'));
-                if (!isOpen) dropdown.classList.add('open');
+            }
+        });
+
+        // ── Tooltip positioning ─────────────────────────────────────────
+        document.querySelectorAll('.tip').forEach(el => {
+            el.addEventListener('mousemove', (e) => {
+                el.style.setProperty('--tip-x', (e.clientX + 12) + 'px');
+                el.style.setProperty('--tip-y', (e.clientY + 16) + 'px');
+            });
+        });
+
+        // ── Search + Pagination ─────────────────────────────────────────
+        const PAGE_SIZE = 100;
+        const allRows = Array.from(document.querySelectorAll('#act-tbody tr:not(#search-empty-row)'));
+        let filteredRows = [...allRows];
+        let currentPage = 0;
+
+        const emptyRow = document.getElementById('search-empty-row');
+
+        function renderPage() {
+            const start = currentPage * PAGE_SIZE;
+            const end = start + PAGE_SIZE;
+
+            allRows.forEach(r => r.style.display = 'none');
+            filteredRows.slice(start, end).forEach(r => r.style.display = '');
+
+            if (emptyRow) {
+                emptyRow.style.display = filteredRows.length === 0 ? '' : 'none';
             }
 
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.filter-group')) {
-                    document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('open'));
-                }
-            });
+            const total = filteredRows.length;
+            const totalPages = Math.ceil(total / PAGE_SIZE);
+            const showing = Math.min(end, total) - start;
 
-            // ── Tooltip positioning ─────────────────────────────────────────
-            document.querySelectorAll('.tip').forEach(el => {
-                el.addEventListener('mousemove', (e) => {
-                    el.style.setProperty('--tip-x', (e.clientX + 12) + 'px');
-                    el.style.setProperty('--tip-y', (e.clientY + 16) + 'px');
-                });
-            });
+            document.getElementById('visible-count').textContent = total;
 
-            // ── Search + Pagination ─────────────────────────────────────────
-            const PAGE_SIZE = 100;
-            const allRows = Array.from(document.querySelectorAll('#act-tbody tr:not(#search-empty-row)'));
-            let filteredRows = [...allRows];
-            let currentPage = 0;
+            const pageInfo = document.getElementById('page-info');
+            const prevBtn = document.getElementById('prev-page');
+            const nextBtn = document.getElementById('next-page');
 
-            const emptyRow = document.getElementById('search-empty-row');
-
-            function renderPage() {
-                const start = currentPage * PAGE_SIZE;
-                const end = start + PAGE_SIZE;
-
-                allRows.forEach(r => r.style.display = 'none');
-                filteredRows.slice(start, end).forEach(r => r.style.display = '');
-
-                if (emptyRow) {
-                    emptyRow.style.display = filteredRows.length === 0 ? '' : 'none';
-                }
-
-                const total = filteredRows.length;
-                const totalPages = Math.ceil(total / PAGE_SIZE);
-                const showing = Math.min(end, total) - start;
-
-                document.getElementById('visible-count').textContent = total;
-
-                const pageInfo = document.getElementById('page-info');
-                const prevBtn = document.getElementById('prev-page');
-                const nextBtn = document.getElementById('next-page');
-
-                if (totalPages > 1) {
-                    pageInfo.textContent = ' გვ. ' + (currentPage + 1) + '/' + totalPages + ' ';
-                    prevBtn.style.display = currentPage > 0 ? 'inline' : 'none';
-                    nextBtn.style.display = currentPage < totalPages - 1 ? 'inline' : 'none';
-                } else {
-                    pageInfo.textContent = '';
-                    prevBtn.style.display = 'none';
-                    nextBtn.style.display = 'none';
-                }
+            if (totalPages > 1) {
+                pageInfo.textContent = ' გვ. ' + (currentPage + 1) + '/' + totalPages + ' ';
+                prevBtn.style.display = currentPage > 0 ? 'inline' : 'none';
+                nextBtn.style.display = currentPage < totalPages - 1 ? 'inline' : 'none';
+            } else {
+                pageInfo.textContent = '';
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
             }
+        }
 
-            function applySearch(query) {
-                const q = query.toLowerCase().trim().replace(/\s*-\s*/g, '-');
-                filteredRows = allRows.filter(row => {
-                    const actNum = row.querySelector('.act-num');
-                    return !q || (actNum && actNum.textContent.toLowerCase().trim().startsWith(q));
-                });
-                currentPage = 0;
-                renderPage();
-            }
-
-            const searchInput = document.getElementById('act-search');
-            const searchClear = document.getElementById('search-clear');
-
-            searchInput.addEventListener('input', function() {
-                searchClear.style.display = this.value ? 'block' : 'none';
-                applySearch(this.value);
+        function applySearch(query) {
+            const q = query.toLowerCase().trim().replace(/\s*-\s*/g, '-');
+            filteredRows = allRows.filter(row => {
+                const actNum = row.querySelector('.act-num');
+                return !q || (actNum && actNum.textContent.toLowerCase().trim().startsWith(q));
             });
-
-            function clearSearch() {
-                searchInput.value = '';
-                searchClear.style.display = 'none';
-                applySearch('');
-            }
-
-            document.getElementById('prev-page').addEventListener('click', (e) => {
-                e.preventDefault();
-                if (currentPage > 0) {
-                    currentPage--;
-                    renderPage();
-                    window.scrollTo(0, 0);
-                }
-            });
-
-            document.getElementById('next-page').addEventListener('click', (e) => {
-                e.preventDefault();
-                if (currentPage < Math.ceil(filteredRows.length / PAGE_SIZE) - 1) {
-                    currentPage++;
-                    renderPage();
-                    window.scrollTo(0, 0);
-                }
-            });
-
-            // ── Initial render ──────────────────────────────────────────────
+            currentPage = 0;
             renderPage();
+        }
 
-            // ── Silent auto-reload ──────────────────────────────────────────
-            // Keeps an open dashboard fresh; the shown time only changes
-            // when new data is actually fetched.
-            setTimeout(() => window.location.reload(), {{ $cacheMinutes }} * 60 * 1000);
-        </script>
-        {{-- Upload modal --}}
-        <div id="upload-modal"
-            style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
-            <div
-                style="background:#fff;border-radius:10px;padding:28px 32px;min-width:340px;max-width:460px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.25);position:relative;">
-                <button onclick="closeUploadModal()"
-                    style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#666;">✕</button>
-                <h3 style="margin:0 0 18px;font-size:1.05rem;">📁 ფაილების ატვირთვა</h3>
-                <label style="display:block;margin-bottom:6px;font-size:.85rem;color:#555;">საქაღალდე</label>
-                <select id="upload-folder"
-                    style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:6px;font-size:.9rem;margin-bottom:14px;">
-                    <option value="">იტვირთება…</option>
-                </select>
-                <label style="display:block;margin-bottom:6px;font-size:.85rem;color:#555;">ფაილები</label>
-                <input type="file" id="upload-files" multiple style="display:block;width:100%;margin-bottom:18px;">
-                <div id="upload-progress" style="display:none;margin-bottom:12px;font-size:.85rem;color:#555;"></div>
-                <button onclick="submitUpload()"
-                    style="width:100%;padding:10px;background:#1a56db;color:#fff;border:none;border-radius:6px;font-size:.95rem;cursor:pointer;font-weight:600;">ატვირთვა</button>
-            </div>
+        const searchInput = document.getElementById('act-search');
+        const searchClear = document.getElementById('search-clear');
+
+        searchInput.addEventListener('input', function() {
+            searchClear.style.display = this.value ? 'block' : 'none';
+            applySearch(this.value);
+        });
+
+        function clearSearch() {
+            searchInput.value = '';
+            searchClear.style.display = 'none';
+            applySearch('');
+        }
+
+        document.getElementById('prev-page').addEventListener('click', (e) => {
+            e.preventDefault();
+            if (currentPage > 0) {
+                currentPage--;
+                renderPage();
+                window.scrollTo(0, 0);
+            }
+        });
+
+        document.getElementById('next-page').addEventListener('click', (e) => {
+            e.preventDefault();
+            if (currentPage < Math.ceil(filteredRows.length / PAGE_SIZE) - 1) {
+                currentPage++;
+                renderPage();
+                window.scrollTo(0, 0);
+            }
+        });
+
+        // ── Initial render ──────────────────────────────────────────────
+        renderPage();
+
+        // ── Silent auto-reload ──────────────────────────────────────────
+        // Keeps an open dashboard fresh; the shown time only changes
+        // when new data is actually fetched.
+        setTimeout(() => window.location.reload(), {{ $cacheMinutes }} * 60 * 1000);
+    </script>
+    {{-- Upload modal --}}
+    <div id="upload-modal"
+        style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
+        <div
+            style="background:#fff;border-radius:10px;padding:28px 32px;min-width:340px;max-width:460px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.25);position:relative;">
+            <button onclick="closeUploadModal()"
+                style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#666;">✕</button>
+            <h3 style="margin:0 0 18px;font-size:1.05rem;">📁 ფაილების ატვირთვა</h3>
+            <label style="display:block;margin-bottom:6px;font-size:.85rem;color:#555;">საქაღალდე</label>
+            <select id="upload-folder"
+                style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:6px;font-size:.9rem;margin-bottom:14px;">
+                <option value="">იტვირთება…</option>
+            </select>
+            <label style="display:block;margin-bottom:6px;font-size:.85rem;color:#555;">ფაილები</label>
+            <input type="file" id="upload-files" multiple style="display:block;width:100%;margin-bottom:18px;">
+            <div id="upload-progress" style="display:none;margin-bottom:12px;font-size:.85rem;color:#555;"></div>
+            <button onclick="submitUpload()"
+                style="width:100%;padding:10px;background:#1a56db;color:#fff;border:none;border-radius:6px;font-size:.95rem;cursor:pointer;font-weight:600;">ატვირთვა</button>
         </div>
+    </div>
 
-        <script>
-            let _uploadActId = null;
+    <script>
+        let _uploadActId = null;
 
-            document.querySelectorAll('.upload-btn').forEach(btn => {
-                btn.addEventListener('click', e => {
-                    e.stopPropagation();
-                    openUploadModal(btn.dataset.actId, btn.dataset.actNumber);
+        document.querySelectorAll('.upload-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                openUploadModal(btn.dataset.actId, btn.dataset.actNumber);
+            });
+        });
+
+        async function openUploadModal(actId, actNumber) {
+            _uploadActId = actId;
+            const modal = document.getElementById('upload-modal');
+            const select = document.getElementById('upload-folder');
+            const files = document.getElementById('upload-files');
+            const progress = document.getElementById('upload-progress');
+
+            files.value = '';
+            progress.style.display = 'none';
+            progress.textContent = '';
+            select.innerHTML = '<option value="">იტვირთება…</option>';
+            modal.style.display = 'flex';
+
+            modal.querySelector('h3').textContent = '📁 ACT ' + actNumber + ' — ფაილების ატვირთვა';
+
+            try {
+                const res = await fetch(`/upload/folders?act=${encodeURIComponent(actId)}`);
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error ?? 'შეცდომა');
+                select.innerHTML = data.folders.length ?
+                    data.folders.map(f => `<option value="${f}">${f}</option>`).join('') :
+                    '<option value="">საქაღალდე ვერ მოიძებნა</option>';
+            } catch (err) {
+                select.innerHTML = `<option value="">შეცდომა: ${err.message}</option>`;
+            }
+        }
+
+        function closeUploadModal() {
+            document.getElementById('upload-modal').style.display = 'none';
+            _uploadActId = null;
+        }
+
+        async function submitUpload() {
+            const select = document.getElementById('upload-folder');
+            const files = document.getElementById('upload-files');
+            const progress = document.getElementById('upload-progress');
+            const folder = select.value;
+            const fileList = files.files;
+
+            if (!folder) {
+                alert('აირჩიე საქაღალდე');
+                return;
+            }
+            if (!fileList.length) {
+                alert('აირჩიე ფაილ(ებ)ი');
+                return;
+            }
+
+            const form = new FormData();
+            form.append('act_id', _uploadActId);
+            form.append('folder', folder);
+            for (const f of fileList) form.append('files[]', f);
+
+            progress.style.display = 'block';
+            progress.textContent = 'იტვირთება…';
+
+            try {
+                const res = await fetch('/upload', {
+                    method: 'POST',
+                    body: form
                 });
-            });
-
-            async function openUploadModal(actId, actNumber) {
-                _uploadActId = actId;
-                const modal = document.getElementById('upload-modal');
-                const select = document.getElementById('upload-folder');
-                const files = document.getElementById('upload-files');
-                const progress = document.getElementById('upload-progress');
-
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error ?? 'სერვერის შეცდომა');
+                progress.textContent = `✅ ${data.uploaded.length} ფაილი ატვირთულია`;
                 files.value = '';
-                progress.style.display = 'none';
-                progress.textContent = '';
-                select.innerHTML = '<option value="">იტვირთება…</option>';
-                modal.style.display = 'flex';
-
-                modal.querySelector('h3').textContent = '📁 ACT ' + actNumber + ' — ფაილების ატვირთვა';
-
-                try {
-                    const res = await fetch(`/upload/folders?act=${encodeURIComponent(actId)}`);
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.error ?? 'შეცდომა');
-                    select.innerHTML = data.folders.length ?
-                        data.folders.map(f => `<option value="${f}">${f}</option>`).join('') :
-                        '<option value="">საქაღალდე ვერ მოიძებნა</option>';
-                } catch (err) {
-                    select.innerHTML = `<option value="">შეცდომა: ${err.message}</option>`;
-                }
+                setTimeout(closeUploadModal, 1500);
+            } catch (err) {
+                progress.textContent = `❌ ${err.message}`;
             }
+        }
 
-            function closeUploadModal() {
-                document.getElementById('upload-modal').style.display = 'none';
-                _uploadActId = null;
-            }
+        document.getElementById('upload-modal').addEventListener('click', e => {
+            if (e.target === document.getElementById('upload-modal')) closeUploadModal();
+        });
+    </script>
 
-            async function submitUpload() {
-                const select = document.getElementById('upload-folder');
-                const files = document.getElementById('upload-files');
-                const progress = document.getElementById('upload-progress');
-                const folder = select.value;
-                const fileList = files.files;
+</body>
 
-                if (!folder) {
-                    alert('აირჩიე საქაღალდე');
-                    return;
-                }
-                if (!fileList.length) {
-                    alert('აირჩიე ფაილ(ებ)ი');
-                    return;
-                }
-
-                const form = new FormData();
-                form.append('act_id', _uploadActId);
-                form.append('folder', folder);
-                for (const f of fileList) form.append('files[]', f);
-
-                progress.style.display = 'block';
-                progress.textContent = 'იტვირთება…';
-
-                try {
-                    const res = await fetch('/upload', {
-                        method: 'POST',
-                        body: form
-                    });
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.error ?? 'სერვერის შეცდომა');
-                    progress.textContent = `✅ ${data.uploaded.length} ფაილი ატვირთულია`;
-                    files.value = '';
-                    setTimeout(closeUploadModal, 1500);
-                } catch (err) {
-                    progress.textContent = `❌ ${err.message}`;
-                }
-            }
-
-            document.getElementById('upload-modal').addEventListener('click', e => {
-                if (e.target === document.getElementById('upload-modal')) closeUploadModal();
-            });
-        </script>
-
-    </body>
-
-    </html>
+</html>
