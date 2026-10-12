@@ -292,3 +292,33 @@ test('dashboard passes empty driveColors when state file missing', function () {
         ->assertOk()
         ->assertViewHas('driveColors', []);
 });
+
+test('dashboard derives driveColors from subfolders when parent has no color', function () {
+    Cache::flush();
+
+    $statePath = storage_path('app/google/drive-watcher-state.json');
+    @mkdir(dirname($statePath), 0755, true);
+    file_put_contents($statePath, json_encode([
+        'page_token' => '123',
+        'folder_colors' => [
+            'sub-green' => '#00843D',
+        ],
+        'folder_index' => [
+            'parent-A' => ['act_record_id' => 'recA'],
+        ],
+        'subfolder_index' => [
+            'sub-green' => ['act_folder_id' => 'parent-A', 'name' => 'ფოტოები'],
+        ],
+    ]));
+
+    Http::fake([
+        'api.airtable.com/*' => Http::response(['records' => []], 200),
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Basic '.base64_encode('vigil:test-password')])
+        ->get('/dashboard')
+        ->assertOk()
+        ->assertViewHas('driveColors', fn ($colors) => $colors['recA'] === '#d1fae5');
+
+    @unlink($statePath);
+});

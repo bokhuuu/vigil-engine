@@ -74,8 +74,10 @@ class DashboardController
     }
 
     /**
-     * Build a map of act_record_id → CSS background-color string
-     * by reading the drive-watcher state file. Returns [] if file missing/unreadable.
+     * Build a map of act_record_id → color hex ('#d1fae5' or '#fef9c3')
+     * by reading the drive-watcher state file. Checks the parent folder's
+     * own color first, then falls back to any colored subfolder.
+     * Returns [] if file missing/unreadable.
      */
     private function loadDriveColors(): array
     {
@@ -93,19 +95,40 @@ class DashboardController
 
         $folderColors = $state['folder_colors'] ?? [];
         $folderIndex = $state['folder_index'] ?? [];
+        $subfolderIndex = $state['subfolder_index'] ?? [];
+
+        // Build: parentFolderId → list of its subfolder IDs
+        $parentToSubs = [];
+        foreach ($subfolderIndex as $subId => $meta) {
+            $parentId = $meta['act_folder_id'] ?? null;
+            if ($parentId !== null) {
+                $parentToSubs[$parentId][] = $subId;
+            }
+        }
 
         $map = [];
         foreach ($folderIndex as $folderId => $meta) {
             $recordId = $meta['act_record_id'] ?? null;
-            $hex = $folderColors[$folderId] ?? '';
-
-            if ($recordId === null || $hex === '') {
+            if ($recordId === null) {
                 continue;
             }
 
-            $map[$recordId] = $hex === '#00843D'
-                ? '#d1fae5'
-                : '#fef9c3';
+            // Parent's own color (written by engine on change events)
+            $ownHex = $folderColors[$folderId] ?? '';
+
+            // Derive from subfolders (102 already have colors right now)
+            $subHexes = array_filter(
+                array_map(fn ($subId) => $folderColors[$subId] ?? '', $parentToSubs[$folderId] ?? []),
+                fn ($h) => $h !== ''
+            );
+
+            $hex = $ownHex !== '' ? $ownHex : ($subHexes !== [] ? array_values($subHexes)[0] : '');
+
+            if ($hex === '') {
+                continue;
+            }
+
+            $map[$recordId] = $hex === '#00843D' ? '#d1fae5' : '#fef9c3';
         }
 
         return $map;
