@@ -358,7 +358,7 @@ class GoogleDriveService
             'parents' => [$parentFolderId],
         ]);
 
-        $file = $this->drive()->files->create($metadata, [
+        $file = $this->getUserDrive()->files->create($metadata, [
             'data' => $content,
             'mimeType' => $mimeType,
             'uploadType' => 'multipart',
