@@ -662,6 +662,9 @@
                                 @if ($business->drive_folder_url)
                                     <a href="{{ $business->drive_folder_url }}" target="_blank"
                                         style="color:var(--blue);">📁 Drive</a>
+                                    <button type="button" onclick="openUploadModal()"
+                                        style="margin-left:0.5rem;background:none;border:none;cursor:pointer;font-size:1rem;padding:0;line-height:1;"
+                                        title="ფაილის ატვირთვა">⬆️</button>
                                 @else
                                     <button type="button" class="btn btn-edit"
                                         style="font-size:0.78rem;padding:0.25rem 0.75rem;"
@@ -758,7 +761,7 @@
             {{-- CORRESPONDENCE CARD --}}
             <div class="card" style="grid-column: span 2;">
                 <div class="card-header">მიმოწერა</div>
-                <div class="card-body">
+                <div class="card-body" style="max-height:520px;overflow-y:auto;">
                     @forelse($business->correspondence->sortBy('round') as $corr)
                         <div class="corr-item">
                             <div class="corr-header">
@@ -937,6 +940,34 @@
 
         </div>
 
+        {{-- UPLOAD MODAL --}}
+        <div class="modal-overlay" id="upload-modal" onclick="if(event.target===this)closeUploadModal()">
+            <div class="modal">
+                <div class="modal-title">📤 ფაილის ატვირთვა</div>
+                <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">
+                    {{ $business->registration_code }} · {{ $business->name }}</div>
+                <div style="margin-bottom:1rem;">
+                    <label
+                        style="display:block;font-size:0.82rem;font-weight:500;margin-bottom:0.375rem;">საქაღალდე</label>
+                    <select id="upload-folder-select"
+                        style="width:100%;padding:0.45rem 0.65rem;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:0.88rem;">
+                        <option value="">— ჩატვირთვა... —</option>
+                    </select>
+                </div>
+                <div style="margin-bottom:1.25rem;">
+                    <label style="display:block;font-size:0.82rem;font-weight:500;margin-bottom:0.375rem;">ფაილები</label>
+                    <input type="file" id="upload-files" multiple
+                        style="width:100%;font-size:0.85rem;color:var(--text);">
+                </div>
+                <div id="upload-status" style="font-size:0.82rem;min-height:1.2em;margin-bottom:0.75rem;"></div>
+                <div class="modal-actions">
+                    <button type="button" onclick="closeUploadModal()">გაუქმება</button>
+                    <button type="button" id="upload-submit-btn" onclick="submitUpload()"
+                        style="background:var(--blue);color:#fff;border-color:var(--blue);">ატვირთვა</button>
+                </div>
+            </div>
+        </div>
+
         {{-- DELETE MODAL --}}
         <div class="modal-overlay" id="delete-modal">
             <div class="modal">
@@ -1021,6 +1052,77 @@
                 document.getElementById('corr-delete-label').textContent = 'მიმოწერა-' + round;
                 document.getElementById('corr-delete-form').action = '/business/{{ $business->id }}/correspondence/' + id;
                 document.getElementById('corr-delete-modal').classList.add('active');
+            }
+
+            function openUploadModal() {
+                const sel = document.getElementById('upload-folder-select');
+                sel.innerHTML = '<option value="">— ჩატვირთვა... —</option>';
+                document.getElementById('upload-files').value = '';
+                document.getElementById('upload-status').textContent = '';
+                document.getElementById('upload-modal').classList.add('active');
+
+                fetch('{{ route('business.upload.folders') }}?business_id={{ $business->id }}')
+                    .then(r => r.json())
+                    .then(data => {
+                        sel.innerHTML = '<option value="">— საქაღალდე —</option>';
+                        (data.folders || []).forEach(f => {
+                            const o = document.createElement('option');
+                            o.value = f;
+                            o.textContent = f;
+                            sel.appendChild(o);
+                        });
+                    });
+            }
+
+            function closeUploadModal() {
+                document.getElementById('upload-modal').classList.remove('active');
+            }
+
+            function submitUpload() {
+                const folder = document.getElementById('upload-folder-select').value;
+                const files = document.getElementById('upload-files').files;
+                const status = document.getElementById('upload-status');
+                const btn = document.getElementById('upload-submit-btn');
+
+                if (!folder) {
+                    status.textContent = '⚠️ აირჩიეთ საქაღალდე';
+                    return;
+                }
+                if (!files.length) {
+                    status.textContent = '⚠️ აირჩიეთ ფაილი';
+                    return;
+                }
+
+                const fd = new FormData();
+                fd.append('business_id', '{{ $business->id }}');
+                fd.append('folder', folder);
+                for (const f of files) fd.append('files[]', f);
+
+                btn.disabled = true;
+                status.textContent = '⏳ ატვირთვა...';
+
+                fetch('{{ route('business.upload.store') }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: fd,
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.uploaded) {
+                            status.textContent = '✅ ატვირთულია: ' + data.uploaded.join(', ');
+                            document.getElementById('upload-files').value = '';
+                        } else {
+                            status.textContent = '❌ ' + (data.error ?? 'შეცდომა');
+                        }
+                    })
+                    .catch(() => {
+                        status.textContent = '❌ ქსელის შეცდომა';
+                    })
+                    .finally(() => {
+                        btn.disabled = false;
+                    });
             }
         </script>
 

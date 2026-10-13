@@ -449,20 +449,6 @@
             color: #fff;
         }
 
-        .drive-link {
-            font-size: 0.78rem;
-            color: var(--blue);
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            transition: opacity 0.15s;
-        }
-
-        .drive-link:hover {
-            opacity: 0.75;
-        }
-
         .td-empty {
             color: var(--text-3);
             font-size: 0.78rem;
@@ -631,7 +617,6 @@
                             <th>ლოტი</th>
                             <th>ACT</th>
                             <th>სტატუსი</th>
-                            <th>Drive</th>
                         </tr>
                     </thead>
                     <tbody id="tbody">
@@ -669,15 +654,6 @@
                                     @if ($business->correspondence->where('status', 'overdue')->count() > 0)
                                         <span class="badge badge-overdue" style="margin-left:0.375rem;"
                                             title="ვადაგადაცილებული მიმოწერა">⚠️</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if ($business->drive_folder_url)
-                                        <a href="{{ $business->drive_folder_url }}" target="_blank"
-                                            class="drive-link">📁
-                                            Drive</a>
-                                    @else
-                                        <span class="td-empty">—</span>
                                     @endif
                                 </td>
                             </tr>
@@ -775,6 +751,7 @@
 
             applyFilters();
         </script>
+
 
     </body>
 
