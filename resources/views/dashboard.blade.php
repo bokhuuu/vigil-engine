@@ -362,7 +362,9 @@
 
         .table-scroll {
             overflow-x: auto;
+            overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            max-height: calc(100vh - 255px);
         }
 
         table {
@@ -373,6 +375,9 @@
 
         thead tr {
             background: #f8f9fc;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         th {
@@ -663,10 +668,53 @@
         tr:hover .col-drive {
             background: #eef0f5 !important;
         }
+
+        /* Loading spinner */
+        #page-loader {
+            position: fixed;
+            inset: 0;
+            background: #f0f2f5;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        #page-loader.hidden {
+            display: none;
+        }
+
+        .spinner-ring {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e4e8f0;
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spinner-label {
+            font-size: 11px;
+            color: #8892a4;
+            letter-spacing: 0.05em;
+        }
     </style>
 </head>
 
 <body>
+    {{-- Page loader --}}
+    <div id="page-loader">
+        <div class="spinner-ring"></div>
+        <div class="spinner-label">იტვირთება…</div>
+    </div>
 
     {{-- Header --}}
     <div class="header">
@@ -1043,7 +1091,7 @@
             if (currentPage > 0) {
                 currentPage--;
                 renderPage();
-                window.scrollTo(0, 0);
+                document.querySelector('.table-scroll').scrollTo(0, 0);
             }
         });
 
@@ -1052,7 +1100,7 @@
             if (currentPage < Math.ceil(filteredRows.length / PAGE_SIZE) - 1) {
                 currentPage++;
                 renderPage();
-                window.scrollTo(0, 0);
+                document.querySelector('.table-scroll').scrollTo(0, 0);
             }
         });
 
@@ -1086,6 +1134,11 @@
     </div>
 
     <script>
+        // ── Page loader ─────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('page-loader').classList.add('hidden');
+        });
+
         let _uploadActId = null;
 
         document.querySelectorAll('.upload-btn').forEach(btn => {
