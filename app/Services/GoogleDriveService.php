@@ -436,4 +436,24 @@ class GoogleDriveService
         return $this->findChildFolder($subfolderName, $actFolderId)
             ?? $this->createFolder($subfolderName, $actFolderId);
     }
+
+    /**
+     * List direct subfolders of a Drive folder URL.
+     * Returns an array of folder names, excluding any in $exclude.
+     */
+    public function listSubfoldersFromUrl(string $folderUrl, array $exclude = []): array
+    {
+        $folderId = $this->folderIdFromUrl($folderUrl);
+
+        if ($folderId === null) {
+            throw new \InvalidArgumentException("Invalid Drive folder URL: {$folderUrl}");
+        }
+
+        $folders = $this->listChildFolders($folderId);
+
+        return array_values(array_filter(
+            array_keys($folders),
+            fn (string $name) => ! in_array($name, $exclude, true),
+        ));
+    }
 }
