@@ -1113,7 +1113,6 @@
                     .then(r => r.json())
                     .then(data => {
                         if (data.uploaded) {
-                            console.log('response:', JSON.stringify(data));
                             status.textContent = '✅ ატვირთულია: ' + data.uploaded.join(', ');
                             setTimeout(() => closeUploadModal(), 1500);
                             document.getElementById('upload-files').value = '';
