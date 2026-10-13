@@ -1114,7 +1114,7 @@
                     .then(data => {
                         if (data.uploaded) {
                             status.textContent = '✅ ატვირთულია: ' + data.uploaded.join(', ');
-                            closeUploadModal();
+                            setTimeout(() => closeUploadModal(), 1500);
                             document.getElementById('upload-files').value = '';
                         } else {
                             status.textContent = '❌ ' + (data.error ?? 'შეცდომა');
