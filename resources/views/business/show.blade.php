@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $business->name }} · Vigil</title>
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💼</text></svg>">
@@ -961,9 +962,10 @@
                 </div>
                 <div id="upload-status" style="font-size:0.82rem;min-height:1.2em;margin-bottom:0.75rem;"></div>
                 <div class="modal-actions">
-                    <button type="button" onclick="closeUploadModal()">გაუქმება</button>
-                    <button type="button" id="upload-submit-btn" onclick="submitUpload()"
-                        style="background:var(--blue);color:#fff;border-color:var(--blue);">ატვირთვა</button>
+                    <button type="button" class="btn btn-cancel" style="display:inline-flex;"
+                        onclick="closeUploadModal()">გაუქმება</button>
+                    <button type="button" class="btn btn-edit" id="upload-submit-btn" onclick="submitUpload()"
+                        style="background:var(--blue);">ატვირთვა</button>
                 </div>
             </div>
         </div>
