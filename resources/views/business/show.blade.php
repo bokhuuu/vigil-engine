@@ -1080,9 +1080,9 @@
                 document.getElementById('upload-modal').classList.remove('active');
             }
 
-            function submitUpload() {
+            async function submitUpload() {
                 const folder = document.getElementById('upload-folder-select').value;
-                const files = document.getElementById('upload-files').files;
+                const files = Array.from(document.getElementById('upload-files').files);
                 const status = document.getElementById('upload-status');
                 const btn = document.getElementById('upload-submit-btn');
 
@@ -1095,37 +1095,46 @@
                     return;
                 }
 
-                const fd = new FormData();
-                fd.append('business_id', '{{ $business->id }}');
-                fd.append('folder', folder);
-                for (const f of files) fd.append('files[]', f);
-
                 btn.disabled = true;
-                status.textContent = '⏳ ატვირთვა...';
+                const CHUNK = 5;
+                const total = files.length;
+                let uploaded = [];
+                let failed = [];
 
-                fetch('{{ route('business.upload.store') }}', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        },
-                        body: fd,
-                    })
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.uploaded) {
-                            status.textContent = '✅ ატვირთულია: ' + data.uploaded.join(', ');
-                            setTimeout(() => closeUploadModal(), 1500);
-                            document.getElementById('upload-files').value = '';
-                        } else {
-                            status.textContent = '❌ ' + (data.error ?? 'შეცდომა');
-                        }
-                    })
-                    .catch(() => {
-                        status.textContent = '❌ ქსელის შეცდომა';
-                    })
-                    .finally(() => {
-                        btn.disabled = false;
-                    });
+                for (let i = 0; i < total; i += CHUNK) {
+                    const chunk = files.slice(i, i + CHUNK);
+                    status.textContent = '⏳ ატვირთვა... ' + Math.min(i + CHUNK, total) + ' / ' + total;
+
+                    const fd = new FormData();
+                    fd.append('business_id', '{{ $business->id }}');
+                    fd.append('folder', folder);
+                    for (const f of chunk) fd.append('files[]', f);
+
+                    try {
+                        const res = await fetch('{{ route('business.upload.store') }}', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: fd,
+                        });
+                        const data = await res.json();
+                        if (data.uploaded) uploaded = uploaded.concat(data.uploaded);
+                        if (data.failed) failed = failed.concat(data.failed);
+                    } catch {
+                        failed = failed.concat(chunk.map(f => f.name));
+                    }
+                }
+
+                btn.disabled = false;
+                document.getElementById('upload-files').value = '';
+
+                if (failed.length) {
+                    status.textContent = '✅ ატვირთულია: ' + uploaded.length + '  ❌ ვერ ატვირთა: ' + failed.length;
+                } else {
+                    status.textContent = '✅ ატვირთულია: ' + uploaded.length + ' ფაილი';
+                }
+                setTimeout(() => closeUploadModal(), 1500);
             }
         </script>
 

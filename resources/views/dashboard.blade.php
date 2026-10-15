@@ -1185,42 +1185,59 @@
 
         async function submitUpload() {
             const select = document.getElementById('upload-folder');
-            const files = document.getElementById('upload-files');
+            const filesInput = document.getElementById('upload-files');
             const progress = document.getElementById('upload-progress');
             const folder = select.value;
-            const fileList = files.files;
+            const files = Array.from(filesInput.files);
 
             if (!folder) {
                 alert('აირჩიე საქაღალდე');
                 return;
             }
-            if (!fileList.length) {
+            if (!files.length) {
                 alert('აირჩიე ფაილ(ებ)ი');
                 return;
             }
 
-            const form = new FormData();
-            form.append('act_id', _uploadActId);
-            form.append('folder', folder);
-            for (const f of fileList) form.append('files[]', f);
-
             window._uploadInProgress = true;
             progress.style.display = 'block';
-            progress.textContent = 'იტვირთება…';
 
-            try {
-                const res = await fetch('/upload', {
-                    method: 'POST',
-                    body: form
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error ?? 'სერვერის შეცდომა');
-                progress.textContent = `✅ ${data.uploaded.length} ფაილი ატვირთულია`;
-                files.value = '';
-                setTimeout(closeUploadModal, 1500);
-            } catch (err) {
-                progress.textContent = `❌ ${err.message}`;
+            const CHUNK = 5;
+            const total = files.length;
+            let uploaded = [];
+            let failed = [];
+
+            for (let i = 0; i < total; i += CHUNK) {
+                const chunk = files.slice(i, i + CHUNK);
+                progress.textContent = `⏳ იტვირთება… ${Math.min(i + CHUNK, total)} / ${total}`;
+
+                const form = new FormData();
+                form.append('act_id', _uploadActId);
+                form.append('folder', folder);
+                for (const f of chunk) form.append('files[]', f);
+
+                try {
+                    const res = await fetch('/upload', {
+                        method: 'POST',
+                        body: form
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error ?? 'სერვერის შეცდომა');
+                    if (data.uploaded) uploaded = uploaded.concat(data.uploaded);
+                    if (data.failed) failed = failed.concat(data.failed);
+                } catch (err) {
+                    failed = failed.concat(chunk.map(f => f.name));
+                }
             }
+
+            filesInput.value = '';
+
+            if (failed.length) {
+                progress.textContent = `✅ ატვირთულია: ${uploaded.length}  ❌ ვერ ატვირთა: ${failed.length}`;
+            } else {
+                progress.textContent = `✅ ${uploaded.length} ფაილი ატვირთულია`;
+            }
+            setTimeout(closeUploadModal, 1500);
         }
 
         document.getElementById('upload-modal').addEventListener('click', e => {
