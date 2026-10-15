@@ -65,18 +65,25 @@ class BusinessUploadController extends Controller
         );
 
         $uploaded = [];
+        $failed = [];
 
         foreach ($request->file('files') as $file) {
-            $this->businessDrive->uploadFileToDrive(
-                $subfolderId,
-                $file->getClientOriginalName(),
-                file_get_contents($file->getRealPath()),
-                $file->getMimeType() ?? 'application/octet-stream',
-            );
-
-            $uploaded[] = $file->getClientOriginalName();
+            try {
+                $this->businessDrive->uploadFileToDrive(
+                    $subfolderId,
+                    $file->getClientOriginalName(),
+                    file_get_contents($file->getRealPath()),
+                    $file->getMimeType() ?? 'application/octet-stream',
+                );
+                $uploaded[] = $file->getClientOriginalName();
+            } catch (\Throwable $e) {
+                $failed[] = $file->getClientOriginalName();
+            }
         }
 
-        return response()->json(['uploaded' => $uploaded]);
+        return response()->json([
+            'uploaded' => $uploaded,
+            'failed' => $failed,
+        ]);
     }
 }
