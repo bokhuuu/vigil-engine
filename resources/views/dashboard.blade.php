@@ -1118,7 +1118,14 @@
         // Keeps an open dashboard fresh; the shown time only changes
         // when new data is actually fetched.
         const _reloadMs = {{ $cacheMinutes }} * 60 * 1000;
-        const _reloadAt = Date.now() + _reloadMs;
+        const _stored = sessionStorage.getItem('_reloadAt');
+        const _reloadAt = (_stored && parseInt(_stored) > Date.now()) ?
+            parseInt(_stored) :
+            (() => {
+                const t = Date.now() + _reloadMs;
+                sessionStorage.setItem('_reloadAt', t);
+                return t;
+            })();
         const _countdownEl = document.getElementById('reload-countdown');
 
         function _updateCountdown() {
