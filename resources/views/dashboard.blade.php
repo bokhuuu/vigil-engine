@@ -97,6 +97,12 @@
             animation: pulse 2s infinite;
         }
 
+        .timer-countdown {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            color: #4b5563;
+        }
+
         @keyframes pulse {
 
             0%,
@@ -727,6 +733,7 @@
                 <div class="timer-dot"
                     @if ($isStale) style="background:#f59e0b;animation:none;" @endif></div>
                 <span>განახლდა {{ $fetchedAt->format('H:i') }}</span>
+                <span class="timer-countdown" id="reload-countdown"></span>
             </div>
             <a href="{{ $statsUrl }}" target="_blank" class="stats-link">Airtable სტატისტიკა →</a>
         </div>
@@ -1110,10 +1117,29 @@
         // ── Silent auto-reload ──────────────────────────────────────────
         // Keeps an open dashboard fresh; the shown time only changes
         // when new data is actually fetched.
+        const _reloadMs = {{ $cacheMinutes }} * 60 * 1000;
+        const _reloadAt = Date.now() + _reloadMs;
+        const _countdownEl = document.getElementById('reload-countdown');
+
+        function _updateCountdown() {
+            if (window._uploadInProgress) {
+                _countdownEl.textContent = '';
+                return;
+            }
+            const left = Math.max(0, _reloadAt - Date.now());
+            const m = Math.floor(left / 60000);
+            const s = Math.floor((left % 60000) / 1000);
+            _countdownEl.textContent = m + ':' + String(s).padStart(2, '0') + '-ში';
+        }
+
+        _updateCountdown();
+        setInterval(_updateCountdown, 1000);
+
         setTimeout(() => {
             if (!window._uploadInProgress) window.location.reload();
-        }, {{ $cacheMinutes }} * 60 * 1000);
+        }, _reloadMs);
     </script>
+
     {{-- Upload modal --}}
     <div id="upload-modal"
         style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
