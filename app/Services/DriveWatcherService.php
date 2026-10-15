@@ -154,7 +154,7 @@ class DriveWatcherService
             Log::info("DriveWatcherService: grace expired for [{$subfolder['name']}] on ACT [{$actInfo['act_number']}]".($dryRun ? ' [DRY RUN]' : ''));
 
             if (! $dryRun) {
-                // $this->events->fileRemoved($actInfo['act_number'], $subfolder['name']);
+                $this->events->fileRemoved($actInfo['act_number'], $subfolder['name']);
                 $this->state->setSubfolderState($subfolderId, 'removed');
             }
 

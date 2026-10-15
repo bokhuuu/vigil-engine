@@ -49,10 +49,6 @@ class DriveWatchCommand extends Command
         try {
             $changedIds = $this->reader->getChangedIds();
             $this->watcher->process($changedIds, $dryRun);
-            $this->watcher->processGraceTimers(
-                (int) (microtime(true) * 1000),
-                $dryRun
-            );
         } catch (\Exception $e) {
             Log::error('vigil:drive-watch failed: '.$e->getMessage());
 

@@ -45,7 +45,6 @@ it('processes changes in dry run mode', function (): void {
 
     $watcher = Mockery::mock(DriveWatcherService::class);
     $watcher->shouldReceive('process')->once()->with(['id1', 'id2'], true);
-    $watcher->shouldReceive('processGraceTimers')->once();
     $this->app->instance(DriveWatcherService::class, $watcher);
 
     $this->artisan('vigil:drive-watch --dry-run')
