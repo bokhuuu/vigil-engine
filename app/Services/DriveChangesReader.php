@@ -47,6 +47,13 @@ class DriveChangesReader
 
                 foreach ($response->getChanges() as $change) {
                     $changed[] = $change->getFileId();
+
+                    $file = $change->getFile();
+                    if ($file !== null && $file->getParents()) {
+                        foreach ($file->getParents() as $parentId) {
+                            $changed[] = $parentId;
+                        }
+                    }
                 }
 
                 if ($response->getNextPageToken()) {

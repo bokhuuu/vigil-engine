@@ -43,9 +43,11 @@ it('returns changed file ids and updates page token', function (): void {
 
     $change1 = Mockery::mock(Change::class);
     $change1->shouldReceive('getFileId')->andReturn('file-id-1');
+    $change1->shouldReceive('getFile')->andReturn(null);
 
     $change2 = Mockery::mock(Change::class);
     $change2->shouldReceive('getFileId')->andReturn('file-id-2');
+    $change2->shouldReceive('getFile')->andReturn(null);
 
     $changeList = Mockery::mock(ChangeList::class);
     $changeList->shouldReceive('getChanges')->andReturn([$change1, $change2]);
