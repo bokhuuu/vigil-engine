@@ -1110,7 +1110,9 @@
         // ── Silent auto-reload ──────────────────────────────────────────
         // Keeps an open dashboard fresh; the shown time only changes
         // when new data is actually fetched.
-        setTimeout(() => window.location.reload(), {{ $cacheMinutes }} * 60 * 1000);
+        setTimeout(() => {
+            if (!window._uploadInProgress) window.location.reload();
+        }, {{ $cacheMinutes }} * 60 * 1000);
     </script>
     {{-- Upload modal --}}
     <div id="upload-modal"
@@ -1178,6 +1180,7 @@
         function closeUploadModal() {
             document.getElementById('upload-modal').style.display = 'none';
             _uploadActId = null;
+            window._uploadInProgress = false;
         }
 
         async function submitUpload() {
@@ -1201,6 +1204,7 @@
             form.append('folder', folder);
             for (const f of fileList) form.append('files[]', f);
 
+            window._uploadInProgress = true;
             progress.style.display = 'block';
             progress.textContent = 'იტვირთება…';
 
