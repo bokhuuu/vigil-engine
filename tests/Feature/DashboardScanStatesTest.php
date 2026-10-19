@@ -3,18 +3,8 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\DashboardController;
-use Illuminate\Support\Facades\Storage;
-
-beforeEach(function () {
-    // Use real storage_path — not Storage::disk — matching the fixed implementation
-});
 
 it('returns empty array when state file does not exist', function () {
-    $controller = app(DashboardController::class);
-    $method = new ReflectionMethod($controller, 'loadScanStates');
-    $method->setAccessible(true);
-
-    // Temporarily rename the file if it exists
     $path = storage_path('app/google/drive-watcher-state.json');
     $backup = $path.'.bak';
     $existed = file_exists($path);
@@ -22,6 +12,9 @@ it('returns empty array when state file does not exist', function () {
         rename($path, $backup);
     }
 
+    $controller = app(DashboardController::class);
+    $method = new ReflectionMethod($controller, 'loadScanStates');
+    $method->setAccessible(true);
     $result = $method->invoke($controller);
 
     if ($existed) {
@@ -39,6 +32,7 @@ it('returns empty array when state file is invalid json', function () {
         rename($path, $backup);
     }
 
+    @mkdir(dirname($path), 0755, true);
     file_put_contents($path, 'not-json');
 
     $controller = app(DashboardController::class);
@@ -81,6 +75,7 @@ it('maps airtable record id to scan subfolder state via folder_index', function 
         'folder_colors' => [],
     ];
 
+    @mkdir(dirname($path), 0755, true);
     file_put_contents($path, json_encode($fixture));
 
     $controller = app(DashboardController::class);
@@ -117,6 +112,7 @@ it('ignores subfolders that have no matching folder_index entry', function () {
         'folder_colors' => [],
     ];
 
+    @mkdir(dirname($path), 0755, true);
     file_put_contents($path, json_encode($fixture));
 
     $controller = app(DashboardController::class);
