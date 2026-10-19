@@ -10,6 +10,7 @@ use App\Services\AirtableService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class DashboardController
@@ -76,10 +77,42 @@ class DashboardController
         }
     }
 
+    /**
+     * Build a map of ACT record ID → სკანი subfolder state.
+     * Reads drive-watcher-state.json directly; returns [] on any error.
+     */
+    private function loadScanStates(): array
+    {
+        try {
+            $raw = Storage::disk('local')->get('google/drive-watcher-state.json');
+            if (! $raw) {
+                return [];
+            }
+            $state = json_decode($raw, true);
+            $subfolderIndex = $state['subfolder_index'] ?? [];
+            $subfolderStates = $state['subfolder_states'] ?? [];
+
+            $map = [];
+            foreach ($subfolderIndex as $subfolderId => $info) {
+                if (($info['name'] ?? '') === 'სკანი') {
+                    $actId = $info['act'] ?? null;
+                    if ($actId) {
+                        $map[$actId] = $subfolderStates[$subfolderId] ?? null;
+                    }
+                }
+            }
+
+            return $map;
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
     public function index(Request $request): View
     {
         $cacheMinutes = (int) config('vigil.dashboard.cache_minutes', 5);
         $snapshot = $this->loadSnapshot($cacheMinutes * 60);
+        $scanStates = $this->loadScanStates();
 
         $data = $snapshot['acts'];
         $fetchedAt = Carbon::createFromTimestamp($snapshot['fetched_at'], config('app.timezone'));
@@ -88,6 +121,7 @@ class DashboardController
         $activeMissing = $request->query('missing');
         $activeKvleva = $request->query('kvleva');
         $activeBiznes = $request->query('biznes');
+        $activeHas = $request->query('has');
 
         $acts = collect($data)
             ->map(function ($act) {
@@ -100,6 +134,7 @@ class DashboardController
                     '_biznes_count' => count($fields['🏢 ბიზნესი'] ?? []),
                     '_has_corr' => ! empty($fields['📨 კორესპონდენცია'] ?? []),
                     '_kvleva' => $fields['📊 კვლევა'] ?? null,
+                    '_scan' => $scanStates[$act['id']] ?? null,
                 ]);
             })
             ->when($activeStatus === 'complete', fn ($col) => $col->filter(
@@ -114,6 +149,7 @@ class DashboardController
             ))
             ->when($activeMissing, function ($col) use ($activeMissing) {
                 $fieldMap = [
+                    'scan' => '_scan',
                     'photo' => '📥 ფოტოები',
                     'signatures' => '📥 ხელმოწერები',
                     'drawings' => '📥 შიდა ნახაზები',
@@ -123,13 +159,39 @@ class DashboardController
                 ];
                 $field = $fieldMap[$activeMissing] ?? null;
 
-                return $col->filter(function ($f) use ($field) {
+                return $col->filter(function ($f) use ($field, $activeMissing) {
                     if (! $field) {
                         return true;
+                    }
+                    if ($activeMissing === 'scan') {
+                        return ($f['_scan'] ?? null) !== 'full';
                     }
 
                     return in_array($field, $f['_required'])
                         && ! ($f[$field] ?? false);
+                });
+            })->when($activeHas, function ($col) use ($activeHas) {
+                $fieldMap = [
+                    'scan' => '_scan',
+                    'photo' => '📥 ფოტოები',
+                    'signatures' => '📥 ხელმოწერები',
+                    'drawings' => '📥 შიდა ნახაზები',
+                    'boundary' => '📥 გამიჯვნები',
+                    'cost' => '📥 ხარჯთაღრიცხვა',
+                    'topo' => '📥 ტოპო ნარგავები',
+                ];
+                $field = $fieldMap[$activeHas] ?? null;
+
+                return $col->filter(function ($f) use ($field, $activeHas) {
+                    if (! $field) {
+                        return true;
+                    }
+                    if ($activeHas === 'scan') {
+                        return ($f['_scan'] ?? null) === 'full';
+                    }
+
+                    return in_array($field, $f['_required'])
+                        && ($f[$field] ?? false);
                 });
             })
             ->when($activeKvleva, fn ($col) => $col->filter(
@@ -162,7 +224,7 @@ class DashboardController
             fn ($f) => ($f['_kvleva'] ?? '') === '⏳ გამოსაკითხია'
         )->count();
 
-        $hasActiveFilter = $activeStatus || $activeMissing || $activeKvleva || $activeBiznes;
+        $hasActiveFilter = $activeStatus || $activeMissing || $activeHas || $activeKvleva || $activeBiznes;
 
         return view('dashboard', [
             'acts' => $acts,
@@ -179,6 +241,8 @@ class DashboardController
             'activeMissing' => $activeMissing,
             'activeKvleva' => $activeKvleva,
             'activeBiznes' => $activeBiznes,
+            'scanStates' => $scanStates,
+            'activeHas' => $activeHas,
             'hasActiveFilter' => $hasActiveFilter,
             'role' => $request->attributes->get('vigil_role', 'manager'),
             'filteredTotal' => $filteredTotal,

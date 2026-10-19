@@ -809,16 +809,18 @@
             </div>
         </div>
 
-        {{-- აკლია --}}
+        {{-- ❌ აკლია --}}
         <div class="filter-group" id="fg-missing">
             <div class="filter-toggle {{ $activeMissing ? 'has-active' : '' }}" onclick="toggleFilter('missing')">
-                აკლია {{ $activeMissing ? '· ' . $activeMissing : '' }} <span>▼</span>
+                ❌ აკლია {{ $activeMissing ? '· ' . $activeMissing : '' }} <span>▼</span>
             </div>
             <div class="filter-dropdown" id="fd-missing">
                 <div class="filter-dropdown-label">რა აკლია</div>
                 <div class="filter-options">
                     <a href="{{ request()->fullUrlWithQuery(['missing' => null]) }}"
                         class="filter-opt {{ !$activeMissing ? 'active' : '' }}">ყველა</a>
+                    <a href="{{ request()->fullUrlWithQuery(['missing' => $activeMissing === 'scan' ? null : 'scan']) }}"
+                        class="filter-opt {{ $activeMissing === 'scan' ? 'active' : '' }}">სკანი</a>
                     <a href="{{ request()->fullUrlWithQuery(['missing' => $activeMissing === 'photo' ? null : 'photo']) }}"
                         class="filter-opt {{ $activeMissing === 'photo' ? 'active' : '' }}">ფოტოები</a>
                     <a href="{{ request()->fullUrlWithQuery(['missing' => $activeMissing === 'signatures' ? null : 'signatures']) }}"
@@ -831,6 +833,34 @@
                         class="filter-opt {{ $activeMissing === 'cost' ? 'active' : '' }}">ხარჯთაღრიცხვა</a>
                     <a href="{{ request()->fullUrlWithQuery(['missing' => $activeMissing === 'topo' ? null : 'topo']) }}"
                         class="filter-opt {{ $activeMissing === 'topo' ? 'active' : '' }}">ტოპო ნარგავები</a>
+                </div>
+            </div>
+        </div>
+
+        {{-- ✅ არსებობს --}}
+        <div class="filter-group" id="fg-has">
+            <div class="filter-toggle {{ $activeHas ? 'has-active' : '' }}" onclick="toggleFilter('has')">
+                ✅ არსებობს {{ $activeHas ? '· ' . $activeHas : '' }} <span>▼</span>
+            </div>
+            <div class="filter-dropdown" id="fd-has">
+                <div class="filter-dropdown-label">რა არსებობს</div>
+                <div class="filter-options">
+                    <a href="{{ request()->fullUrlWithQuery(['has' => null]) }}"
+                        class="filter-opt {{ !$activeHas ? 'active' : '' }}">ყველა</a>
+                    <a href="{{ request()->fullUrlWithQuery(['has' => $activeHas === 'scan' ? null : 'scan']) }}"
+                        class="filter-opt {{ $activeHas === 'scan' ? 'active' : '' }}">სკანი</a>
+                    <a href="{{ request()->fullUrlWithQuery(['has' => $activeHas === 'photo' ? null : 'photo']) }}"
+                        class="filter-opt {{ $activeHas === 'photo' ? 'active' : '' }}">ფოტოები</a>
+                    <a href="{{ request()->fullUrlWithQuery(['has' => $activeHas === 'signatures' ? null : 'signatures']) }}"
+                        class="filter-opt {{ $activeHas === 'signatures' ? 'active' : '' }}">ხელმოწერები</a>
+                    <a href="{{ request()->fullUrlWithQuery(['has' => $activeHas === 'drawings' ? null : 'drawings']) }}"
+                        class="filter-opt {{ $activeHas === 'drawings' ? 'active' : '' }}">შიდა ნახაზები</a>
+                    <a href="{{ request()->fullUrlWithQuery(['has' => $activeHas === 'boundary' ? null : 'boundary']) }}"
+                        class="filter-opt {{ $activeHas === 'boundary' ? 'active' : '' }}">გამიჯვნები</a>
+                    <a href="{{ request()->fullUrlWithQuery(['has' => $activeHas === 'cost' ? null : 'cost']) }}"
+                        class="filter-opt {{ $activeHas === 'cost' ? 'active' : '' }}">ხარჯთაღრიცხვა</a>
+                    <a href="{{ request()->fullUrlWithQuery(['has' => $activeHas === 'topo' ? null : 'topo']) }}"
+                        class="filter-opt {{ $activeHas === 'topo' ? 'active' : '' }}">ტოპო ნარგავები</a>
                 </div>
             </div>
         </div>
@@ -892,6 +922,7 @@
                         <th style="width:80px;">ნომერი</th>
                         <th class="col-status">სტატუსი</th>
                         <th class="center">შენ.</th>
+                        <th class="center col-auto">სკანი</th>
                         <th class="center col-manual">ფოტო</th>
                         <th class="center col-manual">ხელმ.</th>
                         <th class="center col-auto">ნახაზი</th>
@@ -938,6 +969,19 @@
                                     <span style="color:#d0d7de;">—</span>
                                 @endif
                             </td>
+                            {{-- სკანი --}}
+                            <td class="center col-auto">
+                                @php $scanState = $act['_scan'] ?? null; @endphp
+                                @if ($scanState === 'full')
+                                    <span class="doc-check" title="სკანი ატვირთულია">✅</span>
+                                @elseif ($scanState === 'grace')
+                                    <span class="doc-check" title="სკანი — წაშლის მოლოდინში">⏳</span>
+                                @elseif ($scanState === 'removed')
+                                    <span class="doc-check" title="სკანი — ფაილი წაიშალა">❌</span>
+                                @else
+                                    <span class="doc-check" title="სკანი — არ არის ატვირთული">❌</span>
+                                @endif
+                            </td>
                             @foreach ($docFields as $label => $field)
                                 @php $colClass = in_array($field, ['📥 ფოტოები', '📥 ხელმოწერები']) ? 'col-manual' : 'col-auto'; @endphp
                                 <td class="center {{ $colClass }}">
@@ -982,11 +1026,11 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ count($docFields) + 6 }}" class="empty">ACT-ები ვერ მოიძებნა</td>
+                            <td colspan="{{ count($docFields) + 7 }}" class="empty">ACT-ები ვერ მოიძებნა</td>
                         </tr>
                     @endforelse
                     <tr id="search-empty-row" style="display:none;">
-                        <td colspan="{{ count($docFields) + 6 }}" class="empty">
+                        <td colspan="{{ count($docFields) + 7 }}" class="empty">
                             🔍 ACT ვერ მოიძებნა
                         </td>
                     </tr>
@@ -1084,12 +1128,14 @@
 
         searchInput.addEventListener('input', function() {
             searchClear.style.display = this.value ? 'block' : 'none';
+            sessionStorage.setItem('_searchQuery', this.value);
             applySearch(this.value);
         });
 
         function clearSearch() {
             searchInput.value = '';
             searchClear.style.display = 'none';
+            sessionStorage.removeItem('_searchQuery');
             applySearch('');
         }
 
@@ -1112,7 +1158,16 @@
         });
 
         // ── Initial render ──────────────────────────────────────────────
-        renderPage();
+        (function() {
+            const saved = sessionStorage.getItem('_searchQuery');
+            if (saved) {
+                searchInput.value = saved;
+                searchClear.style.display = 'block';
+                applySearch(saved);
+            } else {
+                renderPage();
+            }
+        })();
 
         // ── Silent auto-reload ──────────────────────────────────────────
         // Keeps an open dashboard fresh; the shown time only changes
@@ -1128,8 +1183,14 @@
             })();
         const _countdownEl = document.getElementById('reload-countdown');
 
+        function _hasActiveFilters() {
+            return window._uploadInProgress ||
+                document.querySelector('.filter-toggle.has-active') !== null ||
+                (searchInput && searchInput.value.trim() !== '');
+        }
+
         function _updateCountdown() {
-            if (window._uploadInProgress) {
+            if (_hasActiveFilters()) {
                 _countdownEl.textContent = '';
                 return;
             }
@@ -1142,9 +1203,11 @@
         _updateCountdown();
         setInterval(_updateCountdown, 1000);
 
-        setTimeout(() => {
-            if (!window._uploadInProgress) window.location.reload();
-        }, _reloadMs);
+        setInterval(() => {
+            if (!_hasActiveFilters() && Date.now() >= _reloadAt) {
+                window.location.reload();
+            }
+        }, 5000);
     </script>
 
     {{-- Upload modal --}}
