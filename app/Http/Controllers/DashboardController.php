@@ -10,7 +10,6 @@ use App\Services\AirtableService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class DashboardController
@@ -84,20 +83,32 @@ class DashboardController
     private function loadScanStates(): array
     {
         try {
-            $raw = Storage::disk('local')->get('google/drive-watcher-state.json');
+            $raw = file_get_contents(storage_path('app/google/drive-watcher-state.json'));
             if (! $raw) {
                 return [];
             }
             $state = json_decode($raw, true);
+            $folderIndex = $state['folder_index'] ?? [];
             $subfolderIndex = $state['subfolder_index'] ?? [];
             $subfolderStates = $state['subfolder_states'] ?? [];
 
+            // Build: act_folder_id → airtable_record_id
+            $folderToRecord = [];
+            foreach ($folderIndex as $driveFolderId => $info) {
+                $recordId = $info['act_record_id'] ?? null;
+                if ($recordId) {
+                    $folderToRecord[$driveFolderId] = $recordId;
+                }
+            }
+
+            // Build: airtable_record_id → scan subfolder state
             $map = [];
             foreach ($subfolderIndex as $subfolderId => $info) {
                 if (($info['name'] ?? '') === 'სკანი') {
-                    $actId = $info['act'] ?? null;
-                    if ($actId) {
-                        $map[$actId] = $subfolderStates[$subfolderId] ?? null;
+                    $actFolderId = $info['act_folder_id'] ?? null;
+                    $recordId = $actFolderId ? ($folderToRecord[$actFolderId] ?? null) : null;
+                    if ($recordId) {
+                        $map[$recordId] = $subfolderStates[$subfolderId] ?? null;
                     }
                 }
             }
