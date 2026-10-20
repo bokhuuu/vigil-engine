@@ -135,7 +135,7 @@ class DashboardController
         $activeHas = $request->query('has');
 
         $acts = collect($data)
-            ->map(function ($act) {
+            ->map(function ($act) use ($scanStates) {
                 $fields = $act['fields'];
 
                 return array_merge($fields, [
