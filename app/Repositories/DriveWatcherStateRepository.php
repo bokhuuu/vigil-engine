@@ -34,10 +34,6 @@ class DriveWatcherStateRepository
     // ----------------------------------------------------------------
     // Folder index (Drive folder ID → ACT info)
     // ----------------------------------------------------------------
-
-    /**
-     * @return array<string, array{act_number: string, act_record_id: string}>
-     */
     public function getFolderIndex(): array
     {
         return $this->read()['folder_index'] ?? [];
@@ -45,8 +41,6 @@ class DriveWatcherStateRepository
 
     /**
      * Replace the entire folder index (used during seeding).
-     *
-     * @param  array<string, array{act_number: string, act_record_id: string}>  $index
      */
     public function setFolderIndex(array $index): void
     {
@@ -74,9 +68,6 @@ class DriveWatcherStateRepository
     // Subfolder index (Drive subfolder ID → parent ACT folder + name)
     // ----------------------------------------------------------------
 
-    /**
-     * @return array<string, array{act_folder_id: string, name: string}>
-     */
     public function getSubfolderIndex(): array
     {
         return $this->read()['subfolder_index'] ?? [];
@@ -85,6 +76,13 @@ class DriveWatcherStateRepository
     public function addSubfolder(string $subfolderId, string $actFolderId, string $name): void
     {
         $state = $this->read();
+
+        foreach ($state['subfolder_index'] ?? [] as $_ => $existing) {
+            if ($existing['act_folder_id'] === $actFolderId && $existing['name'] === $name) {
+                return;
+            }
+        }
+
         $state['subfolder_index'][$subfolderId] = [
             'act_folder_id' => $actFolderId,
             'name' => $name,

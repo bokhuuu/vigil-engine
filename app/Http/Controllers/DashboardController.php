@@ -104,7 +104,11 @@ class DashboardController
                     $actFolderId = $info['act_folder_id'] ?? null;
                     $recordId = $actFolderId ? ($folderToRecord[$actFolderId] ?? null) : null;
                     if ($recordId) {
-                        $map[$recordId] = $subfolderStates[$subfolderId] ?? null;
+                        $existing = $map[$recordId] ?? null;
+                        $new = $subfolderStates[$subfolderId] ?? null;
+                        if ($existing !== 'full') {
+                            $map[$recordId] = $new;
+                        }
                     }
                 }
             }
