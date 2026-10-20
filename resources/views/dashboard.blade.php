@@ -736,6 +736,15 @@
                 <span class="timer-countdown" id="reload-countdown"></span>
             </div>
             <a href="{{ $statsUrl }}" target="_blank" class="stats-link">Airtable სტატისტიკა →</a>
+            @if ($role === 'manager')
+                <form method="POST" action="{{ route('dashboard.rescan') }}" style="display:inline;"
+                    onsubmit="const b=this.querySelector('button');b.disabled=true;b.textContent='…';">
+                    @csrf
+                    <button type="submit"
+                        style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;white-space:nowrap;"
+                        title="ყველა Drive საქაღალდის სრული გადამოწმება">🔄 გადამოწმება</button>
+                </form>
+            @endif
         </div>
     </div>
 
@@ -745,8 +754,8 @@
         </div>
     @endif
 
-    @if (session('status'))
-        <div class="flash ok">{{ session('status') }}</div>
+    @if (session('success'))
+        <div class="flash ok">{{ session('success') }}</div>
     @endif
     @if (session('error'))
         <div class="flash err">{{ session('error') }}</div>
@@ -837,13 +846,13 @@
             </div>
         </div>
 
-        {{-- ✅ არსებობს --}}
+        {{-- ✅ არის --}}
         <div class="filter-group" id="fg-has">
             <div class="filter-toggle {{ $activeHas ? 'has-active' : '' }}" onclick="toggleFilter('has')">
-                ✅ არსებობს {{ $activeHas ? '· ' . $activeHas : '' }} <span>▼</span>
+                ✅ არის {{ $activeHas ? '· ' . $activeHas : '' }} <span>▼</span>
             </div>
             <div class="filter-dropdown" id="fd-has">
-                <div class="filter-dropdown-label">რა არსებობს</div>
+                <div class="filter-dropdown-label">რა არის</div>
                 <div class="filter-options">
                     <a href="{{ request()->fullUrlWithQuery(['has' => null]) }}"
                         class="filter-opt {{ !$activeHas ? 'active' : '' }}">ყველა</a>

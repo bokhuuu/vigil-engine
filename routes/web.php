@@ -32,3 +32,7 @@ Route::get('/upload/folders', [DriveUploadController::class, 'folders'])
     ->middleware(BasicAuthMiddleware::class);
 Route::post('/upload', [DriveUploadController::class, 'upload'])
     ->middleware(BasicAuthMiddleware::class);
+
+Route::post('/dashboard/rescan', [DashboardController::class, 'rescan'])
+    ->middleware(BasicAuthMiddleware::class)
+    ->name('dashboard.rescan');

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class DriveWatcherService
 {
-    private const GRACE_MS = 300_000; // 5 minutes in milliseconds
+    private const GRACE_MS = 300_000;
 
     private const COLOR_GREEN = '#00843D';
 
@@ -29,8 +29,6 @@ class DriveWatcherService
      * Process a set of changed Drive item IDs.
      * Each ID is looked up in the subfolder index; unknown IDs are skipped.
      * Dry-run mode logs what would happen without touching Airtable or colors.
-     *
-     * @param  array<string>  $changedIds
      */
     public function process(array $changedIds, bool $dryRun = false): void
     {
@@ -40,7 +38,6 @@ class DriveWatcherService
 
         $nowMs = (int) (microtime(true) * 1000);
 
-        // Collect which ACT folders need a color update after processing
         $actFoldersDirty = [];
 
         foreach ($changedIds as $id) {
@@ -228,6 +225,60 @@ class DriveWatcherService
         $token = $response->getStartPageToken();
         $this->state->setPageToken($token);
         Log::info("DriveWatcherService: page token initialised to [{$token}]");
+    }
+
+    /**
+     * Full rescan — walk every known subfolder, check for files, and correct states.
+     * Use when the change-feed has missed uploads that pre-date the page token.
+     */
+    public function rescan(bool $dryRun = false): array
+    {
+        $nowMs = (int) (microtime(true) * 1000);
+        $checked = 0;
+        $updated = 0;
+        $actFoldersDirty = [];
+
+        foreach ($this->state->getSubfolderIndex() as $subfolderId => $subfolder) {
+            $prevState = $this->state->getSubfolderState($subfolderId);
+
+            if ($prevState !== null && str_starts_with($prevState, 'grace:')) {
+                continue;
+            }
+
+            $actInfo = $this->state->getActByFolderId($subfolder['act_folder_id']);
+            if ($actInfo === null) {
+                continue;
+            }
+
+            $hasFiles = $this->driveService->subfolderHasFiles($subfolderId);
+            $checked++;
+
+            $newState = $this->reconcileSubfolder(
+                $actInfo['act_number'],
+                $subfolder['name'],
+                $subfolderId,
+                $hasFiles,
+                $prevState,
+                $nowMs,
+                $dryRun,
+            );
+
+            if ($newState !== $prevState) {
+                if (! $dryRun) {
+                    $this->state->setSubfolderState($subfolderId, $newState);
+                }
+                $actFoldersDirty[$subfolder['act_folder_id']] = true;
+                $updated++;
+            }
+
+            $this->updateSubfolderColor($subfolderId, $hasFiles, $dryRun);
+        }
+
+        foreach (array_keys($actFoldersDirty) as $actFolderId) {
+            $this->updateRootFolderColor($actFolderId, $dryRun);
+        }
+
+        return ['checked' => $checked, 'updated' => $updated];
     }
 
     // ----------------------------------------------------------------

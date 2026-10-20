@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Exceptions\AirtableException;
+use App\Jobs\DriveRescanJob;
 use App\Services\ActRequirements;
 use App\Services\AirtableService;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
@@ -45,10 +47,6 @@ class DashboardController
      * Acts + the moment they were fetched, cached as ONE entry so the
      * time shown always matches the data. On Airtable failure, fall back
      * to the last successful snapshot (marked stale).
-     *
-     * @return array{acts: array, fetched_at: int, stale: bool}
-     *
-     * @throws AirtableException when Airtable fails and no snapshot exists yet
      */
     private function loadSnapshot(int $ttlSeconds): array
     {
@@ -92,7 +90,6 @@ class DashboardController
             $subfolderIndex = $state['subfolder_index'] ?? [];
             $subfolderStates = $state['subfolder_states'] ?? [];
 
-            // Build: act_folder_id → airtable_record_id
             $folderToRecord = [];
             foreach ($folderIndex as $driveFolderId => $info) {
                 $recordId = $info['act_record_id'] ?? null;
@@ -101,7 +98,6 @@ class DashboardController
                 }
             }
 
-            // Build: airtable_record_id → scan subfolder state
             $map = [];
             foreach ($subfolderIndex as $subfolderId => $info) {
                 if (($info['name'] ?? '') === 'სკანი') {
@@ -224,7 +220,6 @@ class DashboardController
             fn ($a) => ($a['fields']['🚦სტატუსი'] ?? '') === '✅ დასრულებული'
         )->count();
 
-        // Footer counts from filtered acts
         $filteredTotal = $acts->count();
         $filteredComplete = $acts->filter(
             fn ($f) => ($f['🚦სტატუსი'] ?? '') === '✅ დასრულებული'
@@ -262,5 +257,19 @@ class DashboardController
             'filteredBiznes' => $filteredBiznes,
             'filteredKvlevaPending' => $filteredKvlevaPending,
         ]);
+    }
+
+    /**
+     * Dispatch a full Drive rescan job (manager only).
+     */
+    public function rescan(Request $request): RedirectResponse
+    {
+        if ($request->attributes->get('vigil_role') !== 'manager') {
+            abort(403);
+        }
+
+        DriveRescanJob::dispatch();
+
+        return redirect()->route('dashboard')->with('success', 'სრული სკანი დაიწყო.');
     }
 }
