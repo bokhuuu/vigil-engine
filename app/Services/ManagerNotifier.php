@@ -16,6 +16,10 @@ class ManagerNotifier
      */
     public function notify(string $message): void
     {
+        if (config('vigil.telegram.notifications_enabled') !== 'true') {
+            return;
+        }
+
         $this->telegram->sendToMe($message);
 
         foreach ($this->airtable->getManagers() as $manager) {

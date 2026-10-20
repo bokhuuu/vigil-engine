@@ -185,6 +185,7 @@ return [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),
         'my_chat_id' => env('TELEGRAM_MY_CHAT_ID'),
         'group_chat_id' => env('TELEGRAM_GROUP_CHAT_ID'),
+        'notifications_enabled' => env('TELEGRAM_NOTIFICATIONS_ENABLED', 'true'),
     ],
 
     /*
