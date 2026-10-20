@@ -157,6 +157,7 @@ class DashboardController
             ->when($activeStatus === 'closed', fn ($col) => $col->filter(
                 fn ($f) => ($f['🚦სტატუსი'] ?? '') === '✅ დასრულებული'
                     && collect($f['_required'])->every(fn ($field) => $f[$field] ?? false)
+                    && ($f['_scan'] ?? null) === 'full'
             ))
             ->when($activeMissing, function ($col) use ($activeMissing) {
                 $fieldMap = [
