@@ -738,7 +738,7 @@
             <a href="{{ $statsUrl }}" target="_blank" class="stats-link">Airtable სტატისტიკა →</a>
             @if ($role === 'manager')
                 <form method="POST" action="{{ route('dashboard.rescan') }}" style="display:inline;"
-                    onsubmit="const b=this.querySelector('button');b.disabled=true;b.textContent='…';">
+                    onsubmit="if(!confirm('სრული Drive სკანი დაახლოებით 30-60 წუთი გრძელდება. გაგრძელება?')) return false; const b=this.querySelector('button'); b.disabled=true; b.textContent='⏳ მიმდინარეობს…'; b.style.opacity='0.6'; b.style.cursor='not-allowed';">
                     @csrf
                     <button type="submit"
                         style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;white-space:nowrap;"
