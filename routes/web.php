@@ -21,7 +21,8 @@ Route::middleware(VerifyWebhookSecret::class)->group(function () {
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(BasicAuthMiddleware::class);
+    ->middleware(BasicAuthMiddleware::class)
+    ->name('dashboard');
 
 Route::post('/dashboard/acts/{recordId}/folder', [DashboardFolderController::class, 'store'])
     ->where('recordId', 'rec[A-Za-z0-9]+')
