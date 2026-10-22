@@ -1235,7 +1235,10 @@
                 <option value="">იტვირთება…</option>
             </select>
             <label style="display:block;margin-bottom:6px;font-size:.85rem;color:#555;">ფაილები</label>
-            <input type="file" id="upload-files" multiple style="display:block;width:100%;margin-bottom:18px;">
+            <input type="file" id="upload-files" multiple style="display:block;width:100%;margin-bottom:10px;">
+            <label style="display:block;margin-bottom:6px;font-size:.85rem;color:#555;">ან მთელი საქაღალდე</label>
+            <input type="file" id="upload-folder-input" webkitdirectory multiple
+                style="display:block;width:100%;margin-bottom:18px;">
             <div id="upload-progress" style="display:none;margin-bottom:12px;font-size:.85rem;color:#555;"></div>
             <button onclick="submitUpload()"
                 style="width:100%;padding:10px;background:#1a56db;color:#fff;border:none;border-radius:6px;font-size:.95rem;cursor:pointer;font-weight:600;">ატვირთვა</button>
@@ -1315,9 +1318,10 @@
         async function submitUpload() {
             const select = document.getElementById('upload-folder');
             const filesInput = document.getElementById('upload-files');
+            const folderInput = document.getElementById('upload-folder-input');
             const progress = document.getElementById('upload-progress');
             const folder = select.value;
-            const files = Array.from(filesInput.files);
+            const files = [...Array.from(filesInput.files || []), ...Array.from(folderInput.files || [])];
 
             if (!folder) {
                 alert('აირჩიე საქაღალდე');
@@ -1360,6 +1364,7 @@
             }
 
             filesInput.value = '';
+            document.getElementById('upload-folder-input').value = '';
 
             if (failed.length) {
                 progress.textContent = `✅ ატვირთულია: ${uploaded.length}  ❌ ვერ ატვირთა: ${failed.length}`;
