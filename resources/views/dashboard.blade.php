@@ -1266,7 +1266,7 @@
             btn.style.cursor = 'not-allowed';
             document.getElementById('rescan-form').submit();
         }
-        document.getElementById('rescan-modal').addEventListener('click', e => {
+        document.getElementById('rescan-modal')?.addEventListener('click', e => {
             if (e.target === document.getElementById('rescan-modal')) closeRescanModal();
         });
 
