@@ -248,6 +248,7 @@ class DashboardController
         )->count();
 
         $hasActiveFilter = $activeStatus || $activeMissing || $activeHas || $activeKvleva || $activeBiznes;
+        $rescanRunning = (bool) Cache::get('rescan_running', false);
 
         return view('dashboard', [
             'acts' => $acts,
@@ -266,6 +267,7 @@ class DashboardController
             'activeBiznes' => $activeBiznes,
             'activeHas' => $activeHas,
             'hasActiveFilter' => $hasActiveFilter,
+            'rescanRunning' => $rescanRunning,
             'role' => $request->attributes->get('vigil_role', 'manager'),
             'filteredTotal' => $filteredTotal,
             'filteredComplete' => $filteredComplete,
@@ -284,6 +286,7 @@ class DashboardController
             abort(403);
         }
 
+        Cache::put('rescan_running', true, now()->addHours(2));
         DriveRescanJob::dispatch();
 
         return redirect()->route('dashboard')->with('success', 'სრული სკანი დაიწყო.');

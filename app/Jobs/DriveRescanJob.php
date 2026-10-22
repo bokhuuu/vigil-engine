@@ -7,6 +7,7 @@ namespace App\Jobs;
 use App\Services\DriveWatcherService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class DriveRescanJob implements ShouldQueue
@@ -24,5 +25,7 @@ class DriveRescanJob implements ShouldQueue
         $result = $watcher->rescan();
 
         Log::info("DriveRescanJob: done — checked: {$result['checked']}, updated: {$result['updated']}");
+
+        Cache::forget('rescan_running');
     }
 }
