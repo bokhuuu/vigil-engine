@@ -26,12 +26,12 @@ class DashboardController
     ) {}
 
     private array $docFields = [
-        'ფოტო' => '📥 ფოტოები',
-        'ხელმ.' => '📥 ხელმოწერები',
-        'ნახაზი' => '📥 შიდა ნახაზები',
-        'გამიჯ.' => '📥 გამიჯვნები',
-        'ხარჯ.' => '📥 ხარჯთაღრიცხვა',
-        'ტოპო' => '📥 ტოპო ნარგავები',
+        'ფოტო' => ['airtable' => '📥 ფოტოები',       'drive' => 'ფოტოები'],
+        'ხელმ.' => ['airtable' => '📥 ხელმოწერები',    'drive' => 'სკანი'],
+        'ნახაზი' => ['airtable' => '📥 შიდა ნახაზები',  'drive' => 'შიდა ნახაზები'],
+        'გამიჯ.' => ['airtable' => '📥 გამიჯვნები',     'drive' => 'გამიჯვნები'],
+        'ხარჯ.' => ['airtable' => '📥 ხარჯთაღრიცხვა', 'drive' => 'ხარჯთაღრიცხვა'],
+        'ტოპო' => ['airtable' => '📥 ტოპო ნარგავები', 'drive' => 'ტოპო ნარგავები'],
     ];
 
     private array $kvlevaColors = [
@@ -78,7 +78,7 @@ class DashboardController
      * Build a map of ACT record ID → სკანი subfolder state.
      * Reads drive-watcher-state.json directly; returns [] on any error.
      */
-    private function loadScanStates(): array
+    private function loadDriveStates(): array
     {
         try {
             $raw = file_get_contents(storage_path('app/google/drive-watcher-state.json'));
@@ -100,16 +100,18 @@ class DashboardController
 
             $map = [];
             foreach ($subfolderIndex as $subfolderId => $info) {
-                if (($info['name'] ?? '') === 'სკანი') {
-                    $actFolderId = $info['act_folder_id'] ?? null;
-                    $recordId = $actFolderId ? ($folderToRecord[$actFolderId] ?? null) : null;
-                    if ($recordId) {
-                        $existing = $map[$recordId] ?? null;
-                        $new = $subfolderStates[$subfolderId] ?? null;
-                        if ($existing !== 'full') {
-                            $map[$recordId] = $new;
-                        }
-                    }
+                $name = $info['name'] ?? null;
+                $actFolderId = $info['act_folder_id'] ?? null;
+                $recordId = $actFolderId ? ($folderToRecord[$actFolderId] ?? null) : null;
+
+                if (! $name || ! $recordId) {
+                    continue;
+                }
+
+                $subState = $subfolderStates[$subfolderId] ?? 'empty';
+
+                if (! isset($map[$recordId][$name]) || $map[$recordId][$name] !== 'full') {
+                    $map[$recordId][$name] = $subState;
                 }
             }
 
@@ -123,7 +125,7 @@ class DashboardController
     {
         $cacheMinutes = (int) config('vigil.dashboard.cache_minutes', 5);
         $snapshot = $this->loadSnapshot($cacheMinutes * 60);
-        $scanStates = $this->loadScanStates();
+        $driveStates = $this->loadDriveStates();
 
         $data = $snapshot['acts'];
         $fetchedAt = Carbon::createFromTimestamp($snapshot['fetched_at'], config('app.timezone'));
@@ -135,8 +137,17 @@ class DashboardController
         $activeHas = $request->query('has');
 
         $acts = collect($data)
-            ->map(function ($act) use ($scanStates) {
+            ->map(function ($act) use ($driveStates) {
                 $fields = $act['fields'];
+                $actDrive = $driveStates[$act['id']] ?? [];
+
+                $driveDoc = [];
+                foreach ($this->docFields as $label => $cfg) {
+                    $subfolder = $cfg['drive'];
+                    $driveDoc[$cfg['airtable']] = isset($actDrive[$subfolder])
+                        ? $actDrive[$subfolder] === 'full'
+                        : (bool) ($fields[$cfg['airtable']] ?? false);
+                }
 
                 return array_merge($fields, [
                     '_id' => $act['id'],
@@ -145,7 +156,8 @@ class DashboardController
                     '_biznes_count' => count($fields['🏢 ბიზნესი'] ?? []),
                     '_has_corr' => ! empty($fields['📨 კორესპონდენცია'] ?? []),
                     '_kvleva' => $fields['📊 კვლევა'] ?? null,
-                    '_scan' => $scanStates[$act['id']] ?? null,
+                    '_scan' => $actDrive['სკანი'] ?? null,
+                    '_drive_doc' => $driveDoc,
                 ]);
             })
             ->when($activeStatus === 'complete', fn ($col) => $col->filter(
@@ -156,7 +168,7 @@ class DashboardController
             ))
             ->when($activeStatus === 'closed', fn ($col) => $col->filter(
                 fn ($f) => ($f['🚦სტატუსი'] ?? '') === '✅ დასრულებული'
-                    && collect($f['_required'])->every(fn ($field) => $f[$field] ?? false)
+                    && collect($f['_required'])->every(fn ($field) => $f['_drive_doc'][$field] ?? false)
                     && ($f['_scan'] ?? null) === 'full'
             ))
             ->when($activeMissing, function ($col) use ($activeMissing) {
@@ -180,7 +192,7 @@ class DashboardController
                     }
 
                     return in_array($field, $f['_required'])
-                        && ! ($f[$field] ?? false);
+                        && ! ($f['_drive_doc'][$field] ?? false);
                 });
             })->when($activeHas, function ($col) use ($activeHas) {
                 $fieldMap = [
@@ -203,7 +215,7 @@ class DashboardController
                     }
 
                     return in_array($field, $f['_required'])
-                        && ($f[$field] ?? false);
+                        && ($f['_drive_doc'][$field] ?? false);
                 });
             })
             ->when($activeKvleva, fn ($col) => $col->filter(
@@ -252,7 +264,6 @@ class DashboardController
             'activeMissing' => $activeMissing,
             'activeKvleva' => $activeKvleva,
             'activeBiznes' => $activeBiznes,
-            'scanStates' => $scanStates,
             'activeHas' => $activeHas,
             'hasActiveFilter' => $hasActiveFilter,
             'role' => $request->attributes->get('vigil_role', 'manager'),

@@ -688,7 +688,7 @@
             gap: 16px;
         }
 
-        #page-loader.hidden {
+        body:not(.is-loading) #page-loader {
             display: none;
         }
 
@@ -715,7 +715,7 @@
     </style>
 </head>
 
-<body>
+<body class="is-loading">
     {{-- Page loader --}}
     <div id="page-loader">
         <div class="spinner-ring"></div>
@@ -737,12 +737,11 @@
             </div>
             <a href="{{ $statsUrl }}" target="_blank" class="stats-link">Airtable სტატისტიკა →</a>
             @if ($role === 'manager')
-                <form method="POST" action="{{ route('dashboard.rescan') }}" style="display:inline;"
-                    onsubmit="if(!confirm('სრული Drive სკანი დაახლოებით 30-60 წუთი გრძელდება. გაგრძელება?')) return false; const b=this.querySelector('button'); b.disabled=true; b.textContent='⏳ მიმდინარეობს…'; b.style.opacity='0.6'; b.style.cursor='not-allowed';">
+                <button id="rescan-btn" onclick="openRescanModal()"
+                    style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;white-space:nowrap;"
+                    title="ყველა Drive საქაღალდის სრული გადამოწმება">🔄 გადამოწმება</button>
+                <form id="rescan-form" method="POST" action="{{ route('dashboard.rescan') }}" style="display:none;">
                     @csrf
-                    <button type="submit"
-                        style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;white-space:nowrap;"
-                        title="ყველა Drive საქაღალდის სრული გადამოწმება">🔄 გადამოწმება</button>
                 </form>
             @endif
         </div>
@@ -963,7 +962,9 @@
                                 @php
                                     $docsIncomplete =
                                         $isComplete &&
-                                        collect($required)->contains(fn($field) => empty($act[$field] ?? false));
+                                        collect($required)->contains(
+                                            fn($field) => empty($act['_drive_doc'][$field] ?? false),
+                                        );
                                 @endphp
                                 <span
                                     class="badge {{ $isComplete ? ($docsIncomplete ? 'warn' : 'complete') : 'incomplete' }}"
@@ -991,11 +992,12 @@
                                     <span class="doc-check" title="სკანი — არ არის ატვირთული">❌</span>
                                 @endif
                             </td>
-                            @foreach ($docFields as $label => $field)
-                                @php $colClass = in_array($field, ['📥 ფოტოები', '📥 ხელმოწერები']) ? 'col-manual' : 'col-auto'; @endphp
+                            @foreach ($docFields as $label => $cfg)
+                                @php $colClass = in_array($cfg['airtable'], ['📥 ფოტოები', '📥 ხელმოწერები']) ? 'col-manual' : 'col-auto'; @endphp
                                 <td class="center {{ $colClass }}">
-                                    @if (in_array($field, $required))
-                                        <span class="doc-check">{{ $act[$field] ?? false ? '✅' : '❌' }}</span>
+                                    @if (in_array($cfg['airtable'], $required))
+                                        <span
+                                            class="doc-check">{{ $act['_drive_doc'][$cfg['airtable']] ?? false ? '✅' : '❌' }}</span>
                                     @else
                                         <span style="color:#d0d7de;font-size:16px;">·</span>
                                     @endif
@@ -1243,7 +1245,29 @@
     <script>
         // ── Page loader ─────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('page-loader').classList.add('hidden');
+            document.body.classList.remove('is-loading');
+        });
+
+        // ── Rescan modal ────────────────────────────────────────────
+        function openRescanModal() {
+            document.getElementById('rescan-modal').style.display = 'flex';
+        }
+
+        function closeRescanModal() {
+            document.getElementById('rescan-modal').style.display = 'none';
+        }
+
+        function submitRescan() {
+            closeRescanModal();
+            const btn = document.getElementById('rescan-btn');
+            btn.disabled = true;
+            btn.textContent = '⏳ მიმდინარეობს…';
+            btn.style.opacity = '0.6';
+            btn.style.cursor = 'not-allowed';
+            document.getElementById('rescan-form').submit();
+        }
+        document.getElementById('rescan-modal').addEventListener('click', e => {
+            if (e.target === document.getElementById('rescan-modal')) closeRescanModal();
         });
 
         let _uploadActId = null;
@@ -1349,6 +1373,25 @@
             if (e.target === document.getElementById('upload-modal')) closeUploadModal();
         });
     </script>
+
+
+
+    {{-- Rescan confirm modal --}}
+    <div id="rescan-modal"
+        style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
+        <div
+            style="background:#fff;border-radius:10px;padding:28px 32px;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.25);">
+            <h3 style="margin:0 0 12px;font-size:1rem;color:#1a1f36;">🔄 სრული Drive გადამოწმება</h3>
+            <p style="font-size:13px;color:#4b5563;margin:0 0 20px;line-height:1.6;">ყველა Drive საქაღალდის სრული
+                გადამოწმება დაახლოებით <strong>30–60 წუთი</strong> გრძელდება. გაგრძელება?</p>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button onclick="closeRescanModal()"
+                    style="padding:8px 18px;border-radius:6px;border:1px solid #e4e8f0;background:#fff;color:#4b5563;font-size:13px;cursor:pointer;">გაუქმება</button>
+                <button onclick="submitRescan()"
+                    style="padding:8px 18px;border-radius:6px;border:none;background:#2563eb;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">დადასტურება</button>
+            </div>
+        </div>
+    </div>
 
 </body>
 

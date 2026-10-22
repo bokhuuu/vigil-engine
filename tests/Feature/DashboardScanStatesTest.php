@@ -13,7 +13,7 @@ it('returns empty array when state file does not exist', function () {
     }
 
     $controller = app(DashboardController::class);
-    $method = new ReflectionMethod($controller, 'loadScanStates');
+    $method = new ReflectionMethod($controller, 'loadDriveStates');
     $method->setAccessible(true);
     $result = $method->invoke($controller);
 
@@ -36,7 +36,7 @@ it('returns empty array when state file is invalid json', function () {
     file_put_contents($path, 'not-json');
 
     $controller = app(DashboardController::class);
-    $method = new ReflectionMethod($controller, 'loadScanStates');
+    $method = new ReflectionMethod($controller, 'loadDriveStates');
     $method->setAccessible(true);
     $result = $method->invoke($controller);
 
@@ -48,7 +48,7 @@ it('returns empty array when state file is invalid json', function () {
     expect($result)->toBe([]);
 });
 
-it('maps airtable record id to scan subfolder state via folder_index', function () {
+it('maps airtable record id to all subfolder states via folder_index', function () {
     $path = storage_path('app/google/drive-watcher-state.json');
     $backup = $path.'.bak';
     $existed = file_exists($path);
@@ -79,7 +79,7 @@ it('maps airtable record id to scan subfolder state via folder_index', function 
     file_put_contents($path, json_encode($fixture));
 
     $controller = app(DashboardController::class);
-    $method = new ReflectionMethod($controller, 'loadScanStates');
+    $method = new ReflectionMethod($controller, 'loadDriveStates');
     $method->setAccessible(true);
     $result = $method->invoke($controller);
 
@@ -89,8 +89,13 @@ it('maps airtable record id to scan subfolder state via folder_index', function 
     }
 
     expect($result)->toBe([
-        'recABC' => 'full',
-        'recDEF' => 'empty',
+        'recABC' => [
+            'სკანი' => 'full',
+            'ფოტოები' => 'full',
+        ],
+        'recDEF' => [
+            'სკანი' => 'empty',
+        ],
     ]);
 });
 
@@ -116,7 +121,7 @@ it('ignores subfolders that have no matching folder_index entry', function () {
     file_put_contents($path, json_encode($fixture));
 
     $controller = app(DashboardController::class);
-    $method = new ReflectionMethod($controller, 'loadScanStates');
+    $method = new ReflectionMethod($controller, 'loadDriveStates');
     $method->setAccessible(true);
     $result = $method->invoke($controller);
 
