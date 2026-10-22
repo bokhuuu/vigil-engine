@@ -229,13 +229,13 @@ class GoogleDriveService
     }
 
     /**
-     * Whether a folder contains at least one file (subfolders don't count).
+     * Whether a folder contains at least one child (file or subfolder).
+     * Subfolders count because files may be nested inside them.
      */
     protected function folderHasFiles(string $folderId): bool
     {
         $response = $this->drive()->files->listFiles([
-            'q' => "'{$folderId}' in parents and trashed = false"
-                ." and mimeType != 'application/vnd.google-apps.folder'",
+            'q' => "'{$folderId}' in parents and trashed = false",
             'fields' => 'files(id)',
             'pageSize' => 1,
         ]);
