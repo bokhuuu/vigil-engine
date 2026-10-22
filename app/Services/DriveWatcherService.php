@@ -270,8 +270,6 @@ class DriveWatcherService
                 $actFoldersDirty[$subfolder['act_folder_id']] = true;
                 $updated++;
             }
-
-            $this->updateSubfolderColor($subfolderId, $hasFiles, $dryRun);
         }
 
         foreach (array_keys($actFoldersDirty) as $actFolderId) {
