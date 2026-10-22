@@ -66,6 +66,12 @@ class DriveUploadController
         }
 
         $subfolderId = $this->drive->findOrCreateSubfolder($folderUrl, $request->folder);
+        if ($request->filled('subfolder_name')) {
+            $subfolderId = $this->drive->findOrCreateFolder(
+                $request->string('subfolder_name')->toString(),
+                $subfolderId
+            );
+        }
         $uploaded = [];
         $failed = [];
 

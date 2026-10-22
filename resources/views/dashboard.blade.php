@@ -1322,7 +1322,11 @@
             const folderInput = document.getElementById('upload-folder-input');
             const progress = document.getElementById('upload-progress');
             const folder = select.value;
-            const files = [...Array.from(filesInput.files || []), ...Array.from(folderInput.files || [])];
+            const folderFiles = Array.from(folderInput.files || []);
+            const subfolderName = folderFiles.length > 0 ?
+                (folderFiles[0].webkitRelativePath.split('/')[0] ?? null) :
+                null;
+            const files = [...Array.from(filesInput.files || []), ...folderFiles];
 
             if (!folder) {
                 alert('აირჩიე საქაღალდე');
@@ -1347,6 +1351,7 @@
 
                 const form = new FormData();
                 form.append('act_id', _uploadActId);
+                if (subfolderName) form.append('subfolder_name', subfolderName);
                 form.append('folder', folder);
                 for (const f of chunk) form.append('files[]', f);
 
