@@ -811,7 +811,7 @@
                     <a href="{{ request()->fullUrlWithQuery(['status' => 'incomplete']) }}"
                         class="filter-opt {{ $activeStatus === 'incomplete' ? 'active' : '' }}">⏳ მიმდინარე</a>
                     <a href="{{ request()->fullUrlWithQuery(['status' => 'complete']) }}"
-                        class="filter-opt {{ $activeStatus === 'complete' ? 'active' : '' }}">✅ დასრულებული</a>
+                        class="filter-opt {{ $activeStatus === 'complete' ? 'active' : '' }}">✅ დასრულდა</a>
                     <a href="{{ request()->fullUrlWithQuery(['status' => 'closed']) }}"
                         class="filter-opt {{ $activeStatus === 'closed' ? 'active' : '' }}">🔒 დახურული</a>
                 </div>
