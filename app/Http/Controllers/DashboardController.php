@@ -27,7 +27,7 @@ class DashboardController
 
     private array $docFields = [
         'ფოტო' => ['airtable' => '📥 ფოტოები',       'drive' => 'ფოტოები'],
-        'ხელმ.' => ['airtable' => '📥 ხელმოწერები',    'drive' => 'სკანი'],
+        'ხელმ.' => ['airtable' => '📥 ხელმოწერები',    'drive' => null],
         'ნახაზი' => ['airtable' => '📥 შიდა ნახაზები',  'drive' => 'შიდა ნახაზები'],
         'გამიჯ.' => ['airtable' => '📥 გამიჯვნები',     'drive' => 'გამიჯვნები'],
         'ხარჯ.' => ['airtable' => '📥 ხარჯთაღრიცხვა', 'drive' => 'ხარჯთაღრიცხვა'],
@@ -144,9 +144,13 @@ class DashboardController
                 $driveDoc = [];
                 foreach ($this->docFields as $label => $cfg) {
                     $subfolder = $cfg['drive'];
-                    $driveDoc[$cfg['airtable']] = isset($actDrive[$subfolder])
-                        ? $actDrive[$subfolder] === 'full'
-                        : (bool) ($fields[$cfg['airtable']] ?? false);
+                    if ($subfolder === null) {
+                        $driveDoc[$cfg['airtable']] = (bool) ($fields[$cfg['airtable']] ?? false);
+                    } else {
+                        $driveDoc[$cfg['airtable']] = isset($actDrive[$subfolder])
+                            ? $actDrive[$subfolder] === 'full'
+                            : (bool) ($fields[$cfg['airtable']] ?? false);
+                    }
                 }
 
                 return array_merge($fields, [
