@@ -800,7 +800,7 @@
         <div class="filter-group" id="fg-status">
             <div class="filter-toggle {{ $activeStatus ? 'has-active' : '' }}" onclick="toggleFilter('status')">
                 სტატუსი
-                {{ $activeStatus ? '· ' . ($activeStatus === 'complete' ? 'დასრულდა' : ($activeStatus === 'closed' ? 'დახურული' : 'მიმდინარე')) : '' }}
+                {{ $activeStatus ? '· ' . ($activeStatus === 'incomplete_docs' ? 'დასრულდა' : ($activeStatus === 'closed' ? 'დაიხურა' : 'მიმდინარე')) : '' }}
                 <span>▼</span>
             </div>
             <div class="filter-dropdown" id="fd-status">
@@ -810,10 +810,10 @@
                         class="filter-opt {{ !$activeStatus ? 'active' : '' }}">ყველა</a>
                     <a href="{{ request()->fullUrlWithQuery(['status' => 'incomplete']) }}"
                         class="filter-opt {{ $activeStatus === 'incomplete' ? 'active' : '' }}">⏳ მიმდინარე</a>
-                    <a href="{{ request()->fullUrlWithQuery(['status' => 'complete']) }}"
-                        class="filter-opt {{ $activeStatus === 'complete' ? 'active' : '' }}">✅ დასრულდა</a>
+                    <a href="{{ request()->fullUrlWithQuery(['status' => 'incomplete_docs']) }}"
+                        class="filter-opt {{ $activeStatus === 'incomplete_docs' ? 'active' : '' }}">⚠️ დასრულდა</a>
                     <a href="{{ request()->fullUrlWithQuery(['status' => 'closed']) }}"
-                        class="filter-opt {{ $activeStatus === 'closed' ? 'active' : '' }}">🔒 დახურული</a>
+                        class="filter-opt {{ $activeStatus === 'closed' ? 'active' : '' }}">✅ დაიხურა</a>
                 </div>
             </div>
         </div>

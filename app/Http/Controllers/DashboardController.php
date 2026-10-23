@@ -160,11 +160,15 @@ class DashboardController
                     '_drive_doc' => $driveDoc,
                 ]);
             })
-            ->when($activeStatus === 'complete', fn ($col) => $col->filter(
-                fn ($f) => ($f['🚦სტატუსი'] ?? '') === '✅ დასრულებული'
-            ))
             ->when($activeStatus === 'incomplete', fn ($col) => $col->filter(
                 fn ($f) => ($f['🚦სტატუსი'] ?? '') === '⏳ მიმდინარე'
+            ))
+            ->when($activeStatus === 'incomplete_docs', fn ($col) => $col->filter(
+                fn ($f) => ($f['🚦სტატუსი'] ?? '') === '✅ დასრულებული'
+                    && (
+                        ($f['_scan'] ?? null) !== 'full' ||
+                        collect($f['_required'])->contains(fn ($field) => ! ($f['_drive_doc'][$field] ?? false))
+                    )
             ))
             ->when($activeStatus === 'closed', fn ($col) => $col->filter(
                 fn ($f) => ($f['🚦სტატუსი'] ?? '') === '✅ დასრულებული'
