@@ -800,7 +800,7 @@
         <div class="filter-group" id="fg-status">
             <div class="filter-toggle {{ $activeStatus ? 'has-active' : '' }}" onclick="toggleFilter('status')">
                 სტატუსი
-                {{ $activeStatus ? '· ' . ($activeStatus === 'complete' ? 'დაიხურა' : ($activeStatus === 'closed' ? 'დახურული' : 'მიმდინარე')) : '' }}
+                {{ $activeStatus ? '· ' . ($activeStatus === 'complete' ? 'დასრულდა' : ($activeStatus === 'closed' ? 'დახურული' : 'მიმდინარე')) : '' }}
                 <span>▼</span>
             </div>
             <div class="filter-dropdown" id="fd-status">
@@ -963,9 +963,10 @@
                                 @php
                                     $docsIncomplete =
                                         $isComplete &&
-                                        collect($required)->contains(
-                                            fn($field) => empty($act['_drive_doc'][$field] ?? false),
-                                        );
+                                        (($act['_scan'] ?? null) !== 'full' ||
+                                            collect($required)->contains(
+                                                fn($field) => empty($act['_drive_doc'][$field] ?? false),
+                                            ));
                                 @endphp
                                 <span
                                     class="badge {{ $isComplete ? ($docsIncomplete ? 'warn' : 'complete') : 'incomplete' }}"
