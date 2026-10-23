@@ -51,6 +51,8 @@ class DriveUploadController
             'folder' => ['required', 'string'],
             'files' => ['required', 'array', 'min:1'],
             'files.*' => ['required', 'file', 'max:102400'],
+            'paths' => ['sometimes', 'array'],
+            'paths.*' => ['sometimes', 'string', 'max:500'],
         ]);
 
         $act = collect($this->cachedActs())->firstWhere('id', $request->act_id);
@@ -65,21 +67,28 @@ class DriveUploadController
             return response()->json(['error' => 'ACT has no Drive folder'], 422);
         }
 
-        $subfolderId = $this->drive->findOrCreateSubfolder($folderUrl, $request->folder);
-        if ($request->filled('subfolder_name')) {
-            $subfolderId = $this->drive->findOrCreateFolder(
-                $request->string('subfolder_name')->toString(),
-                $subfolderId
-            );
-        }
         $uploaded = [];
         $failed = [];
+        $paths = $request->input('paths', []);
+        $folderIdCache = [];
 
-        foreach ($request->file('files') as $file) {
+        foreach ($request->file('files') as $index => $file) {
             try {
+                $relativePath = $paths[$index] ?? $file->getClientOriginalName();
+                $dirname = ltrim(dirname($relativePath), '.');
+
+                if ($dirname !== '') {
+                    $subfolderPath = $request->folder.'/'.$dirname;
+                    $folderId = $folderIdCache[$subfolderPath]
+                        ??= $this->drive->ensureSubfolderPath($folderUrl, $subfolderPath);
+                } else {
+                    $folderId = $folderIdCache[$request->folder]
+                        ??= $this->drive->findOrCreateSubfolder($folderUrl, $request->folder);
+                }
+
                 $this->drive->uploadFile(
-                    $subfolderId,
-                    $file->getClientOriginalName(),
+                    $folderId,
+                    basename($relativePath),
                     file_get_contents($file->getRealPath()),
                     $file->getMimeType() ?? 'application/octet-stream',
                 );

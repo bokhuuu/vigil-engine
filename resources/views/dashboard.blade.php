@@ -1324,10 +1324,16 @@
             const progress = document.getElementById('upload-progress');
             const folder = select.value;
             const folderFiles = Array.from(folderInput.files || []);
-            const subfolderName = folderFiles.length > 0 ?
-                (folderFiles[0].webkitRelativePath.split('/')[0] ?? null) :
-                null;
-            const files = [...Array.from(filesInput.files || []), ...folderFiles];
+            const files = [
+                ...Array.from(filesInput.files || []).map(f => ({
+                    file: f,
+                    path: f.name
+                })),
+                ...folderFiles.map(f => ({
+                    file: f,
+                    path: f.webkitRelativePath || f.name
+                })),
+            ];
 
             if (!folder) {
                 alert('აირჩიე საქაღალდე');
@@ -1352,9 +1358,11 @@
 
                 const form = new FormData();
                 form.append('act_id', _uploadActId);
-                if (subfolderName) form.append('subfolder_name', subfolderName);
                 form.append('folder', folder);
-                for (const f of chunk) form.append('files[]', f);
+                for (const item of chunk) {
+                    form.append('files[]', item.file);
+                    form.append('paths[]', item.path);
+                }
 
                 try {
                     const res = await fetch('/upload', {
@@ -1366,7 +1374,7 @@
                     if (data.uploaded) uploaded = uploaded.concat(data.uploaded);
                     if (data.failed) failed = failed.concat(data.failed);
                 } catch (err) {
-                    failed = failed.concat(chunk.map(f => f.name));
+                    failed = failed.concat(chunk.map(item => item.file.name));
                 }
             }
 
