@@ -970,7 +970,7 @@
                                 <span
                                     class="badge {{ $isComplete ? ($docsIncomplete ? 'warn' : 'complete') : 'incomplete' }}"
                                     @if ($docsIncomplete) title="დასრულებული მაგრამ დოკუმენტები არასრულია" @endif>
-                                    {{ $isComplete ? ($docsIncomplete ? '⚠️ დაიხურა' : 'დაიხურა') : 'მიმდინარე' }}
+                                    {{ $isComplete ? ($docsIncomplete ? '⚠️ დასრულდა' : 'დაიხურა') : 'მიმდინარე' }}
                                 </span>
                             </td>
                             <td class="center">
