@@ -63,3 +63,30 @@ it('persists state across instances', function (): void {
     expect($repo2->getPageToken())->toBe('token1')
         ->and($repo2->getActByFolderId('f1')['act_number'])->toBe('42');
 });
+
+it('replaces stale subfolder entry when same act folder and name registered with new id', function (): void {
+    $this->repo->addSubfolder('oldId', 'actFolder1', 'ფოტოები');
+    $this->repo->setSubfolderState('oldId', 'full');
+    $this->repo->setFolderColor('oldId', '#00843D');
+
+    $this->repo->addSubfolder('newId', 'actFolder1', 'ფოტოები');
+
+    expect($this->repo->getSubfolder('oldId'))->toBeNull();
+
+    $sub = $this->repo->getSubfolder('newId');
+    expect($sub['act_folder_id'])->toBe('actFolder1')
+        ->and($sub['name'])->toBe('ფოტოები');
+
+    expect($this->repo->getSubfolderState('newId'))->toBe('full');
+    expect($this->repo->getFolderColor('newId'))->toBe('#00843D');
+});
+
+it('does not re-add subfolder when same id already registered', function (): void {
+    $this->repo->addSubfolder('subId1', 'actFolder1', 'ფოტოები');
+    $this->repo->setSubfolderState('subId1', 'full');
+
+    $this->repo->addSubfolder('subId1', 'actFolder1', 'ფოტოები');
+
+    expect($this->repo->getSubfolderState('subId1'))->toBe('full');
+    expect(count($this->repo->getSubfolderIndex()))->toBe(1);
+});

@@ -77,9 +77,27 @@ class DriveWatcherStateRepository
     {
         $state = $this->read();
 
-        foreach ($state['subfolder_index'] ?? [] as $_ => $existing) {
-            if ($existing['act_folder_id'] === $actFolderId && $existing['name'] === $name) {
+        foreach ($state['subfolder_index'] ?? [] as $existingId => $_) {
+            if ($existingId === $subfolderId) {
                 return;
+            }
+        }
+
+        // Remove any stale entry for the same ACT folder + name (different ID)
+        foreach ($state['subfolder_index'] ?? [] as $existingId => $existing) {
+            if ($existing['act_folder_id'] === $actFolderId && $existing['name'] === $name) {
+                error_log("DriveWatcherStateRepository: replacing stale subfolder [{$name}] ID [{$existingId}] with [{$subfolderId}]");
+                unset($state['subfolder_index'][$existingId]);
+                // Migrate state and color to new ID
+                if (isset($state['subfolder_states'][$existingId])) {
+                    $state['subfolder_states'][$subfolderId] = $state['subfolder_states'][$existingId];
+                    unset($state['subfolder_states'][$existingId]);
+                }
+                if (isset($state['folder_colors'][$existingId])) {
+                    $state['folder_colors'][$subfolderId] = $state['folder_colors'][$existingId];
+                    unset($state['folder_colors'][$existingId]);
+                }
+                break;
             }
         }
 
