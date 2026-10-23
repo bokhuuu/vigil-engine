@@ -916,7 +916,7 @@
 
     {{-- Legend --}}
     <div class="legend">
-        <div class="legend-item">✅ მიღებულია</div>
+        <div class="legend-item">✅ არის</div>
         <div class="legend-item">❌ აკლია</div>
         <div class="legend-item" style="color:#b3bac5;">· არ საჭიროებს</div>
         <div class="legend-item">❗ hover = შენიშვნა</div>
