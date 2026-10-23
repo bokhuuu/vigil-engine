@@ -800,7 +800,7 @@
         <div class="filter-group" id="fg-status">
             <div class="filter-toggle {{ $activeStatus ? 'has-active' : '' }}" onclick="toggleFilter('status')">
                 სტატუსი
-                {{ $activeStatus ? '· ' . ($activeStatus === 'complete' ? 'დასრულდა' : ($activeStatus === 'closed' ? 'დახურული' : 'მიმდინარე')) : '' }}
+                {{ $activeStatus ? '· ' . ($activeStatus === 'complete' ? 'დაიხურა' : ($activeStatus === 'closed' ? 'დახურული' : 'მიმდინარე')) : '' }}
                 <span>▼</span>
             </div>
             <div class="filter-dropdown" id="fd-status">
@@ -931,7 +931,7 @@
                         <th style="width:80px;">ნომერი</th>
                         <th class="col-status">სტატუსი</th>
                         <th class="center">შენ.</th>
-                        <th class="center col-auto">სკანი</th>
+                        <th class="center col-manual">სკანი</th>
                         <th class="center col-manual">ფოტო</th>
                         <th class="center col-manual">ხელმ.</th>
                         <th class="center col-auto">ნახაზი</th>
@@ -970,7 +970,7 @@
                                 <span
                                     class="badge {{ $isComplete ? ($docsIncomplete ? 'warn' : 'complete') : 'incomplete' }}"
                                     @if ($docsIncomplete) title="დასრულებული მაგრამ დოკუმენტები არასრულია" @endif>
-                                    {{ $isComplete ? ($docsIncomplete ? '⚠️ დასრულდა' : 'დასრულდა') : 'მიმდინარე' }}
+                                    {{ $isComplete ? ($docsIncomplete ? '⚠️ დაიხურა' : 'დაიხურა') : 'მიმდინარე' }}
                                 </span>
                             </td>
                             <td class="center">
@@ -981,7 +981,7 @@
                                 @endif
                             </td>
                             {{-- სკანი --}}
-                            <td class="center col-auto">
+                            <td class="center col-manual">
                                 @php $scanState = $act['_scan'] ?? null; @endphp
                                 @if ($scanState === 'full')
                                     <span class="doc-check" title="სკანი ატვირთულია">✅</span>
