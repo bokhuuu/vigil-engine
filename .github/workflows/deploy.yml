@@ -101,8 +101,9 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
           script: |
-            cd /var/www/vigil-engine && GIT_SSH_COMMAND="ssh -i /home/deploy/.ssh/vigil_ed25519" git pull origin main
+            cd /var/www/vigil-engine && GIT_SSH_COMMAND="ssh -i /home/deploy/.ssh/vigil_ed25519" git pull --ff-only origin main
             cd /var/www/vigil-engine && composer install --no-interaction --prefer-dist --optimize-autoloader
             cd /var/www/vigil-engine && php artisan config:clear
             cd /var/www/vigil-engine && php artisan horizon:terminate
