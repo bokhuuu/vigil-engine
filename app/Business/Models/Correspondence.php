@@ -26,6 +26,11 @@ class Correspondence extends Model
         'drive_folder_url',
         'notes',
         'status',
+        'status',
+        'recipient_email',
+        'cc_emails',
+        'subject',
+        'body',
     ];
 
     protected function casts(): array
@@ -34,6 +39,7 @@ class Correspondence extends Model
             'sent_at' => 'date',
             'deadline_at' => 'date',
             'received_at' => 'date',
+            'cc_emails' => 'array',
         ];
     }
 

@@ -439,6 +439,203 @@
             background: var(--surface-2);
         }
 
+        /* DRAFT CARD */
+        .draft-toggle {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .draft-toggle:hover {
+            background: var(--border);
+        }
+
+        .draft-chevron {
+            transition: transform 0.2s;
+            font-size: 0.75rem;
+            color: var(--text-3);
+        }
+
+        .draft-chevron.open {
+            transform: rotate(90deg);
+        }
+
+        .draft-body {
+            display: none;
+            padding: 1.25rem;
+        }
+
+        .draft-field {
+            margin-bottom: 1rem;
+        }
+
+        .draft-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-3);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 0.375rem;
+            display: block;
+        }
+
+        .draft-input-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .draft-input {
+            font-family: inherit;
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 100%;
+            color: var(--text);
+            outline: none;
+            background: var(--surface);
+            transition: border-color 0.15s;
+        }
+
+        .draft-input:focus {
+            border-color: var(--blue);
+        }
+
+        .draft-textarea {
+            font-family: inherit;
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 100%;
+            color: var(--text);
+            outline: none;
+            background: var(--surface);
+            resize: vertical;
+            min-height: 220px;
+            line-height: 1.6;
+            transition: border-color 0.15s;
+        }
+
+        .draft-textarea:focus {
+            border-color: var(--blue);
+        }
+
+        .btn-copy {
+            font-family: inherit;
+            font-size: 0.75rem;
+            padding: 0.4rem 0.625rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-2);
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: all 0.15s;
+        }
+
+        .btn-copy:hover {
+            border-color: var(--text-2);
+        }
+
+        .btn-copy.copied {
+            border-color: var(--green);
+            color: var(--green);
+            background: var(--green-bg);
+        }
+
+        .btn-copy:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .cc-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.375rem;
+            padding: 0.4rem 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            align-items: center;
+            min-height: 42px;
+            flex: 1;
+        }
+
+        .cc-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: var(--blue-bg);
+            color: var(--blue);
+            font-size: 0.78rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+        }
+
+        .cc-chip.locked {
+            background: var(--slate-bg);
+            color: var(--slate);
+        }
+
+        .cc-chip-remove {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: inherit;
+            font-size: 0.75rem;
+            padding: 0;
+            line-height: 1;
+            opacity: 0.6;
+        }
+
+        .cc-chip-remove:hover {
+            opacity: 1;
+        }
+
+        .cc-add-input {
+            font-family: inherit;
+            font-size: 0.8rem;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: var(--text);
+            min-width: 140px;
+            flex: 1;
+        }
+
+        .draft-deadline-hint {
+            font-size: 0.78rem;
+            color: var(--text-3);
+            margin-top: 0.375rem;
+        }
+
+        .btn-sent {
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.625rem 1.5rem;
+            background: var(--green);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-sent:hover {
+            background: #047857;
+        }
+
+        .btn-sent:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         /* DELETE MODAL */
         .modal-overlay {
             position: fixed;
@@ -600,6 +797,7 @@
             </div>
         </div>
 
+        {{-- EDIT FORM: info + contacts only --}}
         <form id="edit-form" method="POST" action="{{ route('business.update', $business) }}">
             @csrf
             @method('PUT')
@@ -784,12 +982,14 @@
 
             </div>
         </form>
+        {{-- /edit-form ends here — nothing below is inside it --}}
 
         <form id="drive-create-form" method="POST" action="{{ route('business.drive.create', $business) }}">
             @csrf
         </form>
 
-        <div class="grid">
+        {{-- CORRESPONDENCE GRID --}}
+        <div class="grid" style="margin-top:1.25rem;">
 
             {{-- CORRESPONDENCE CARD --}}
             <div class="card" style="grid-column: span 2;">
@@ -859,6 +1059,7 @@
                                 <div class="corr-notes">{{ $corr->notes }}</div>
                             @endif
 
+                            {{-- Inline edit for existing correspondence (dates/status/notes only) --}}
                             <div id="corr-edit-{{ $corr->id }}"
                                 style="display:none;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);">
                                 <form method="POST"
@@ -970,214 +1171,438 @@
                 </div>
 
             </div>
+            {{-- /correspondence grid --}}
 
-        </div>
+            {{-- DRAFT CARD — standalone, outside every other form --}}
+            <div class="card" style="margin-top:1.25rem;">
+                <div class="card-header draft-toggle" onclick="toggleDraft()" id="draft-header">
+                    <span>✉️ წერილის პროექტი</span>
+                    <span class="draft-chevron" id="draft-chevron">▶</span>
+                </div>
+                <div class="draft-body" id="draft-body">
 
-        {{-- UPLOAD MODAL --}}
-        <div class="modal-overlay" id="upload-modal" onclick="if(event.target===this)closeUploadModal()">
-            <div class="modal">
-                <div class="modal-title">📤 ფაილის ატვირთვა</div>
-                <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">
-                    {{ $business->registration_code }} · {{ $business->name }}</div>
-                <div style="margin-bottom:1rem;">
-                    <label
-                        style="display:block;font-size:0.82rem;font-weight:500;margin-bottom:0.375rem;">საქაღალდე</label>
-                    <select id="upload-folder-select"
-                        style="width:100%;padding:0.45rem 0.65rem;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:0.88rem;">
-                        <option value="">— ჩატვირთვა... —</option>
-                    </select>
-                </div>
-                <div style="margin-bottom:1.25rem;">
-                    <label style="display:block;font-size:0.82rem;font-weight:500;margin-bottom:0.375rem;">ფაილები</label>
-                    <input type="file" id="upload-files" multiple
-                        style="width:100%;font-size:0.85rem;color:var(--text);">
-                </div>
-                <div id="upload-status" style="font-size:0.82rem;min-height:1.2em;margin-bottom:0.75rem;"></div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-cancel" style="display:inline-flex;"
-                        onclick="closeUploadModal()">გაუქმება</button>
-                    <button type="button" class="btn btn-edit" id="upload-submit-btn" onclick="submitUpload()"
-                        style="background:var(--blue);">ატვირთვა</button>
+                    @php
+                        $draftWarnings = [];
+                        if (!$business->owner_email && !$business->accountant_email) {
+                            $draftWarnings[] = 'TO ველი ცარიელია — მეპატრონის ან ბუღალტრის ელ-ფოსტა შეიყვანეთ';
+                        }
+                        if (!$business->cadastral_code) {
+                            $draftWarnings[] = 'საკადასტრო კოდი არ არის — შეიყვანეთ ძირითად ინფოში';
+                        }
+                        $draftBlocked = count($draftWarnings) > 0;
+                    @endphp
+
+                    @if ($draftBlocked)
+                        <div
+                            style="background:var(--amber-bg);border:1px solid #fde68a;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;">
+                            <div style="font-size:0.78rem;font-weight:600;color:var(--amber);margin-bottom:0.25rem;">⚠️
+                                გაგზავნა შეუძლებელია</div>
+                            @foreach ($draftWarnings as $w)
+                                <div style="font-size:0.82rem;color:var(--amber);">— {{ $w }}</div>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    {{-- TO --}}
+                    <div class="draft-field">
+                        <label class="draft-label">TO</label>
+                        <div class="draft-input-row">
+                            <input class="draft-input" id="draft-to"
+                                value="{{ collect([$business->owner_email, $business->accountant_email])->filter()->implode(', ') }}"
+                                placeholder="მიმღების ელ-ფოსტა">
+                            <button type="button" class="btn-copy" onclick="draftCopy('draft-to', this)"
+                                {{ $draftBlocked ? 'disabled' : '' }}>📋</button>
+                        </div>
+                    </div>
+
+                    {{-- CC --}}
+                    <div class="draft-field">
+                        <label class="draft-label">CC</label>
+                        <div class="draft-input-row">
+                            <div class="cc-chips" id="cc-chips" onclick="document.getElementById('cc-add').focus()">
+                                @foreach (config('services.business.internal_emails') as $email)
+                                    @if ($email)
+                                        <span class="cc-chip" data-email="{{ $email }}">
+                                            {{ $email }}
+                                            <button type="button" class="cc-chip-remove"
+                                                onclick="removeChip(this, event)">✕</button>
+                                        </span>
+                                    @endif
+                                @endforeach
+                                <span class="cc-chip locked" title="Engine — ყოველთვის CC-ში">
+                                    {{ config('services.business.own_email') }}
+                                </span>
+                                <input class="cc-add-input" id="cc-add" placeholder="დამატება..."
+                                    onkeydown="ccInputKeydown(event)">
+                            </div>
+                            <button type="button" class="btn-copy" onclick="copyCC(this)"
+                                {{ $draftBlocked ? 'disabled' : '' }}>📋</button>
+                        </div>
+                    </div>
+
+                    {{-- SUBJECT --}}
+                    <div class="draft-field">
+                        <label class="draft-label">Subject</label>
+                        <div class="draft-input-row">
+                            <input class="draft-input" id="draft-subject"
+                                value="{{ $business->name }} / კოდი: {{ $business->registration_code }}">
+                            <button type="button" class="btn-copy" onclick="draftCopy('draft-subject', this)"
+                                {{ $draftBlocked ? 'disabled' : '' }}>📋</button>
+                        </div>
+                    </div>
+
+                    {{-- BODY --}}
+                    <div class="draft-field">
+                        <label class="draft-label">Body</label>
+                        <div class="draft-input-row" style="align-items:flex-start;">
+                            <textarea class="draft-textarea" id="draft-body-text">მოგესალმებით,
+
+გწერთ კომპანია Colliers-დან. საქართველოს რეგიონული განვითარებისა და ინფრასტრუქტურის სამინისტროს საავტომობილო გზების დეპარტამენტის პროექტის ფარგლებში ვახორციელებთ ბიზნესის მოცდენისთვის საკომპენსაციო თანხის დაანგარიშებას. ამისათვის გთხოვთ, საკადასტრო კოდზე {{ $business->cadastral_code ?? '—' }} არსებულ თქვენს ბიზნეს საქმიანობაზე მოგვაწოდოთ შემდეგი ინფორმაცია და დოკუმენტები:
+
+- საწარმოს იურიდიული დასახელება;
+
+- საიდენტიფიკაციო კოდი;
+
+- საქმიანობის სახე (მოკლე აღწერით);
+
+- საქმიანობის დაწყების წელი;
+
+- იჯარის ხელშეკრულება (ასეთის არსებობის შემთხვევაში) და საიჯარო ქირის გადახდის დამადასტურებელი დოკუმენტები (2025 წლიდან - დღემდე);
+
+- საწარმოს წლიური მოგება 2023, 2024 და 2025 წლებისთვის, თითოეული წლისთვის ცალ-ცალკე. გთხოვთ, თან დაურთოთ შემოსავლების სამსახურის პორტალიდან (rs.ge) ჩამოტვირთული დამადასტურებელი დოკუმენტები (მოგება ზარალის უწყისი);
+
+- დასაქმებულთა სია ყველა თანამშრომლის პირადი ნომრისა და ხელფასის მითითებით. ასევე შემოსავლების სამსახურის პორტალიდან ჩამოტვირთული საშემოსავლო გადასახადის დეკლარაციები 2025 წლის თითოეული თვისთვის;
+
+- ბუღალტერის საკონტაქტო ინფორმაცია;
+
+გთხოვთ, გაითვალისწინოთ:
+
+- მოწოდებული ინფორმაცია უნდა მხოლოდ იმ ობიექტს, რომელიც რეგისტრირებულია ან ბიზნეს საქმიანობას ახორციელებს ზემოთ მითითებულ საკადასტრო კოდზე;
+
+- თანხების მითითებისას დააზუსტეთ, არის თუ არა ისინი გადასახადების ჩათვლით.
+
+მოწოდებული ინფორმაცია, მათ შორის თანამშრომლების პერსონალური მონაცემები, გამოყენებული იქნება მხოლოდ კომპენსაციის დაანგარიშების მიზნით და დაცული იქნება კონფიდენციალურობის მოთხოვნების შესაბამისად.
+
+გთხოვთ, აღნიშნული დოკუმენტები გამოგვიგზავნოთ არაუმეტეს 10 კალენდარულ დღეში.
+
+პატივისცემით,</textarea>
+                            <button type="button" class="btn-copy" onclick="draftCopy('draft-body-text', this)"
+                                style="align-self:flex-start;" {{ $draftBlocked ? 'disabled' : '' }}>📋</button>
+                        </div>
+                    </div>
+
+                    {{-- DEADLINE HINT + SENT BUTTON --}}
+                    <div
+                        style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-top:0.5rem;">
+                        <div class="draft-deadline-hint">
+                            ⏱ ვადა: <strong>{{ now()->addDays(10)->format('d.m.Y') }}</strong>
+                        </div>
+                        <form method="POST" action="{{ route('business.correspondence.store', $business) }}"
+                            id="draft-sent-form">
+                            @csrf
+                            <input type="hidden" name="sent_at" value="{{ now()->format('Y-m-d') }}">
+                            <input type="hidden" name="deadline_at" value="{{ now()->addDays(10)->format('Y-m-d') }}">
+                            <input type="hidden" name="recipient_email" id="draft-sent-to">
+                            <input type="hidden" name="cc_emails" id="draft-sent-cc">
+                            <input type="hidden" name="subject" id="draft-sent-subject">
+                            <input type="hidden" name="body" id="draft-sent-body">
+                            <button type="button" class="btn-sent" onclick="submitDraftSent()"
+                                {{ $draftBlocked ? 'disabled' : '' }}>გაგზავნილია ✓</button>
+                        </form>
+                    </div>
+
                 </div>
             </div>
-        </div>
+            {{-- /draft card --}}
 
-        {{-- DELETE MODAL --}}
-        <div class="modal-overlay" id="delete-modal">
-            <div class="modal">
-                <div class="modal-title">ბიზნესის წაშლა</div>
-                <div class="modal-text">დარწმუნებული ხართ, რომ გსურთ <strong>{{ $business->name }}</strong> წაშლა? ეს
-                    მოქმედება შეუქცევადია.</div>
-                <div class="modal-actions">
-                    <button class="btn btn-cancel" style="display:inline-flex;"
-                        onclick="document.getElementById('delete-modal').classList.remove('active')">გაუქმება</button>
-                    <form method="POST" action="{{ route('business.destroy', $business) }}">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-delete">წაშლა</button>
-                    </form>
+            {{-- UPLOAD MODAL --}}
+            <div class="modal-overlay" id="upload-modal" onclick="if(event.target===this)closeUploadModal()">
+                <div class="modal">
+                    <div class="modal-title">📤 ფაილის ატვირთვა</div>
+                    <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">
+                        {{ $business->registration_code }} · {{ $business->name }}</div>
+                    <div style="margin-bottom:1rem;">
+                        <label
+                            style="display:block;font-size:0.82rem;font-weight:500;margin-bottom:0.375rem;">საქაღალდე</label>
+                        <select id="upload-folder-select"
+                            style="width:100%;padding:0.45rem 0.65rem;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:0.88rem;">
+                            <option value="">— ჩატვირთვა... —</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom:1.25rem;">
+                        <label
+                            style="display:block;font-size:0.82rem;font-weight:500;margin-bottom:0.375rem;">ფაილები</label>
+                        <input type="file" id="upload-files" multiple
+                            style="width:100%;font-size:0.85rem;color:var(--text);">
+                    </div>
+                    <div id="upload-status" style="font-size:0.82rem;min-height:1.2em;margin-bottom:0.75rem;"></div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-cancel" style="display:inline-flex;"
+                            onclick="closeUploadModal()">გაუქმება</button>
+                        <button type="button" class="btn btn-edit" id="upload-submit-btn" onclick="submitUpload()"
+                            style="background:var(--blue);">ატვირთვა</button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        {{-- CORRESPONDENCE DELETE MODAL --}}
-        <div class="modal-overlay" id="corr-delete-modal">
-            <div class="modal">
-                <div class="modal-title">მიმოწერის წაშლა</div>
-                <div class="modal-text">დარწმუნებული ხართ, რომ გსურთ <strong id="corr-delete-label"></strong> წაშლა?</div>
-                <div class="modal-actions">
-                    <button class="btn btn-cancel" style="display:inline-flex;"
-                        onclick="document.getElementById('corr-delete-modal').classList.remove('active')">გაუქმება</button>
-                    <form id="corr-delete-form" method="POST">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-delete">წაშლა</button>
-                    </form>
+            {{-- DELETE MODAL --}}
+            <div class="modal-overlay" id="delete-modal">
+                <div class="modal">
+                    <div class="modal-title">ბიზნესის წაშლა</div>
+                    <div class="modal-text">დარწმუნებული ხართ, რომ გსურთ <strong>{{ $business->name }}</strong> წაშლა? ეს
+                        მოქმედება შეუქცევადია.</div>
+                    <div class="modal-actions">
+                        <button class="btn btn-cancel" style="display:inline-flex;"
+                            onclick="document.getElementById('delete-modal').classList.remove('active')">გაუქმება</button>
+                        <form method="POST" action="{{ route('business.destroy', $business) }}">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-delete">წაშლა</button>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <script>
-            const editFields = [
-                'name', 'code', 'act', 'lot', 'cadastral', 'drive',
-                'owner-name', 'owner-phone', 'owner-email',
-                'acc-name', 'acc-phone', 'acc-email', 'notes'
-            ];
-            const editSelects = ['status'];
-            const editCheckboxGroups = ['type'];
+            {{-- CORRESPONDENCE DELETE MODAL --}}
+            <div class="modal-overlay" id="corr-delete-modal">
+                <div class="modal">
+                    <div class="modal-title">მიმოწერის წაშლა</div>
+                    <div class="modal-text">დარწმუნებული ხართ, რომ გსურთ <strong id="corr-delete-label"></strong> წაშლა?
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-cancel" style="display:inline-flex;"
+                            onclick="document.getElementById('corr-delete-modal').classList.remove('active')">გაუქმება</button>
+                        <form id="corr-delete-form" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-delete">წაშლა</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
 
-            function startEdit() {
-                editFields.forEach(f => {
-                    document.getElementById('view-' + f).style.display = 'none';
-                    document.getElementById('edit-' + f).style.display = 'block';
-                });
-                editSelects.forEach(f => {
-                    document.getElementById('view-' + f).style.display = 'none';
-                    document.getElementById('edit-' + f).style.display = 'block';
-                });
-                editCheckboxGroups.forEach(f => {
-                    document.getElementById('view-' + f).style.display = 'none';
-                    document.getElementById('edit-' + f).style.display = 'flex';
-                });
-                document.getElementById('btn-edit').style.display = 'none';
-                document.getElementById('btn-save').style.display = 'inline-flex';
-                document.getElementById('btn-cancel').style.display = 'inline-flex';
-            }
+            <script>
+                const editFields = [
+                    'name', 'code', 'act', 'lot', 'cadastral', 'drive',
+                    'owner-name', 'owner-phone', 'owner-email',
+                    'acc-name', 'acc-phone', 'acc-email', 'notes'
+                ];
+                const editSelects = ['status'];
+                const editCheckboxGroups = ['type'];
 
-            function cancelEdit() {
-                editFields.forEach(f => {
-                    document.getElementById('view-' + f).style.display = '';
-                    document.getElementById('edit-' + f).style.display = 'none';
-                });
-                editSelects.forEach(f => {
-                    document.getElementById('view-' + f).style.display = '';
-                    document.getElementById('edit-' + f).style.display = 'none';
-                });
-                editCheckboxGroups.forEach(f => {
-                    document.getElementById('view-' + f).style.display = '';
-                    document.getElementById('edit-' + f).style.display = 'none';
-                });
-                document.getElementById('btn-edit').style.display = '';
-                document.getElementById('btn-save').style.display = 'none';
-                document.getElementById('btn-cancel').style.display = 'none';
-            }
-
-            function submitEdit() {
-                document.getElementById('edit-form').submit();
-            }
-
-            function toggleCorrEdit(id) {
-                const el = document.getElementById('corr-edit-' + id);
-                el.style.display = el.style.display === 'none' ? 'block' : 'none';
-            }
-
-            function showCorrDeleteModal(id, round) {
-                document.getElementById('corr-delete-label').textContent = 'მიმოწერა-' + round;
-                document.getElementById('corr-delete-form').action = '/business/{{ $business->id }}/correspondence/' + id;
-                document.getElementById('corr-delete-modal').classList.add('active');
-            }
-
-            function openUploadModal() {
-                const sel = document.getElementById('upload-folder-select');
-                sel.innerHTML = '<option value="">— ჩატვირთვა... —</option>';
-                document.getElementById('upload-files').value = '';
-                document.getElementById('upload-status').textContent = '';
-                document.getElementById('upload-modal').classList.add('active');
-
-                fetch('{{ route('business.upload.folders') }}?business_id={{ $business->id }}')
-                    .then(r => r.json())
-                    .then(data => {
-                        sel.innerHTML = '<option value="">— საქაღალდე —</option>';
-                        (data.folders || []).forEach(f => {
-                            const o = document.createElement('option');
-                            o.value = f;
-                            o.textContent = f;
-                            sel.appendChild(o);
-                        });
+                function startEdit() {
+                    editFields.forEach(f => {
+                        document.getElementById('view-' + f).style.display = 'none';
+                        document.getElementById('edit-' + f).style.display = 'block';
                     });
-            }
-
-            function closeUploadModal() {
-                document.getElementById('upload-modal').classList.remove('active');
-            }
-
-            async function submitUpload() {
-                const folder = document.getElementById('upload-folder-select').value;
-                const files = Array.from(document.getElementById('upload-files').files);
-                const status = document.getElementById('upload-status');
-                const btn = document.getElementById('upload-submit-btn');
-
-                if (!folder) {
-                    status.textContent = '⚠️ აირჩიეთ საქაღალდე';
-                    return;
-                }
-                if (!files.length) {
-                    status.textContent = '⚠️ აირჩიეთ ფაილი';
-                    return;
+                    editSelects.forEach(f => {
+                        document.getElementById('view-' + f).style.display = 'none';
+                        document.getElementById('edit-' + f).style.display = 'block';
+                    });
+                    editCheckboxGroups.forEach(f => {
+                        document.getElementById('view-' + f).style.display = 'none';
+                        document.getElementById('edit-' + f).style.display = 'flex';
+                    });
+                    document.getElementById('btn-edit').style.display = 'none';
+                    document.getElementById('btn-save').style.display = 'inline-flex';
+                    document.getElementById('btn-cancel').style.display = 'inline-flex';
                 }
 
-                btn.disabled = true;
-                const CHUNK = 5;
-                const total = files.length;
-                let uploaded = [];
-                let failed = [];
+                function cancelEdit() {
+                    editFields.forEach(f => {
+                        document.getElementById('view-' + f).style.display = '';
+                        document.getElementById('edit-' + f).style.display = 'none';
+                    });
+                    editSelects.forEach(f => {
+                        document.getElementById('view-' + f).style.display = '';
+                        document.getElementById('edit-' + f).style.display = 'none';
+                    });
+                    editCheckboxGroups.forEach(f => {
+                        document.getElementById('view-' + f).style.display = '';
+                        document.getElementById('edit-' + f).style.display = 'none';
+                    });
+                    document.getElementById('btn-edit').style.display = '';
+                    document.getElementById('btn-save').style.display = 'none';
+                    document.getElementById('btn-cancel').style.display = 'none';
+                }
 
-                for (let i = 0; i < total; i += CHUNK) {
-                    const chunk = files.slice(i, i + CHUNK);
-                    status.textContent = '⏳ ატვირთვა... ' + Math.min(i + CHUNK, total) + ' / ' + total;
+                function submitEdit() {
+                    document.getElementById('edit-form').submit();
+                }
 
-                    const fd = new FormData();
-                    fd.append('business_id', '{{ $business->id }}');
-                    fd.append('folder', folder);
-                    for (const f of chunk) fd.append('files[]', f);
+                function toggleCorrEdit(id) {
+                    const el = document.getElementById('corr-edit-' + id);
+                    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+                }
 
-                    try {
-                        const res = await fetch('{{ route('business.upload.store') }}', {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                            },
-                            body: fd,
+                function showCorrDeleteModal(id, round) {
+                    document.getElementById('corr-delete-label').textContent = 'მიმოწერა-' + round;
+                    document.getElementById('corr-delete-form').action = '/business/{{ $business->id }}/correspondence/' + id;
+                    document.getElementById('corr-delete-modal').classList.add('active');
+                }
+
+                function openUploadModal() {
+                    const sel = document.getElementById('upload-folder-select');
+                    sel.innerHTML = '<option value="">— ჩატვირთვა... —</option>';
+                    document.getElementById('upload-files').value = '';
+                    document.getElementById('upload-status').textContent = '';
+                    document.getElementById('upload-modal').classList.add('active');
+
+                    fetch('{{ route('business.upload.folders') }}?business_id={{ $business->id }}')
+                        .then(r => r.json())
+                        .then(data => {
+                            sel.innerHTML = '<option value="">— საქაღალდე —</option>';
+                            (data.folders || []).forEach(f => {
+                                const o = document.createElement('option');
+                                o.value = f;
+                                o.textContent = f;
+                                sel.appendChild(o);
+                            });
                         });
-                        const data = await res.json();
-                        if (data.uploaded) uploaded = uploaded.concat(data.uploaded);
-                        if (data.failed) failed = failed.concat(data.failed);
-                    } catch {
-                        failed = failed.concat(chunk.map(f => f.name));
+                }
+
+                function closeUploadModal() {
+                    document.getElementById('upload-modal').classList.remove('active');
+                }
+
+                async function submitUpload() {
+                    const folder = document.getElementById('upload-folder-select').value;
+                    const files = Array.from(document.getElementById('upload-files').files);
+                    const status = document.getElementById('upload-status');
+                    const btn = document.getElementById('upload-submit-btn');
+
+                    if (!folder) {
+                        status.textContent = '⚠️ აირჩიეთ საქაღალდე';
+                        return;
+                    }
+                    if (!files.length) {
+                        status.textContent = '⚠️ აირჩიეთ ფაილი';
+                        return;
+                    }
+
+                    btn.disabled = true;
+                    const CHUNK = 5;
+                    const total = files.length;
+                    let uploaded = [];
+                    let failed = [];
+
+                    for (let i = 0; i < total; i += CHUNK) {
+                        const chunk = files.slice(i, i + CHUNK);
+                        status.textContent = '⏳ ატვირთვა... ' + Math.min(i + CHUNK, total) + ' / ' + total;
+
+                        const fd = new FormData();
+                        fd.append('business_id', '{{ $business->id }}');
+                        fd.append('folder', folder);
+                        for (const f of chunk) fd.append('files[]', f);
+
+                        try {
+                            const res = await fetch('{{ route('business.upload.store') }}', {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                },
+                                body: fd,
+                            });
+                            const data = await res.json();
+                            if (data.uploaded) uploaded = uploaded.concat(data.uploaded);
+                            if (data.failed) failed = failed.concat(data.failed);
+                        } catch {
+                            failed = failed.concat(chunk.map(f => f.name));
+                        }
+                    }
+
+                    btn.disabled = false;
+                    document.getElementById('upload-files').value = '';
+
+                    if (failed.length) {
+                        status.textContent = '✅ ატვირთულია: ' + uploaded.length + '  ❌ ვერ ატვირთა: ' + failed.length;
+                    } else {
+                        status.textContent = '✅ ატვირთულია: ' + uploaded.length + ' ფაილი';
+                    }
+                    setTimeout(() => closeUploadModal(), 1500);
+                }
+
+                // DRAFT CARD
+                function toggleDraft() {
+                    const body = document.getElementById('draft-body');
+                    const chevron = document.getElementById('draft-chevron');
+                    const open = body.style.display === 'block';
+                    body.style.display = open ? 'none' : 'block';
+                    chevron.classList.toggle('open', !open);
+                }
+
+                function draftCopy(id, btn) {
+                    const el = document.getElementById(id);
+                    const text = el.tagName === 'TEXTAREA' ? el.value : el.value;
+                    navigator.clipboard.writeText(text).then(() => {
+                        btn.classList.add('copied');
+                        btn.textContent = '✓';
+                        setTimeout(() => {
+                            btn.classList.remove('copied');
+                            btn.textContent = '📋';
+                        }, 1500);
+                    });
+                }
+
+                function removeChip(btn, e) {
+                    e.stopPropagation();
+                    btn.closest('.cc-chip').remove();
+                }
+
+                function ccInputKeydown(e) {
+                    if (e.key === 'Enter' || e.key === ',') {
+                        e.preventDefault();
+                        const val = e.target.value.trim().replace(/,$/, '');
+                        if (val) addCCChip(val);
+                        e.target.value = '';
+                    }
+                    if (e.key === 'Backspace' && !e.target.value) {
+                        const chips = document.querySelectorAll('#cc-chips .cc-chip:not(.locked)');
+                        if (chips.length) chips[chips.length - 1].remove();
                     }
                 }
 
-                btn.disabled = false;
-                document.getElementById('upload-files').value = '';
-
-                if (failed.length) {
-                    status.textContent = '✅ ატვირთულია: ' + uploaded.length + '  ❌ ვერ ატვირთა: ' + failed.length;
-                } else {
-                    status.textContent = '✅ ატვირთულია: ' + uploaded.length + ' ფაილი';
+                function addCCChip(email) {
+                    const chip = document.createElement('span');
+                    chip.className = 'cc-chip';
+                    chip.dataset.email = email;
+                    chip.innerHTML = email +
+                        ' <button type="button" class="cc-chip-remove" onclick="removeChip(this,event)">✕</button>';
+                    const input = document.getElementById('cc-add');
+                    document.getElementById('cc-chips').insertBefore(chip, input);
                 }
-                setTimeout(() => closeUploadModal(), 1500);
-            }
-        </script>
+
+                function copyCC(btn) {
+                    const chips = document.querySelectorAll('#cc-chips .cc-chip');
+                    const emails = Array.from(chips).map(c => c.dataset.email).filter(Boolean).join(', ');
+                    navigator.clipboard.writeText(emails).then(() => {
+                        btn.classList.add('copied');
+                        btn.textContent = '✓';
+                        setTimeout(() => {
+                            btn.classList.remove('copied');
+                            btn.textContent = '📋';
+                        }, 1500);
+                    });
+                }
+
+                function submitDraftSent() {
+                    const to = document.getElementById('draft-to').value.trim();
+                    if (!to) {
+                        alert('TO ველი ცარიელია');
+                        return;
+                    }
+
+                    const chips = document.querySelectorAll('#cc-chips .cc-chip');
+                    const ccArr = Array.from(chips).map(c => c.dataset.email).filter(Boolean);
+
+                    document.getElementById('draft-sent-to').value = to;
+                    document.getElementById('draft-sent-cc').value = JSON.stringify(ccArr);
+                    document.getElementById('draft-sent-subject').value = document.getElementById('draft-subject').value;
+                    document.getElementById('draft-sent-body').value = document.getElementById('draft-body-text').value;
+
+                    document.getElementById('draft-sent-form').submit();
+                }
+            </script>
 
     </body>
 

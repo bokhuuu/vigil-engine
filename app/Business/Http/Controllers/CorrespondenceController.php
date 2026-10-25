@@ -18,7 +18,17 @@ class CorrespondenceController extends Controller
             'sent_at' => ['required', 'date'],
             'deadline_at' => ['required', 'date', 'after:sent_at'],
             'notes' => ['nullable', 'string'],
+            'recipient_email' => ['nullable', 'string'],
+            'cc_emails' => ['nullable', 'string'],
+            'subject' => ['nullable', 'string'],
+            'body' => ['nullable', 'string'],
         ]);
+
+        $ccEmails = null;
+        if (! empty($validated['cc_emails'])) {
+            $decoded = json_decode($validated['cc_emails'], true);
+            $ccEmails = is_array($decoded) ? $decoded : null;
+        }
 
         $round = $business->correspondence()->max('round') + 1;
 
@@ -28,6 +38,10 @@ class CorrespondenceController extends Controller
             'deadline_at' => $validated['deadline_at'],
             'notes' => $validated['notes'] ?? null,
             'status' => 'pending',
+            'recipient_email' => $validated['recipient_email'] ?? null,
+            'cc_emails' => $ccEmails,
+            'subject' => $validated['subject'] ?? null,
+            'body' => $validated['body'] ?? null,
         ]);
 
         return redirect()->route('business.show', $business)->with('success', 'მიმოწერა-'.$round.' დაემატა');
