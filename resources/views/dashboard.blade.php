@@ -1329,10 +1329,14 @@
                     file: f,
                     path: f.name
                 })),
-                ...folderFiles.map(f => ({
-                    file: f,
-                    path: f.webkitRelativePath || f.name
-                })),
+                ...folderFiles.map(f => {
+                    const parts = (f.webkitRelativePath || f.name).split('/');
+                    const path = parts.length > 1 ? parts.slice(1).join('/') : parts[0];
+                    return {
+                        file: f,
+                        path
+                    };
+                }),
             ];
 
             if (!folder) {
