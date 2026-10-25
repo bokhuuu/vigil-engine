@@ -49,8 +49,8 @@ class BusinessUploadController extends Controller
         $request->validate([
             'business_id' => ['required', 'integer', 'exists:business.businesses,id'],
             'folder' => ['required', 'string', 'max:255'],
-            'files' => ['required'],
-            'files.*' => ['file', 'max:102400'],
+            'files' => ['required', 'array', 'min:1', 'max:20'],
+            'files.*' => ['required', 'file', 'max:102400'],
         ]);
 
         $business = Business::findOrFail($request->integer('business_id'));
