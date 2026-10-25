@@ -14,7 +14,7 @@ Route::prefix('business')->name('business.')->group(function () {
 
     Route::middleware('guest:business')->group(function () {
         Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-        Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
     });
 
     Route::middleware('auth:business')->group(function () {
