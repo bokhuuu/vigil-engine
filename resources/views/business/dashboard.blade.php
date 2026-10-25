@@ -424,6 +424,13 @@
             color: var(--red);
         }
 
+        .td-type {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 3px;
+        }
+
         .type-pill {
             display: inline-flex;
             padding: 0.18rem 0.5rem;
@@ -433,6 +440,12 @@
             background: var(--slate-bg);
             color: var(--slate);
             white-space: nowrap;
+        }
+
+        .type-pill-more {
+            background: var(--border);
+            color: var(--text-3);
+            font-size: 0.68rem;
         }
 
         .lot-chip {
@@ -631,10 +644,17 @@
                                 style="cursor:pointer;">
                                 <td class="td-name">{{ $business->name }}</td>
                                 <td class="td-code">{{ $business->registration_code }}</td>
-                                <td>
-                                    @foreach ((array) $business->type as $t)
-                                        <span class="type-pill" style="margin-right:2px;">{{ $t }}</span>
+                                <td class="td-type">
+                                    @php
+                                        $types = (array) $business->type;
+                                        $extra = count($types) - 2;
+                                    @endphp
+                                    @foreach (array_slice($types, 0, 2) as $t)
+                                        <span class="type-pill">{{ $t }}</span>
                                     @endforeach
+                                    @if ($extra > 0)
+                                        <span class="type-pill type-pill-more">+{{ $extra }}</span>
+                                    @endif
                                 </td>
                                 <td><span class="lot-chip">{{ $business->lot_number }}</span></td>
                                 <td class="td-code td-act" style="white-space:nowrap;">
@@ -689,6 +709,12 @@
             const countBar = document.getElementById('count-bar');
             const rows = Array.from(document.querySelectorAll('#tbody tr[data-name]'));
             const total = rows.length;
+            const noResults = document.createElement('tr');
+            noResults.id = 'no-results-row';
+            noResults.innerHTML =
+                '<td colspan="6"><div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">ჩანაწერი არ მოიძებნა</div></div></td>';
+            noResults.style.display = 'none';
+            document.getElementById('tbody').appendChild(noResults);
 
             function normalize(str) {
                 return (str || '').toLowerCase().replace(/\s*-\s*/g, '-').trim();
@@ -722,6 +748,8 @@
                     row.style.display = show ? '' : 'none';
                     if (show) visible++;
                 });
+
+                noResults.style.display = visible === 0 ? '' : 'none';
 
                 countBar.textContent = visible < total ?
                     `${visible} / ${total} ბიზნესი` :
