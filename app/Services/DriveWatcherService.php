@@ -324,11 +324,6 @@ class DriveWatcherService
         return 'empty';
     }
 
-    private function sendRemovalAlert(string $actNumber, string $subfolderName, string $actFolderId): void
-    {
-        $this->events->fileRemoved($actNumber, $subfolderName);
-    }
-
     private function updateSubfolderColor(string $subfolderId, bool $hasFiles, bool $dryRun): void
     {
         $meta = $this->driveService->getFileMetadata($subfolderId);
