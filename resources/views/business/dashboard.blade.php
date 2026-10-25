@@ -570,14 +570,8 @@
         <div class="toolbar">
             <div class="search-wrap">
                 <span class="search-icon">🔍</span>
-                <input type="text" class="search-input" id="search" placeholder="სახელი ან კოდი...">
+                <input type="text" class="search-input" id="search" placeholder="სახელი, კოდი ან ACT...">
                 <button class="search-clear" id="search-clear" title="გასუფთავება">×</button>
-            </div>
-
-            <div class="search-wrap" style="max-width:160px;">
-                <span class="search-icon">🔖</span>
-                <input type="text" class="search-input" id="search-act" placeholder="ACT ნომერი...">
-                <button class="search-clear" id="search-act-clear" title="გასუფთავება">×</button>
             </div>
 
             <select class="filter-select" id="filter-status">
@@ -688,8 +682,6 @@
         <script>
             const search = document.getElementById('search');
             const searchClear = document.getElementById('search-clear');
-            const searchAct = document.getElementById('search-act');
-            const searchActClear = document.getElementById('search-act-clear');
             const filterStatus = document.getElementById('filter-status');
             const filterType = document.getElementById('filter-type');
             const filterLot = document.getElementById('filter-lot');
@@ -704,7 +696,6 @@
 
             function applyFilters() {
                 const q = normalize(search.value);
-                const qa = normalize(searchAct.value);
                 const status = filterStatus.value;
                 const type = filterType.value;
                 const lot = filterLot.value;
@@ -719,14 +710,15 @@
                     const matchSearch = !q ||
                         name.includes(q) ||
                         code === q ||
-                        code.startsWith(q);
-                    const matchAct = !qa || act === qa || act.includes(qa);
+                        code.startsWith(q) ||
+                        act === q ||
+                        act.includes(q);
 
                     const matchStatus = !status ||
                         (status === 'overdue' ? row.dataset.overdue === 'true' : row.dataset.status === status);
                     const matchType = !type || row.dataset.type.split(',').includes(type);
                     const matchLot = !lot || row.dataset.lot === lot;
-                    const show = matchSearch && matchAct && matchStatus && matchType && matchLot;
+                    const show = matchSearch && matchStatus && matchType && matchLot;
                     row.style.display = show ? '' : 'none';
                     if (show) visible++;
                 });
@@ -736,7 +728,6 @@
                     `${total} ბიზნესი`;
 
                 searchClear.style.display = q ? 'block' : 'none';
-                searchActClear.style.display = qa ? 'block' : 'none';
                 const hasFilter = status || type || lot;
                 btnClear.style.display = hasFilter ? 'inline-flex' : 'none';
 
@@ -750,15 +741,8 @@
                 applyFilters();
                 search.focus();
             });
-            searchActClear.addEventListener('click', () => {
-                searchAct.value = '';
-                applyFilters();
-                searchAct.focus();
-            });
 
             btnClear.addEventListener('click', () => {
-                search.value = '';
-                searchAct.value = '';
                 filterStatus.value = '';
                 filterType.value = '';
                 filterLot.value = '';
@@ -766,7 +750,6 @@
             });
 
             search.addEventListener('input', applyFilters);
-            searchAct.addEventListener('input', applyFilters);
             filterStatus.addEventListener('change', applyFilters);
             filterType.addEventListener('change', applyFilters);
             filterLot.addEventListener('change', applyFilters);
