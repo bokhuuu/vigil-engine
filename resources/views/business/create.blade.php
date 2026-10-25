@@ -251,6 +251,37 @@
             border-color: var(--text-2);
         }
 
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem 1rem;
+            padding: 0.55rem 0;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.875rem;
+            color: var(--text);
+            cursor: pointer;
+            width: fit-content;
+            font-weight: 400;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 16px !important;
+            height: 16px !important;
+            cursor: pointer;
+            accent-color: var(--navy);
+        }
+
+        .checkbox-group label {
+            color: var(--text);
+            font-size: 0.875rem;
+            font-weight: 400;
+        }
+
         @media (max-width: 600px) {
             .form-row {
                 grid-template-columns: 1fr;

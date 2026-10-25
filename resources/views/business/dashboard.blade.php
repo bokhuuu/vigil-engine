@@ -574,6 +574,12 @@
                 <button class="search-clear" id="search-clear" title="გასუფთავება">×</button>
             </div>
 
+            <div class="search-wrap" style="max-width:160px;">
+                <span class="search-icon">🔖</span>
+                <input type="text" class="search-input" id="search-act" placeholder="ACT ნომერი...">
+                <button class="search-clear" id="search-act-clear" title="გასუფთავება">×</button>
+            </div>
+
             <select class="filter-select" id="filter-status">
                 <option value="">ყველა სტატუსი</option>
                 <option value="active">მიმდინარე</option>
@@ -623,14 +629,19 @@
                         @forelse($businesses as $business)
                             <tr data-name="{{ mb_strtolower($business->name) }}"
                                 data-code="{{ $business->registration_code }}" data-act="{{ $business->act_number }}"
-                                data-status="{{ $business->status }}" data-type="{{ $business->type }}"
+                                data-status="{{ $business->status }}"
+                                data-type="{{ implode(',', (array) $business->type) }}"
                                 data-lot="{{ $business->lot_number }}"
                                 data-overdue="{{ $business->correspondence->where('status', 'overdue')->count() > 0 ? 'true' : 'false' }}"
                                 onclick="window.location='{{ route('business.show', $business) }}'"
                                 style="cursor:pointer;">
                                 <td class="td-name">{{ $business->name }}</td>
                                 <td class="td-code">{{ $business->registration_code }}</td>
-                                <td><span class="type-pill">{{ $business->type }}</span></td>
+                                <td>
+                                    @foreach ((array) $business->type as $t)
+                                        <span class="type-pill" style="margin-right:2px;">{{ $t }}</span>
+                                    @endforeach
+                                </td>
                                 <td><span class="lot-chip">{{ $business->lot_number }}</span></td>
                                 <td class="td-code td-act" style="white-space:nowrap;">
                                     {{ $business->act_number ?? '—' }}</td>
@@ -677,6 +688,8 @@
         <script>
             const search = document.getElementById('search');
             const searchClear = document.getElementById('search-clear');
+            const searchAct = document.getElementById('search-act');
+            const searchActClear = document.getElementById('search-act-clear');
             const filterStatus = document.getElementById('filter-status');
             const filterType = document.getElementById('filter-type');
             const filterLot = document.getElementById('filter-lot');
@@ -691,6 +704,7 @@
 
             function applyFilters() {
                 const q = normalize(search.value);
+                const qa = normalize(searchAct.value);
                 const status = filterStatus.value;
                 const type = filterType.value;
                 const lot = filterLot.value;
@@ -705,15 +719,14 @@
                     const matchSearch = !q ||
                         name.includes(q) ||
                         code === q ||
-                        code.startsWith(q) ||
-                        act === q ||
-                        act.includes(q);
+                        code.startsWith(q);
+                    const matchAct = !qa || act === qa || act.includes(qa);
 
                     const matchStatus = !status ||
                         (status === 'overdue' ? row.dataset.overdue === 'true' : row.dataset.status === status);
-                    const matchType = !type || row.dataset.type === type;
+                    const matchType = !type || row.dataset.type.split(',').includes(type);
                     const matchLot = !lot || row.dataset.lot === lot;
-                    const show = matchSearch && matchStatus && matchType && matchLot;
+                    const show = matchSearch && matchAct && matchStatus && matchType && matchLot;
                     row.style.display = show ? '' : 'none';
                     if (show) visible++;
                 });
@@ -723,6 +736,7 @@
                     `${total} ბიზნესი`;
 
                 searchClear.style.display = q ? 'block' : 'none';
+                searchActClear.style.display = qa ? 'block' : 'none';
                 const hasFilter = status || type || lot;
                 btnClear.style.display = hasFilter ? 'inline-flex' : 'none';
 
@@ -736,8 +750,15 @@
                 applyFilters();
                 search.focus();
             });
+            searchActClear.addEventListener('click', () => {
+                searchAct.value = '';
+                applyFilters();
+                searchAct.focus();
+            });
 
             btnClear.addEventListener('click', () => {
+                search.value = '';
+                searchAct.value = '';
                 filterStatus.value = '';
                 filterType.value = '';
                 filterLot.value = '';
@@ -745,6 +766,7 @@
             });
 
             search.addEventListener('input', applyFilters);
+            searchAct.addEventListener('input', applyFilters);
             filterStatus.addEventListener('change', applyFilters);
             filterType.addEventListener('change', applyFilters);
             filterLot.addEventListener('change', applyFilters);
