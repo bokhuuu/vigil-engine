@@ -130,7 +130,7 @@
         /* STATS */
         .stats {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 0.875rem;
             margin-bottom: 1.75rem;
         }
@@ -201,6 +201,13 @@
             font-weight: 500;
             text-transform: none;
             letter-spacing: 0;
+        }
+
+        .stat-overdue-hint {
+            font-size: 0.68rem;
+            color: var(--red);
+            font-weight: 500;
+            margin-top: 0.25rem;
         }
 
         /* TOOLBAR */
@@ -564,6 +571,9 @@
             <div class="stat s-active">
                 <div class="stat-n">{{ $stats['active'] }}</div>
                 <div class="stat-l">მიმდინარე</div>
+                @if ($stats['overdue'] > 0)
+                    <div class="stat-overdue-hint">{{ $stats['overdue'] }} ვადაგადაცილებული</div>
+                @endif
             </div>
             <div class="stat s-pending">
                 <div class="stat-n">{{ $stats['pending'] }}</div>
@@ -572,10 +582,6 @@
             <div class="stat s-complete">
                 <div class="stat-n">{{ $stats['complete'] }}</div>
                 <div class="stat-l">დასრულებული</div>
-            </div>
-            <div class="stat s-overdue">
-                <div class="stat-n">{{ $stats['overdue'] }}</div>
-                <div class="stat-l">ვადაგადაცილებული</div>
             </div>
         </div>
 
