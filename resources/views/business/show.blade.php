@@ -481,6 +481,29 @@
             justify-content: flex-end;
         }
 
+        .edit-checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem 1rem;
+            padding: 0.2rem 0;
+        }
+
+        .edit-checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.875rem;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .edit-checkbox-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--navy);
+        }
+
         /* RESPONSIVE */
         @media (max-width: 600px) {
             .info-row {
@@ -617,17 +640,25 @@
                         </div>
 
                         <div class="info-row">
+                            <span class="info-label">საკადასტრო</span>
+                            <span class="info-value {{ !$business->cadastral_code ? 'info-empty' : '' }}"
+                                id="view-cadastral">{{ $business->cadastral_code ?? '—' }}</span>
+                            <input class="edit-input" name="cadastral_code" value="{{ $business->cadastral_code }}"
+                                placeholder="მაგ: 05.19.22.026" id="edit-cadastral">
+                        </div>
+
+                        <div class="info-row">
                             <span class="info-label">ტიპი</span>
-                            <span class="info-value" id="view-type">{{ $business->type }}</span>
-                            <select class="edit-select" name="type" id="edit-type">
-                                <option value="მეპატრონე" {{ $business->type === 'მეპატრონე' ? 'selected' : '' }}>
-                                    მეპატრონე</option>
-                                <option value="მოიჯარე" {{ $business->type === 'მოიჯარე' ? 'selected' : '' }}>მოიჯარე
-                                </option>
-                                <option value="მეიჯარე" {{ $business->type === 'მეიჯარე' ? 'selected' : '' }}>მეიჯარე
-                                </option>
-                                <option value="სხვა" {{ $business->type === 'სხვა' ? 'selected' : '' }}>სხვა</option>
-                            </select>
+                            <span class="info-value" id="view-type">{{ implode(', ', (array) $business->type) }}</span>
+                            <div class="edit-checkbox-group" id="edit-type" style="display:none;">
+                                @foreach (['მეპატრონე', 'მოიჯარე', 'მეიჯარე', 'სხვა'] as $t)
+                                    <label class="edit-checkbox-item">
+                                        <input type="checkbox" name="type[]" value="{{ $t }}"
+                                            {{ in_array($t, (array) $business->type) ? 'checked' : '' }}>
+                                        {{ $t }}
+                                    </label>
+                                @endforeach
+                            </div>
                         </div>
 
                         <div class="info-row">
@@ -648,7 +679,8 @@
                                 @endswitch
                             </span>
                             <select class="edit-select" name="status" id="edit-status">
-                                <option value="active" {{ $business->status === 'active' ? 'selected' : '' }}>მიმდინარე
+                                <option value="active" {{ $business->status === 'active' ? 'selected' : '' }}>
+                                    მიმდინარე
                                 </option>
                                 <option value="pending" {{ $business->status === 'pending' ? 'selected' : '' }}>
                                     გასაგზავნი</option>
@@ -1007,11 +1039,12 @@
 
         <script>
             const editFields = [
-                'name', 'code', 'act', 'lot', 'drive',
+                'name', 'code', 'act', 'lot', 'cadastral', 'drive',
                 'owner-name', 'owner-phone', 'owner-email',
                 'acc-name', 'acc-phone', 'acc-email', 'notes'
             ];
-            const editSelects = ['type', 'status'];
+            const editSelects = ['status'];
+            const editCheckboxGroups = ['type'];
 
             function startEdit() {
                 editFields.forEach(f => {
@@ -1021,6 +1054,10 @@
                 editSelects.forEach(f => {
                     document.getElementById('view-' + f).style.display = 'none';
                     document.getElementById('edit-' + f).style.display = 'block';
+                });
+                editCheckboxGroups.forEach(f => {
+                    document.getElementById('view-' + f).style.display = 'none';
+                    document.getElementById('edit-' + f).style.display = 'flex';
                 });
                 document.getElementById('btn-edit').style.display = 'none';
                 document.getElementById('btn-save').style.display = 'inline-flex';
@@ -1033,6 +1070,10 @@
                     document.getElementById('edit-' + f).style.display = 'none';
                 });
                 editSelects.forEach(f => {
+                    document.getElementById('view-' + f).style.display = '';
+                    document.getElementById('edit-' + f).style.display = 'none';
+                });
+                editCheckboxGroups.forEach(f => {
                     document.getElementById('view-' + f).style.display = '';
                     document.getElementById('edit-' + f).style.display = 'none';
                 });

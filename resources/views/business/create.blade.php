@@ -312,10 +312,10 @@
                             @enderror
                         </div>
                         <div class="form-group">
-                            <label>ACT ნომერი</label>
-                            <input type="text" name="act_number" value="{{ old('act_number') }}"
-                                placeholder="მაგ: 7-1">
-                            @error('act_number')
+                            <label>საკადასტრო კოდი</label>
+                            <input type="text" name="cadastral_code" value="{{ old('cadastral_code') }}"
+                                placeholder="მაგ: 05.19.22.026">
+                            @error('cadastral_code')
                                 <span class="error-msg">{{ $message }}</span>
                             @enderror
                         </div>
@@ -323,23 +323,34 @@
 
                     <div class="form-row">
                         <div class="form-group">
+                            <label>ACT ნომერი</label>
+                            <input type="text" name="act_number" value="{{ old('act_number') }}"
+                                placeholder="მაგ: 7-1">
+                            @error('act_number')
+                                <span class="error-msg">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div class="form-group">
                             <label>ლოტი <span class="required">*</span></label>
                             <input type="number" name="lot_number" value="{{ old('lot_number', 2) }}" min="1">
                             @error('lot_number')
                                 <span class="error-msg">{{ $message }}</span>
                             @enderror
                         </div>
+                    </div>
+
+                    <div class="form-row full">
                         <div class="form-group">
                             <label>ტიპი <span class="required">*</span></label>
-                            <select name="type">
-                                <option value="მეპატრონე" {{ old('type') === 'მეპატრონე' ? 'selected' : '' }}>მეპატრონე
-                                </option>
-                                <option value="მოიჯარე" {{ old('type') === 'მოიჯარე' ? 'selected' : '' }}>მოიჯარე
-                                </option>
-                                <option value="მეიჯარე" {{ old('type') === 'მეიჯარე' ? 'selected' : '' }}>მეიჯარე
-                                </option>
-                                <option value="სხვა" {{ old('type') === 'სხვა' ? 'selected' : '' }}>სხვა</option>
-                            </select>
+                            <div class="checkbox-group">
+                                @foreach (['მეპატრონე', 'მოიჯარე', 'მეიჯარე', 'სხვა'] as $t)
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" name="type[]" value="{{ $t }}"
+                                            {{ in_array($t, old('type', [])) ? 'checked' : '' }}>
+                                        {{ $t }}
+                                    </label>
+                                @endforeach
+                            </div>
                             @error('type')
                                 <span class="error-msg">{{ $message }}</span>
                             @enderror

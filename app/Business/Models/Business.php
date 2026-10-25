@@ -19,6 +19,7 @@ class Business extends Model
         'name',
         'registration_code',
         'act_number',
+        'cadastral_code',
         'lot_number',
         'type',
         'status',
@@ -31,6 +32,13 @@ class Business extends Model
         'accountant_email',
         'notes',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'type' => 'array',
+        ];
+    }
 
     public function correspondence(): HasMany
     {

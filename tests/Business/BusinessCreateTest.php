@@ -23,7 +23,7 @@ class BusinessCreateTest extends BusinessTestCase
                 'name' => 'Test Business',
                 'registration_code' => '123456789',
                 'lot_number' => 1,
-                'type' => 'მეპატრონე',
+                'type' => ['მეპატრონე'],
                 'status' => 'active',
             ])->assertRedirect();
 
@@ -42,7 +42,7 @@ class BusinessCreateTest extends BusinessTestCase
             'name' => 'Test Business',
             'registration_code' => '987654321',
             'lot_number' => 1,
-            'type' => 'მეპატრონე',
+            'type' => ['მეპატრონე'],
             'status' => 'active',
             'drive_folder_url' => 'https://drive.google.com/drive/folders/abc123',
         ])->assertRedirect();
