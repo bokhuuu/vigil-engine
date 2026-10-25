@@ -204,9 +204,9 @@
         }
 
         .stat-overdue-hint {
-            font-size: 0.68rem;
+            font-size: 0.75rem;
             color: var(--red);
-            font-weight: 500;
+            font-weight: 600;
             margin-top: 0.25rem;
         }
 
@@ -501,7 +501,7 @@
         /* RESPONSIVE */
         @media (max-width: 900px) {
             .stats {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
@@ -512,10 +512,6 @@
 
             .stats {
                 grid-template-columns: repeat(2, 1fr);
-            }
-
-            .stat:first-child {
-                grid-column: span 2;
             }
 
             .stat-n {
@@ -572,7 +568,7 @@
                 <div class="stat-n">{{ $stats['active'] }}</div>
                 <div class="stat-l">მიმდინარე</div>
                 @if ($stats['overdue'] > 0)
-                    <div class="stat-overdue-hint">{{ $stats['overdue'] }} ვადაგადაცილებული</div>
+                    <div class="stat-overdue-hint">⚠️ {{ $stats['overdue'] }}</div>
                 @endif
             </div>
             <div class="stat s-pending">
