@@ -25,16 +25,7 @@ class BusinessDriveService
         $folderId = $this->drive->findOrCreateFolder($folderName, $this->rootFolderId);
         $folderUrl = "https://drive.google.com/drive/folders/{$folderId}";
 
-        // Create fixed subfolders
-        $subfolders = [
-            'ფინანსური ანგარიშგება',
-            'ხელფასები',
-            'შემოსავლის ამონაწერი',
-            'თანამშრომლები',
-            'საბანკო ამონაწერი',
-            'გამოთვლები',
-            'სხვა',
-        ];
+        $subfolders = config('vigil.business.drive_subfolders');
 
         foreach ($subfolders as $subfolder) {
             $this->drive->findOrCreateFolder($subfolder, $folderId);
@@ -92,5 +83,40 @@ class BusinessDriveService
     public function renameBusinessFolder(string $folderId, string $newName): void
     {
         $this->drive->renameFolder($folderId, $newName);
+    }
+
+    /**
+     * List files currently in შემომავალი/ across all correspondence rounds for a business.
+     * Returns [['id' => ..., 'name' => ..., 'mimeType' => ..., 'folder_url' => ...], ...]
+     */
+    public function listIncomingFiles(Business $business): array
+    {
+        if (! $business->drive_folder_url) {
+            return [];
+        }
+
+        $businessFolderId = $this->getFolderIdFromUrl($business->drive_folder_url);
+        $mimotsera = $this->drive->findOrCreateFolder('მიმოწერა', $businessFolderId);
+        $files = [];
+
+        foreach ($this->drive->listChildFolders($mimotsera) as $roundName => $roundId) {
+            $incomingId = $this->drive->findOrCreateFolder('შემომავალი', $roundId);
+            foreach ($this->drive->listFilesInFolder($incomingId) as $file) {
+                $files[] = array_merge($file, ['round' => $roundName]);
+            }
+        }
+
+        return $files;
+    }
+
+    /**
+     * Move a file to a named top-level business subfolder.
+     */
+    public function moveFileToSubfolder(Business $business, string $fileId, string $subfolderName): void
+    {
+        $businessFolderId = $this->getFolderIdFromUrl($business->drive_folder_url);
+        $destinationId = $this->drive->findOrCreateFolder($subfolderName, $businessFolderId);
+
+        $this->drive->moveFile($fileId, $destinationId);
     }
 }

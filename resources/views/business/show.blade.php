@@ -1347,6 +1347,21 @@
             </div>
             {{-- /correspondence grid --}}
 
+            {{-- DRIVE FILES CARD --}}
+            @if ($business->drive_folder_url)
+                <div class="card" style="margin-top:1.25rem;">
+                    <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+                        <span>📂 შემომავალი ფაილები</span>
+                        <button type="button" class="btn btn-edit" style="font-size:0.75rem;padding:0.25rem 0.75rem;"
+                            onclick="loadDriveFiles(this)">ჩატვირთვა</button>
+                    </div>
+                    <div class="card-body" id="drive-files-body">
+                        <p style="color:var(--text-3);font-size:0.875rem;">დააჭირეთ "ჩატვირთვა" შემომავალი ფაილების
+                            სანახავად.</p>
+                    </div>
+                </div>
+            @endif
+
             {{-- UPLOAD MODAL --}}
             <div class="modal-overlay" id="upload-modal" onclick="if(event.target===this)closeUploadModal()">
                 <div class="modal">
@@ -1700,6 +1715,30 @@
                         e.addEventListener('blur', () => validateEmail(e));
                     });
                 });
+
+                {{-- DRIVE FILES CARD --}}
+                @if ($business->drive_folder_url)
+                    <
+                    div class = "card"
+                    style = "margin-top:1.25rem;" >
+                        <
+                        div class = "card-header"
+                    style = "display:flex;align-items:center;justify-content:space-between;" >
+                        <
+                        span > 📂შემომავალი ფაილები < /span> <
+                    button type = "button"
+                    class = "btn btn-edit"
+                    style = "font-size:0.75rem;padding:0.25rem 0.75rem;"
+                    onclick = "loadDriveFiles(this)" > ჩატვირთვა < /button> < /
+                        div > <
+                        div class = "card-body"
+                    id = "drive-files-body" >
+                        <
+                        p style = "color:var(--text-3);font-size:0.875rem;" > დააჭირეთ "ჩატვირთვა"
+                    შემომავალი ფაილების სანახავად. < /p> < /
+                        div > <
+                        /div>
+                @endif
             </script>
 
     </body>

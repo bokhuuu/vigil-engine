@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Business\Http\Controllers\AuthController;
 use App\Business\Http\Controllers\BusinessController;
 use App\Business\Http\Controllers\BusinessCreateController;
+use App\Business\Http\Controllers\BusinessMoveController;
 use App\Business\Http\Controllers\BusinessUploadController;
 use App\Business\Http\Controllers\CorrespondenceController;
 use App\Business\Http\Controllers\DashboardController;
@@ -32,5 +33,8 @@ Route::prefix('business')->name('business.')->group(function () {
         Route::patch('/{business}/correspondence/{correspondence}/received', [CorrespondenceController::class, 'markReceived'])->name('correspondence.received');
         Route::put('/{business}/correspondence/{correspondence}', [CorrespondenceController::class, 'update'])->name('correspondence.update');
         Route::delete('/{business}/correspondence/{correspondence}', [CorrespondenceController::class, 'destroy'])->name('correspondence.destroy');
+
+        Route::get('/{business}/move-files', [BusinessMoveController::class, 'files'])->name('move.files');
+        Route::post('/{business}/move-files', [BusinessMoveController::class, 'move'])->name('move.store');
     });
 });

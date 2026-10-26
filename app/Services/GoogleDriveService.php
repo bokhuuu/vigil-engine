@@ -176,7 +176,7 @@ class GoogleDriveService
     /**
      * Child folders of a parent, as name => id.
      */
-    protected function listChildFolders(string $parentId): array
+    public function listChildFolders(string $parentId): array
     {
         $response = $this->drive()->files->listFiles([
             'q' => "'{$parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
@@ -476,5 +476,48 @@ class GoogleDriveService
     public function getFolderIdFromUrl(?string $url): ?string
     {
         return $this->folderIdFromUrl($url);
+    }
+
+    /**
+     * List non-folder files directly inside a Drive folder.
+     * Returns [['id' => ..., 'name' => ..., 'mimeType' => ...], ...]
+     */
+    public function listFilesInFolder(string $folderId): array
+    {
+        $response = $this->getUserDrive()->files->listFiles([
+            'q' => "'{$folderId}' in parents and mimeType != 'application/vnd.google-apps.folder' and trashed = false",
+            'fields' => 'files(id, name, mimeType)',
+            'pageSize' => 100,
+        ]);
+
+        $files = [];
+        foreach ($response->getFiles() as $file) {
+            $files[] = [
+                'id' => $file->getId(),
+                'name' => $file->getName(),
+                'mimeType' => $file->getMimeType(),
+            ];
+        }
+
+        return $files;
+    }
+
+    /**
+     * Move a file to a new parent folder (Drive-side, no re-upload).
+     */
+    public function moveFile(string $fileId, string $newParentId): void
+    {
+        $meta = $this->getUserDrive()->files->get($fileId, ['fields' => 'parents']);
+        $oldParents = implode(',', $meta->getParents() ?? []);
+
+        $this->getUserDrive()->files->update(
+            $fileId,
+            new DriveFile,
+            [
+                'addParents' => $newParentId,
+                'removeParents' => $oldParents,
+                'fields' => 'id,parents',
+            ],
+        );
     }
 }
