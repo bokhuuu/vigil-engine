@@ -1631,6 +1631,72 @@
 
                     document.getElementById('draft-sent-form').submit();
                 }
+
+                function validatePhone(input) {
+                    const PHONE_RE = /^[\d\s\+\-\(\)]*$/;
+                    const val = input.value.trim();
+                    let hint = input.parentNode.querySelector('.js-hint');
+                    if (val && !PHONE_RE.test(val)) {
+                        input.style.borderColor = 'var(--red)';
+                        if (!hint) {
+                            hint = document.createElement('span');
+                            hint.className = 'js-hint';
+                            hint.style.cssText = 'font-size:0.72rem;color:var(--red);margin-top:0.2rem;display:block;';
+                            input.parentNode.appendChild(hint);
+                        }
+                        hint.textContent = 'მხოლოდ ციფრები, +, -, (, )';
+                        return false;
+                    }
+                    input.style.borderColor = '';
+                    if (hint) hint.remove();
+                    return true;
+                }
+
+                function validateEmail(input) {
+                    const val = input.value.trim();
+                    let hint = input.parentNode.querySelector('.js-hint');
+                    if (val && !val.includes('@')) {
+                        input.style.borderColor = 'var(--red)';
+                        if (!hint) {
+                            hint = document.createElement('span');
+                            hint.className = 'js-hint';
+                            hint.style.cssText = 'font-size:0.72rem;color:var(--red);margin-top:0.2rem;display:block;';
+                            input.parentNode.appendChild(hint);
+                        }
+                        hint.textContent = 'ელ-ფოსტა არასწორია';
+                        return false;
+                    }
+                    input.style.borderColor = '';
+                    if (hint) hint.remove();
+                    return true;
+                }
+
+                // re-declare submitEdit with validation
+                function submitEdit() {
+                    const phones = document.querySelectorAll(
+                        '#edit-form input[name="owner_phone"], #edit-form input[name="accountant_phone"]');
+                    const emails = document.querySelectorAll('#edit-form input[type="email"]');
+                    let ok = true;
+                    phones.forEach(p => {
+                        if (!validatePhone(p)) ok = false;
+                    });
+                    emails.forEach(e => {
+                        if (!validateEmail(e)) ok = false;
+                    });
+                    if (ok) document.getElementById('edit-form').submit();
+                }
+
+                // wire up live feedback
+                document.addEventListener('DOMContentLoaded', function() {
+                    document.querySelectorAll(
+                        '#edit-form input[name="owner_phone"], #edit-form input[name="accountant_phone"]').forEach(
+                    p => {
+                        p.addEventListener('input', () => validatePhone(p));
+                    });
+                    document.querySelectorAll('#edit-form input[type="email"]').forEach(e => {
+                        e.addEventListener('blur', () => validateEmail(e));
+                    });
+                });
             </script>
 
     </body>

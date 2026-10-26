@@ -314,7 +314,7 @@
 
         <h1 class="page-title">ახალი ბიზნესის დამატება</h1>
 
-        <form method="POST" action="{{ route('business.create') }}">
+        <form method="POST" action="{{ route('business.create') }}" id="create-form" novalidate>
             @csrf
 
             {{-- BASIC INFO --}}
@@ -475,6 +475,90 @@
         </form>
 
     </div>
+
+    <script>
+        (function() {
+            const PHONE_RE = /^[\d\s\+\-\(\)]*$/;
+
+            function setError(input, msg) {
+                input.style.borderColor = 'var(--red)';
+                let hint = input.nextElementSibling;
+                if (!hint || !hint.classList.contains('js-hint')) {
+                    hint = document.createElement('span');
+                    hint.className = 'error-msg js-hint';
+                    input.parentNode.insertBefore(hint, input.nextSibling);
+                }
+                hint.textContent = msg;
+            }
+
+            function clearError(input) {
+                input.style.borderColor = '';
+                const hint = input.nextElementSibling;
+                if (hint && hint.classList.contains('js-hint')) hint.remove();
+            }
+
+            function validatePhone(input) {
+                const val = input.value.trim();
+                if (val && !PHONE_RE.test(val)) {
+                    setError(input, 'ტელეფონი: მხოლოდ ციფრები, +, -, (, )');
+                    return false;
+                }
+                clearError(input);
+                return true;
+            }
+
+            function validateEmail(input) {
+                const val = input.value.trim();
+                if (val && !val.includes('@')) {
+                    setError(input, 'ელ-ფოსტა არასწორია');
+                    return false;
+                }
+                clearError(input);
+                return true;
+            }
+
+            function validateRequired(input) {
+                if (!input.value.trim()) {
+                    setError(input, 'სავალდებულო ველი');
+                    return false;
+                }
+                clearError(input);
+                return true;
+            }
+
+            const phones = document.querySelectorAll('input[name="owner_phone"], input[name="accountant_phone"]');
+            const emails = document.querySelectorAll('input[type="email"]');
+            const required = document.querySelectorAll(
+                'input[name="name"], input[name="registration_code"], input[name="lot_number"]');
+
+            phones.forEach(p => {
+                p.addEventListener('input', () => validatePhone(p));
+                p.addEventListener('blur', () => validatePhone(p));
+            });
+
+            emails.forEach(e => {
+                e.addEventListener('blur', () => validateEmail(e));
+            });
+
+            required.forEach(r => {
+                r.addEventListener('blur', () => validateRequired(r));
+            });
+
+            document.getElementById('create-form').addEventListener('submit', function(ev) {
+                let ok = true;
+                phones.forEach(p => {
+                    if (!validatePhone(p)) ok = false;
+                });
+                emails.forEach(e => {
+                    if (!validateEmail(e)) ok = false;
+                });
+                required.forEach(r => {
+                    if (!validateRequired(r)) ok = false;
+                });
+                if (!ok) ev.preventDefault();
+            });
+        })();
+    </script>
 
 </body>
 
