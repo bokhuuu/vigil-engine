@@ -1226,6 +1226,9 @@
                                 @if ($corr->drive_folder_url)
                                     <div class="corr-meta-item"><a href="{{ $corr->drive_folder_url }}"
                                             target="_blank" style="color:var(--blue);">📁 Drive</a></div>
+                                @else
+                                    <div class="corr-meta-item" style="color:var(--text-3);">📁 საქაღალდე არ არის
+                                    </div>
                                 @endif
                             </div>
                             @if ($corr->notes)
@@ -1690,9 +1693,9 @@
                 document.addEventListener('DOMContentLoaded', function() {
                     document.querySelectorAll(
                         '#edit-form input[name="owner_phone"], #edit-form input[name="accountant_phone"]').forEach(
-                    p => {
-                        p.addEventListener('input', () => validatePhone(p));
-                    });
+                        p => {
+                            p.addEventListener('input', () => validatePhone(p));
+                        });
                     document.querySelectorAll('#edit-form input[type="email"]').forEach(e => {
                         e.addEventListener('blur', () => validateEmail(e));
                     });
