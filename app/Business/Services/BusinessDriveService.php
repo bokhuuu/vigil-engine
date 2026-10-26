@@ -52,9 +52,6 @@ class BusinessDriveService
         $mimotseraId = $this->drive->findOrCreateFolder('მიმოწერა', $folderId);
         $roundId = $this->drive->findOrCreateFolder("მიმოწერა-{$round}", $mimotseraId);
 
-        $this->drive->findOrCreateFolder('გამავალი', $roundId);
-        $incomingId = $this->drive->findOrCreateFolder('შემომავალი', $roundId);
-
         $roundUrl = "https://drive.google.com/drive/folders/{$roundId}";
 
         // Update correspondence drive_folder_url
@@ -65,7 +62,7 @@ class BusinessDriveService
 
         Log::info("BusinessDriveService: created round [{$round}] folders for [{$business->name}]");
 
-        return "https://drive.google.com/drive/folders/{$incomingId}";
+        return $roundUrl;
     }
 
     public function uploadFileToDrive(string $parentFolderId, string $filename, string $content, string $mimeType): string
