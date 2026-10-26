@@ -100,8 +100,7 @@ class BusinessDriveService
         $files = [];
 
         foreach ($this->drive->listChildFolders($mimotsera) as $roundName => $roundId) {
-            $incomingId = $this->drive->findOrCreateFolder('შემომავალი', $roundId);
-            foreach ($this->drive->listFilesInFolder($incomingId) as $file) {
+            foreach ($this->drive->listFilesInFolder($roundId) as $file) {
                 $files[] = array_merge($file, ['round' => $roundName]);
             }
         }
