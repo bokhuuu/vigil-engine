@@ -7,6 +7,7 @@ namespace Tests\Business;
 use App\Business\Models\Business;
 use App\Business\Models\Correspondence;
 use App\Business\Models\User;
+use App\Business\Services\BusinessDriveService;
 
 class CorrespondenceControllerTest extends BusinessTestCase
 {
@@ -18,6 +19,13 @@ class CorrespondenceControllerTest extends BusinessTestCase
 
         $user = User::factory()->create();
         $this->actingAs($user, 'business');
+
+        $this->app->instance(
+            BusinessDriveService::class,
+            \Mockery::mock(BusinessDriveService::class, function ($mock) {
+                $mock->shouldReceive('createCorrespondenceRoundFolders')->andReturn('https://drive.google.com/drive/folders/fake');
+            }),
+        );
 
         $this->business = Business::factory()->create([
             'owner_email' => 'owner@example.com',
@@ -87,5 +95,21 @@ class CorrespondenceControllerTest extends BusinessTestCase
         ])->assertRedirect();
 
         $this->assertNull(Correspondence::first()->cc_emails);
+    }
+
+    public function test_store_calls_drive_folder_creation(): void
+    {
+        $mock = \Mockery::mock(BusinessDriveService::class);
+        $mock->shouldReceive('createCorrespondenceRoundFolders')
+            ->once()
+            ->with(\Mockery::type(Business::class), 1)
+            ->andReturn('https://drive.google.com/drive/folders/fake');
+
+        $this->app->instance(BusinessDriveService::class, $mock);
+
+        $this->post(route('business.correspondence.store', $this->business), [
+            'sent_at' => '2026-10-25',
+            'deadline_at' => '2026-11-04',
+        ])->assertRedirect();
     }
 }

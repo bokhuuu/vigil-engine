@@ -6,12 +6,16 @@ namespace App\Business\Http\Controllers;
 
 use App\Business\Models\Business;
 use App\Business\Models\Correspondence;
+use App\Business\Services\BusinessDriveService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Log;
 
 class CorrespondenceController extends Controller
 {
+    public function __construct(private readonly BusinessDriveService $driveService) {}
+
     public function store(Request $request, Business $business): RedirectResponse
     {
         $validated = $request->validate([
@@ -43,6 +47,12 @@ class CorrespondenceController extends Controller
             'subject' => $validated['subject'] ?? null,
             'body' => $validated['body'] ?? null,
         ]);
+
+        try {
+            $this->driveService->createCorrespondenceRoundFolders($business, $round);
+        } catch (\Throwable $e) {
+            Log::warning("Drive folder creation failed for business [{$business->id}] round [{$round}]: ".$e->getMessage());
+        }
 
         return redirect()->route('business.show', $business)->with('success', 'მიმოწერა-'.$round.' დაემატა');
     }
