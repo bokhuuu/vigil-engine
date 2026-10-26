@@ -42,10 +42,10 @@ class BusinessController extends Controller
             'status' => ['required', 'in:active,pending,complete'],
             'owner_name' => ['nullable', 'string', 'max:255'],
             'owner_phone' => ['nullable', 'string', 'max:50'],
-            'owner_email' => ['nullable', 'email', 'max:255'],
+            'owner_email' => ['nullable', 'string', 'max:255'],
             'accountant_name' => ['nullable', 'string', 'max:255'],
             'accountant_phone' => ['nullable', 'string', 'max:50'],
-            'accountant_email' => ['nullable', 'email', 'max:255'],
+            'accountant_email' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
             'drive_folder_url' => ['nullable', 'url'],
         ]);

@@ -701,6 +701,20 @@
             accent-color: var(--navy);
         }
 
+        .corr-edit-grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .corr-edit-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
         /* RESPONSIVE */
         @media (max-width: 600px) {
             .info-row {
@@ -723,6 +737,23 @@
 
             .corr-item {
                 padding: 0.75rem;
+            }
+
+            .draft-input-row {
+                flex-wrap: wrap;
+            }
+
+            .biz-actions {
+                flex-wrap: wrap;
+            }
+
+            .draft-deadline-hint {
+                width: 100%;
+            }
+
+            .corr-edit-grid-3,
+            .corr-edit-grid-2 {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -798,7 +829,7 @@
         </div>
 
         {{-- EDIT FORM: info + contacts only --}}
-        <form id="edit-form" method="POST" action="{{ route('business.update', $business) }}">
+        <form id="edit-form" method="POST" action="{{ route('business.update', $business) }}" novalidate>
             @csrf
             @method('PUT')
 
@@ -929,8 +960,9 @@
                                 <span class="info-label">ტელეფონი</span>
                                 <span class="info-value {{ !$business->owner_phone ? 'info-empty' : '' }}"
                                     id="view-owner-phone">{{ $business->owner_phone ?? '—' }}</span>
-                                <input class="edit-input" name="owner_phone" value="{{ $business->owner_phone }}"
-                                    placeholder="5XX XXX XXX" id="edit-owner-phone">
+                                <input class="edit-input" type='tel' name="owner_phone"
+                                    value="{{ $business->owner_phone }}" placeholder="5XX XXX XXX"
+                                    id="edit-owner-phone">
                             </div>
 
                             <div class="info-row">
@@ -956,7 +988,7 @@
                                 <span class="info-label">ტელეფონი</span>
                                 <span class="info-value {{ !$business->accountant_phone ? 'info-empty' : '' }}"
                                     id="view-acc-phone">{{ $business->accountant_phone ?? '—' }}</span>
-                                <input class="edit-input" name="accountant_phone"
+                                <input class="edit-input" type='tel' name="accountant_phone"
                                     value="{{ $business->accountant_phone }}" placeholder="5XX XXX XXX"
                                     id="edit-acc-phone">
                             </div>
@@ -982,7 +1014,148 @@
 
             </div>
         </form>
-        {{-- /edit-form ends here — nothing below is inside it --}}
+
+        {{-- DRAFT CARD — standalone, outside every other form --}}
+        <div class="card" style="margin-top:1.25rem;">
+            <div class="card-header draft-toggle" onclick="toggleDraft()" id="draft-header">
+                <span>✉️ წერილის პროექტი</span>
+                <span class="draft-chevron" id="draft-chevron">▶</span>
+            </div>
+            <div class="draft-body" id="draft-body">
+
+                @php
+                    $draftWarnings = [];
+                    if (!$business->owner_email && !$business->accountant_email) {
+                        $draftWarnings[] = 'TO ველი ცარიელია — მეპატრონის ან ბუღალტრის ელ-ფოსტა შეიყვანეთ';
+                    }
+                    if (!$business->cadastral_code) {
+                        $draftWarnings[] = 'საკადასტრო კოდი არ არის — შეიყვანეთ ძირითად ინფოში';
+                    }
+                    $draftBlocked = count($draftWarnings) > 0;
+                @endphp
+
+                @if ($draftBlocked)
+                    <div
+                        style="background:var(--amber-bg);border:1px solid #fde68a;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;">
+                        <div style="font-size:0.78rem;font-weight:600;color:var(--amber);margin-bottom:0.25rem;">⚠️
+                            გაგზავნა შეუძლებელია</div>
+                        @foreach ($draftWarnings as $w)
+                            <div style="font-size:0.82rem;color:var(--amber);">— {{ $w }}</div>
+                        @endforeach
+                    </div>
+                @endif
+
+                {{-- TO --}}
+                <div class="draft-field">
+                    <label class="draft-label">TO</label>
+                    <div class="draft-input-row">
+                        <input class="draft-input" id="draft-to"
+                            value="{{ collect([$business->owner_email, $business->accountant_email])->filter()->implode(', ') }}"
+                            placeholder="მიმღების ელ-ფოსტა">
+                        <button type="button" class="btn-copy" onclick="draftCopy('draft-to', this)"
+                            {{ $draftBlocked ? 'disabled' : '' }}>📋</button>
+                    </div>
+                </div>
+
+                {{-- CC --}}
+                <div class="draft-field">
+                    <label class="draft-label">CC</label>
+                    <div class="draft-input-row">
+                        <div class="cc-chips" id="cc-chips" onclick="document.getElementById('cc-add').focus()">
+                            @foreach (config('services.business.internal_emails') as $email)
+                                @if ($email)
+                                    <span class="cc-chip" data-email="{{ $email }}">
+                                        {{ $email }}
+                                        <button type="button" class="cc-chip-remove"
+                                            onclick="removeChip(this, event)">✕</button>
+                                    </span>
+                                @endif
+                            @endforeach
+                            <span class="cc-chip locked" title="Engine — ყოველთვის CC-ში">
+                                {{ config('services.business.own_email') }}
+                            </span>
+                            <input class="cc-add-input" id="cc-add" placeholder="დამატება..."
+                                onkeydown="ccInputKeydown(event)">
+                        </div>
+                        <button type="button" class="btn-copy" onclick="copyCC(this)"
+                            {{ $draftBlocked ? 'disabled' : '' }}>📋</button>
+                    </div>
+                </div>
+
+                {{-- SUBJECT --}}
+                <div class="draft-field">
+                    <label class="draft-label">Subject</label>
+                    <div class="draft-input-row">
+                        <input class="draft-input" id="draft-subject"
+                            value="{{ $business->name }} / კოდი: {{ $business->registration_code }}">
+                        <button type="button" class="btn-copy" onclick="draftCopy('draft-subject', this)"
+                            {{ $draftBlocked ? 'disabled' : '' }}>📋</button>
+                    </div>
+                </div>
+
+                {{-- BODY --}}
+                <div class="draft-field">
+                    <label class="draft-label">Body</label>
+                    <div class="draft-input-row" style="align-items:flex-start;">
+                        <textarea class="draft-textarea" id="draft-body-text">მოგესალმებით,
+
+გწერთ კომპანია Colliers-დან. საქართველოს რეგიონული განვითარებისა და ინფრასტრუქტურის სამინისტროს საავტომობილო გზების დეპარტამენტის პროექტის ფარგლებში ვახორციელებთ ბიზნესის მოცდენისთვის საკომპენსაციო თანხის დაანგარიშებას. ამისათვის გთხოვთ, საკადასტრო კოდზე {{ $business->cadastral_code ?? '—' }} არსებულ თქვენს ბიზნეს საქმიანობაზე მოგვაწოდოთ შემდეგი ინფორმაცია და დოკუმენტები:
+
+- საწარმოს იურიდიული დასახელება;
+
+- საიდენტიფიკაციო კოდი;
+
+- საქმიანობის სახე (მოკლე აღწერით);
+
+- საქმიანობის დაწყების წელი;
+
+- იჯარის ხელშეკრულება (ასეთის არსებობის შემთხვევაში) და საიჯარო ქირის გადახდის დამადასტურებელი დოკუმენტები (2025 წლიდან - დღემდე);
+
+- საწარმოს წლიური მოგება 2023, 2024 და 2025 წლებისთვის, თითოეული წლისთვის ცალ-ცალკე. გთხოვთ, თან დაურთოთ შემოსავლების სამსახურის პორტალიდან (rs.ge) ჩამოტვირთული დამადასტურებელი დოკუმენტები (მოგება ზარალის უწყისი);
+
+- დასაქმებულთა სია ყველა თანამშრომლის პირადი ნომრისა და ხელფასის მითითებით. ასევე შემოსავლების სამსახურის პორტალიდან ჩამოტვირთული საშემოსავლო გადასახადის დეკლარაციები 2025 წლის თითოეული თვისთვის;
+
+- ბუღალტერის საკონტაქტო ინფორმაცია;
+
+გთხოვთ, გაითვალისწინოთ:
+
+- მოწოდებული ინფორმაცია უნდა მხოლოდ იმ ობიექტს, რომელიც რეგისტრირებულია ან ბიზნეს საქმიანობას ახორციელებს ზემოთ მითითებულ საკადასტრო კოდზე;
+
+- თანხების მითითებისას დააზუსტეთ, არის თუ არა ისინი გადასახადების ჩათვლით.
+
+მოწოდებული ინფორმაცია, მათ შორის თანამშრომლების პერსონალური მონაცემები, გამოყენებული იქნება მხოლოდ კომპენსაციის დაანგარიშების მიზნით და დაცული იქნება კონფიდენციალურობის მოთხოვნების შესაბამისად.
+
+გთხოვთ, აღნიშნული დოკუმენტები გამოგვიგზავნოთ არაუმეტეს 10 კალენდარულ დღეში.
+
+პატივისცემით,</textarea>
+                        <button type="button" class="btn-copy" onclick="draftCopy('draft-body-text', this)"
+                            style="align-self:flex-start;" {{ $draftBlocked ? 'disabled' : '' }}>📋</button>
+                    </div>
+                </div>
+
+                {{-- DEADLINE HINT + SENT BUTTON --}}
+                <div
+                    style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-top:0.5rem;">
+                    <div class="draft-deadline-hint">
+                        ⏱ ვადა: <strong>{{ now()->addDays(10)->format('d.m.Y') }}</strong>
+                    </div>
+                    <form method="POST" action="{{ route('business.correspondence.store', $business) }}"
+                        id="draft-sent-form">
+                        @csrf
+                        <input type="hidden" name="sent_at" value="{{ now()->format('Y-m-d') }}">
+                        <input type="hidden" name="deadline_at" value="{{ now()->addDays(10)->format('Y-m-d') }}">
+                        <input type="hidden" name="recipient_email" id="draft-sent-to">
+                        <input type="hidden" name="cc_emails" id="draft-sent-cc">
+                        <input type="hidden" name="subject" id="draft-sent-subject">
+                        <input type="hidden" name="body" id="draft-sent-body">
+                        <button type="button" class="btn-sent" onclick="submitDraftSent()"
+                            {{ $draftBlocked ? 'disabled' : '' }}>გაგზავნილია ✓</button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+        {{-- /draft card --}}
 
         <form id="drive-create-form" method="POST" action="{{ route('business.drive.create', $business) }}">
             @csrf
@@ -1066,8 +1239,7 @@
                                     action="{{ route('business.correspondence.update', [$business, $corr]) }}">
                                     @csrf
                                     @method('PUT')
-                                    <div
-                                        style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+                                    <div class="corr-edit-grid-3">
                                         <div style="display:flex;flex-direction:column;gap:0.375rem;">
                                             <label
                                                 style="font-size:0.78rem;font-weight:500;color:var(--text-2);">გაგზავნილია</label>
@@ -1090,8 +1262,7 @@
                                                 style="font-family:inherit;font-size:0.875rem;padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:8px;outline:none;">
                                         </div>
                                     </div>
-                                    <div
-                                        style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+                                    <div class="corr-edit-grid-2">
                                         <div style="display:flex;flex-direction:column;gap:0.375rem;">
                                             <label
                                                 style="font-size:0.78rem;font-weight:500;color:var(--text-2);">სტატუსი</label>
@@ -1133,7 +1304,7 @@
                         <div id="corr-form" style="display:none;margin-top:0.75rem;">
                             <form method="POST" action="{{ route('business.correspondence.store', $business) }}">
                                 @csrf
-                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                                <div class="corr-edit-grid-2" style="margin-bottom:1rem;">
                                     <div style="display:flex;flex-direction:column;gap:0.375rem;">
                                         <label style="font-size:0.78rem;font-weight:500;color:var(--text-2);">გაგზავნის
                                             თარიღი <span style="color:var(--red);">*</span></label>
@@ -1172,148 +1343,6 @@
 
             </div>
             {{-- /correspondence grid --}}
-
-            {{-- DRAFT CARD — standalone, outside every other form --}}
-            <div class="card" style="margin-top:1.25rem;">
-                <div class="card-header draft-toggle" onclick="toggleDraft()" id="draft-header">
-                    <span>✉️ წერილის პროექტი</span>
-                    <span class="draft-chevron" id="draft-chevron">▶</span>
-                </div>
-                <div class="draft-body" id="draft-body">
-
-                    @php
-                        $draftWarnings = [];
-                        if (!$business->owner_email && !$business->accountant_email) {
-                            $draftWarnings[] = 'TO ველი ცარიელია — მეპატრონის ან ბუღალტრის ელ-ფოსტა შეიყვანეთ';
-                        }
-                        if (!$business->cadastral_code) {
-                            $draftWarnings[] = 'საკადასტრო კოდი არ არის — შეიყვანეთ ძირითად ინფოში';
-                        }
-                        $draftBlocked = count($draftWarnings) > 0;
-                    @endphp
-
-                    @if ($draftBlocked)
-                        <div
-                            style="background:var(--amber-bg);border:1px solid #fde68a;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;">
-                            <div style="font-size:0.78rem;font-weight:600;color:var(--amber);margin-bottom:0.25rem;">⚠️
-                                გაგზავნა შეუძლებელია</div>
-                            @foreach ($draftWarnings as $w)
-                                <div style="font-size:0.82rem;color:var(--amber);">— {{ $w }}</div>
-                            @endforeach
-                        </div>
-                    @endif
-
-                    {{-- TO --}}
-                    <div class="draft-field">
-                        <label class="draft-label">TO</label>
-                        <div class="draft-input-row">
-                            <input class="draft-input" id="draft-to"
-                                value="{{ collect([$business->owner_email, $business->accountant_email])->filter()->implode(', ') }}"
-                                placeholder="მიმღების ელ-ფოსტა">
-                            <button type="button" class="btn-copy" onclick="draftCopy('draft-to', this)"
-                                {{ $draftBlocked ? 'disabled' : '' }}>📋</button>
-                        </div>
-                    </div>
-
-                    {{-- CC --}}
-                    <div class="draft-field">
-                        <label class="draft-label">CC</label>
-                        <div class="draft-input-row">
-                            <div class="cc-chips" id="cc-chips" onclick="document.getElementById('cc-add').focus()">
-                                @foreach (config('services.business.internal_emails') as $email)
-                                    @if ($email)
-                                        <span class="cc-chip" data-email="{{ $email }}">
-                                            {{ $email }}
-                                            <button type="button" class="cc-chip-remove"
-                                                onclick="removeChip(this, event)">✕</button>
-                                        </span>
-                                    @endif
-                                @endforeach
-                                <span class="cc-chip locked" title="Engine — ყოველთვის CC-ში">
-                                    {{ config('services.business.own_email') }}
-                                </span>
-                                <input class="cc-add-input" id="cc-add" placeholder="დამატება..."
-                                    onkeydown="ccInputKeydown(event)">
-                            </div>
-                            <button type="button" class="btn-copy" onclick="copyCC(this)"
-                                {{ $draftBlocked ? 'disabled' : '' }}>📋</button>
-                        </div>
-                    </div>
-
-                    {{-- SUBJECT --}}
-                    <div class="draft-field">
-                        <label class="draft-label">Subject</label>
-                        <div class="draft-input-row">
-                            <input class="draft-input" id="draft-subject"
-                                value="{{ $business->name }} / კოდი: {{ $business->registration_code }}">
-                            <button type="button" class="btn-copy" onclick="draftCopy('draft-subject', this)"
-                                {{ $draftBlocked ? 'disabled' : '' }}>📋</button>
-                        </div>
-                    </div>
-
-                    {{-- BODY --}}
-                    <div class="draft-field">
-                        <label class="draft-label">Body</label>
-                        <div class="draft-input-row" style="align-items:flex-start;">
-                            <textarea class="draft-textarea" id="draft-body-text">მოგესალმებით,
-
-გწერთ კომპანია Colliers-დან. საქართველოს რეგიონული განვითარებისა და ინფრასტრუქტურის სამინისტროს საავტომობილო გზების დეპარტამენტის პროექტის ფარგლებში ვახორციელებთ ბიზნესის მოცდენისთვის საკომპენსაციო თანხის დაანგარიშებას. ამისათვის გთხოვთ, საკადასტრო კოდზე {{ $business->cadastral_code ?? '—' }} არსებულ თქვენს ბიზნეს საქმიანობაზე მოგვაწოდოთ შემდეგი ინფორმაცია და დოკუმენტები:
-
-- საწარმოს იურიდიული დასახელება;
-
-- საიდენტიფიკაციო კოდი;
-
-- საქმიანობის სახე (მოკლე აღწერით);
-
-- საქმიანობის დაწყების წელი;
-
-- იჯარის ხელშეკრულება (ასეთის არსებობის შემთხვევაში) და საიჯარო ქირის გადახდის დამადასტურებელი დოკუმენტები (2025 წლიდან - დღემდე);
-
-- საწარმოს წლიური მოგება 2023, 2024 და 2025 წლებისთვის, თითოეული წლისთვის ცალ-ცალკე. გთხოვთ, თან დაურთოთ შემოსავლების სამსახურის პორტალიდან (rs.ge) ჩამოტვირთული დამადასტურებელი დოკუმენტები (მოგება ზარალის უწყისი);
-
-- დასაქმებულთა სია ყველა თანამშრომლის პირადი ნომრისა და ხელფასის მითითებით. ასევე შემოსავლების სამსახურის პორტალიდან ჩამოტვირთული საშემოსავლო გადასახადის დეკლარაციები 2025 წლის თითოეული თვისთვის;
-
-- ბუღალტერის საკონტაქტო ინფორმაცია;
-
-გთხოვთ, გაითვალისწინოთ:
-
-- მოწოდებული ინფორმაცია უნდა მხოლოდ იმ ობიექტს, რომელიც რეგისტრირებულია ან ბიზნეს საქმიანობას ახორციელებს ზემოთ მითითებულ საკადასტრო კოდზე;
-
-- თანხების მითითებისას დააზუსტეთ, არის თუ არა ისინი გადასახადების ჩათვლით.
-
-მოწოდებული ინფორმაცია, მათ შორის თანამშრომლების პერსონალური მონაცემები, გამოყენებული იქნება მხოლოდ კომპენსაციის დაანგარიშების მიზნით და დაცული იქნება კონფიდენციალურობის მოთხოვნების შესაბამისად.
-
-გთხოვთ, აღნიშნული დოკუმენტები გამოგვიგზავნოთ არაუმეტეს 10 კალენდარულ დღეში.
-
-პატივისცემით,</textarea>
-                            <button type="button" class="btn-copy" onclick="draftCopy('draft-body-text', this)"
-                                style="align-self:flex-start;" {{ $draftBlocked ? 'disabled' : '' }}>📋</button>
-                        </div>
-                    </div>
-
-                    {{-- DEADLINE HINT + SENT BUTTON --}}
-                    <div
-                        style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-top:0.5rem;">
-                        <div class="draft-deadline-hint">
-                            ⏱ ვადა: <strong>{{ now()->addDays(10)->format('d.m.Y') }}</strong>
-                        </div>
-                        <form method="POST" action="{{ route('business.correspondence.store', $business) }}"
-                            id="draft-sent-form">
-                            @csrf
-                            <input type="hidden" name="sent_at" value="{{ now()->format('Y-m-d') }}">
-                            <input type="hidden" name="deadline_at" value="{{ now()->addDays(10)->format('Y-m-d') }}">
-                            <input type="hidden" name="recipient_email" id="draft-sent-to">
-                            <input type="hidden" name="cc_emails" id="draft-sent-cc">
-                            <input type="hidden" name="subject" id="draft-sent-subject">
-                            <input type="hidden" name="body" id="draft-sent-body">
-                            <button type="button" class="btn-sent" onclick="submitDraftSent()"
-                                {{ $draftBlocked ? 'disabled' : '' }}>გაგზავნილია ✓</button>
-                        </form>
-                    </div>
-
-                </div>
-            </div>
-            {{-- /draft card --}}
 
             {{-- UPLOAD MODAL --}}
             <div class="modal-overlay" id="upload-modal" onclick="if(event.target===this)closeUploadModal()">
