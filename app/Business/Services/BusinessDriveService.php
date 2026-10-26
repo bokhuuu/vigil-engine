@@ -50,7 +50,7 @@ class BusinessDriveService
 
         $folderId = $this->getFolderIdFromUrl($business->drive_folder_url);
         $mimotseraId = $this->drive->findOrCreateFolder('მიმოწერა', $folderId);
-        $roundId = $this->drive->findOrCreateFolder("მიმოწერა-{$round}", $mimotseraId);
+        $roundId = $this->drive->findOrCreateFolder((string) $round, $mimotseraId);
 
         $roundUrl = "https://drive.google.com/drive/folders/{$roundId}";
 

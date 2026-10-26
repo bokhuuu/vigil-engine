@@ -419,25 +419,6 @@
             font-style: italic;
         }
 
-        .btn-add-corr {
-            font-family: inherit;
-            font-size: 0.82rem;
-            font-weight: 500;
-            padding: 0.5rem 1rem;
-            background: var(--surface);
-            color: var(--navy);
-            border: 1px dashed var(--border);
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 0.75rem;
-            transition: all 0.15s;
-        }
-
-        .btn-add-corr:hover {
-            border-color: var(--navy);
-            background: var(--surface-2);
-        }
 
         /* DRAFT CARD */
         .draft-toggle {
@@ -701,13 +682,6 @@
             accent-color: var(--navy);
         }
 
-        .corr-edit-grid-3 {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 0.75rem;
-            margin-bottom: 0.75rem;
-        }
-
         .corr-edit-grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -751,8 +725,6 @@
                 width: 100%;
             }
 
-            .corr-edit-grid-3,
-            .corr-edit-grid-2 {
                 grid-template-columns: 1fr;
             }
         }
@@ -1171,7 +1143,7 @@
                     @forelse($business->correspondence->sortBy('round') as $corr)
                         <div class="corr-item">
                             <div class="corr-header">
-                                <span class="corr-title">მიმოწერა-{{ $corr->round }}</span>
+                                <span class="corr-title">{{ $corr->round }}</span>
                                 <span class="badge badge-{{ $corr->status }}">
                                     @switch($corr->status)
                                         @case('received')
@@ -1188,17 +1160,6 @@
                                     @endswitch
                                 </span>
                                 <div style="display:flex;gap:0.375rem;align-items:center;">
-                                    @if ($corr->status === 'pending' || $corr->status === 'overdue')
-                                        <form method="POST"
-                                            action="{{ route('business.correspondence.received', [$business, $corr]) }}"
-                                            style="display:inline;">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="btn btn-edit"
-                                                style="font-size:0.75rem;padding:0.25rem 0.625rem;">✅
-                                                მიღებულია</button>
-                                        </form>
-                                    @endif
                                     <button type="button" class="btn btn-edit"
                                         style="font-size:0.75rem;padding:0.25rem 0.625rem;background:var(--slate);"
                                         onclick="toggleCorrEdit({{ $corr->id }})">✏️</button>
@@ -1242,7 +1203,7 @@
                                     action="{{ route('business.correspondence.update', [$business, $corr]) }}">
                                     @csrf
                                     @method('PUT')
-                                    <div class="corr-edit-grid-3">
+                                    <div class="corr-edit-grid-2">
                                         <div style="display:flex;flex-direction:column;gap:0.375rem;">
                                             <label
                                                 style="font-size:0.78rem;font-weight:500;color:var(--text-2);">გაგზავნილია</label>
@@ -1257,37 +1218,13 @@
                                                 value="{{ $corr->deadline_at?->format('Y-m-d') }}"
                                                 style="font-family:inherit;font-size:0.875rem;padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:8px;outline:none;">
                                         </div>
-                                        <div style="display:flex;flex-direction:column;gap:0.375rem;">
-                                            <label
-                                                style="font-size:0.78rem;font-weight:500;color:var(--text-2);">მიღებულია</label>
-                                            <input type="date" name="received_at"
-                                                value="{{ $corr->received_at?->format('Y-m-d') }}"
-                                                style="font-family:inherit;font-size:0.875rem;padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:8px;outline:none;">
-                                        </div>
                                     </div>
-                                    <div class="corr-edit-grid-2">
-                                        <div style="display:flex;flex-direction:column;gap:0.375rem;">
-                                            <label
-                                                style="font-size:0.78rem;font-weight:500;color:var(--text-2);">სტატუსი</label>
-                                            <select name="status"
-                                                style="font-family:inherit;font-size:0.875rem;padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:8px;outline:none;background:var(--surface);">
-                                                <option value="pending"
-                                                    {{ $corr->status === 'pending' ? 'selected' : '' }}>მოლოდინში
-                                                </option>
-                                                <option value="received"
-                                                    {{ $corr->status === 'received' ? 'selected' : '' }}>მიღებულია
-                                                </option>
-                                                <option value="overdue"
-                                                    {{ $corr->status === 'overdue' ? 'selected' : '' }}>
-                                                    ვადაგადაცილებული</option>
-                                            </select>
-                                        </div>
-                                        <div style="display:flex;flex-direction:column;gap:0.375rem;">
-                                            <label
-                                                style="font-size:0.78rem;font-weight:500;color:var(--text-2);">შენიშვნები</label>
-                                            <input type="text" name="notes" value="{{ $corr->notes }}"
-                                                style="font-family:inherit;font-size:0.875rem;padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:8px;outline:none;">
-                                        </div>
+                                    <div
+                                        style="display:flex;flex-direction:column;gap:0.375rem;margin-bottom:0.75rem;">
+                                        <label
+                                            style="font-size:0.78rem;font-weight:500;color:var(--text-2);">შენიშვნები</label>
+                                        <input type="text" name="notes" value="{{ $corr->notes }}"
+                                            style="font-family:inherit;font-size:0.875rem;padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:8px;outline:none;">
                                     </div>
                                     <div style="display:flex;gap:0.5rem;">
                                         <button type="submit" class="btn btn-edit"
@@ -1304,43 +1241,6 @@
                             <p style="color:var(--text-3);font-size:0.875rem;">მიმოწერა არ არის</p>
                         @endforelse
 
-                        <div id="corr-form" style="display:none;margin-top:0.75rem;">
-                            <form method="POST" action="{{ route('business.correspondence.store', $business) }}">
-                                @csrf
-                                <div class="corr-edit-grid-2" style="margin-bottom:1rem;">
-                                    <div style="display:flex;flex-direction:column;gap:0.375rem;">
-                                        <label style="font-size:0.78rem;font-weight:500;color:var(--text-2);">გაგზავნის
-                                            თარიღი <span style="color:var(--red);">*</span></label>
-                                        <input type="date" name="sent_at" required
-                                            style="font-family:inherit;font-size:0.875rem;padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:8px;outline:none;">
-                                    </div>
-                                    <div style="display:flex;flex-direction:column;gap:0.375rem;">
-                                        <label style="font-size:0.78rem;font-weight:500;color:var(--text-2);">ვადა
-                                            <span style="color:var(--red);">*</span></label>
-                                        <input type="date" name="deadline_at" required
-                                            style="font-family:inherit;font-size:0.875rem;padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:8px;outline:none;">
-                                    </div>
-                                </div>
-                                <div style="display:flex;flex-direction:column;gap:0.375rem;margin-bottom:1rem;">
-                                    <label
-                                        style="font-size:0.78rem;font-weight:500;color:var(--text-2);">შენიშვნები</label>
-                                    <textarea name="notes" rows="2"
-                                        style="font-family:inherit;font-size:0.875rem;padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:8px;outline:none;resize:vertical;"></textarea>
-                                </div>
-                                <div style="display:flex;gap:0.5rem;">
-                                    <button type="submit" class="btn btn-edit"
-                                        style="font-size:0.82rem;">შენახვა</button>
-                                    <button type="button"
-                                        onclick="document.getElementById('corr-form').style.display='none';document.getElementById('btn-add-corr').style.display='block';"
-                                        class="btn btn-cancel"
-                                        style="display:inline-flex;font-size:0.82rem;">გაუქმება</button>
-                                </div>
-                            </form>
-                        </div>
-
-                        <button type="button" class="btn-add-corr" id="btn-add-corr"
-                            onclick="document.getElementById('corr-form').style.display='block';this.style.display='none';">+
-                            მიმოწერის დამატება</button>
                     </div>
                 </div>
 
@@ -1354,7 +1254,7 @@
                         <span>📂 შემომავალი ფაილები</span>
                         <button type="button" class="btn btn-edit"
                             style="font-size:0.75rem;padding:0.25rem 0.75rem;text-transform:none;letter-spacing:0;"
-                            onclick="loadDriveFiles(this)">ჩატვირთვა</button>
+                            onclick="loadDriveFiles(this)">განახლება</button>
                     </div>
                     <div class="card-body" id="drive-files-body">
                         <p style="color:var(--text-3);font-size:0.875rem;">დააჭირეთ "ჩატვირთვა" შემომავალი ფაილების
@@ -1485,7 +1385,7 @@
                 }
 
                 function showCorrDeleteModal(id, round) {
-                    document.getElementById('corr-delete-label').textContent = 'მიმოწერა-' + round;
+                    document.getElementById('corr-delete-label').textContent = 'მიმოწერა ' + round;
                     document.getElementById('corr-delete-form').action = '/business/{{ $business->id }}/correspondence/' + id;
                     document.getElementById('corr-delete-modal').classList.add('active');
                 }
