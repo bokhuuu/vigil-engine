@@ -9,6 +9,7 @@ use App\Business\Models\User;
 use App\Business\Services\BusinessDriveService;
 use App\Services\GoogleDriveService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Mockery\MockInterface;
 
 class BusinessUploadControllerTest extends BusinessTestCase
@@ -107,5 +108,66 @@ class BusinessUploadControllerTest extends BusinessTestCase
             ])
             ->assertStatus(422)
             ->assertJsonFragment(['error' => 'ბიზნესს Drive საქაღალდე არ აქვს']);
+    }
+
+    public function test_upload_puts_file_in_failed_when_drive_throws(): void
+    {
+        $user = User::factory()->create();
+
+        $business = Business::factory()->create([
+            'drive_folder_url' => 'https://drive.google.com/drive/folders/FAKE_ID',
+        ]);
+
+        $this->mock(GoogleDriveService::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('findOrCreateSubfolder')->andReturn('SUBFOLDER_ID');
+        });
+
+        $this->mock(BusinessDriveService::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('uploadFileToDrive')
+                ->andThrow(new \RuntimeException('Drive error'));
+        });
+
+        $this->actingAs($user, 'business')
+            ->postJson(route('business.upload.store'), [
+                'business_id' => $business->id,
+                'folder' => 'დოკუმენტაცია',
+                'files' => [UploadedFile::fake()->create('fail.pdf', 100)],
+            ])
+            ->assertOk()
+            ->assertJson(['uploaded' => [], 'failed' => ['fail.pdf']]);
+    }
+
+    public function test_concurrent_upload_of_same_file_is_deduplicated(): void
+    {
+        $user = User::factory()->create();
+
+        $business = Business::factory()->create([
+            'drive_folder_url' => 'https://drive.google.com/drive/folders/FAKE_ID',
+        ]);
+
+        // Simulate lock already held by another request
+        $filename = 'report.pdf';
+        $lockKey = 'upload:'.$business->id.':'.md5($filename);
+        $lock = Cache::lock($lockKey, 10);
+        $lock->get();
+
+        $this->mock(GoogleDriveService::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('findOrCreateSubfolder')->andReturn('SUBFOLDER_ID');
+        });
+
+        $this->mock(BusinessDriveService::class, function (MockInterface $mock): void {
+            $mock->shouldNotReceive('uploadFileToDrive');
+        });
+
+        $this->actingAs($user, 'business')
+            ->postJson(route('business.upload.store'), [
+                'business_id' => $business->id,
+                'folder' => 'დოკუმენტაცია',
+                'files' => [UploadedFile::fake()->create($filename, 100)],
+            ])
+            ->assertOk()
+            ->assertJson(['uploaded' => [], 'failed' => [$filename]]);
+
+        $lock->release();
     }
 }

@@ -10,6 +10,7 @@ use App\Services\GoogleDriveService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Cache;
 
 class BusinessUploadController extends Controller
 {
@@ -68,16 +69,29 @@ class BusinessUploadController extends Controller
         $failed = [];
 
         foreach ($request->file('files') as $file) {
+            $filename = $file->getClientOriginalName();
+            $lockKey = 'upload:'.$business->id.':'.md5($filename);
+
+            $lock = Cache::lock($lockKey, 10);
+
+            if (! $lock->get()) {
+                $failed[] = $filename;
+
+                continue;
+            }
+
             try {
                 $this->businessDrive->uploadFileToDrive(
                     $subfolderId,
-                    $file->getClientOriginalName(),
+                    $filename,
                     file_get_contents($file->getRealPath()),
                     $file->getMimeType() ?? 'application/octet-stream',
                 );
-                $uploaded[] = $file->getClientOriginalName();
+                $uploaded[] = $filename;
             } catch (\Throwable $e) {
-                $failed[] = $file->getClientOriginalName();
+                $failed[] = $filename;
+            } finally {
+                $lock->release();
             }
         }
 
