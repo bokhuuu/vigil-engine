@@ -82,10 +82,15 @@ class BusinessDriveService
         return $this->drive->uploadFile($parentFolderId, $filename, $content, $mimeType);
     }
 
-    private function getFolderIdFromUrl(string $url): string
+    public function getFolderIdFromUrl(string $url): string
     {
         preg_match('/\/folders\/([a-zA-Z0-9_-]+)/', $url, $matches);
 
         return $matches[1] ?? '';
+    }
+
+    public function renameBusinessFolder(string $folderId, string $newName): void
+    {
+        $this->drive->renameFolder($folderId, $newName);
     }
 }

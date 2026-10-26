@@ -9,6 +9,7 @@ use App\Business\Services\BusinessDriveService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class BusinessController extends Controller
@@ -50,13 +51,30 @@ class BusinessController extends Controller
             'drive_folder_url' => ['nullable', 'url'],
         ]);
 
+        $oldName = $business->name;
+        $oldCode = $business->registration_code;
+
         $business->update($validated);
+
+        if ($business->drive_folder_url && (
+            $validated['name'] !== $oldName ||
+            $validated['registration_code'] !== $oldCode
+        )) {
+            try {
+                $folderId = $this->driveService->getFolderIdFromUrl($business->drive_folder_url);
+                $newFolderName = "{$business->name} ({$business->registration_code})";
+                $this->driveService->renameBusinessFolder($folderId, $newFolderName);
+            } catch (\Throwable $e) {
+                Log::warning("Drive rename failed for business [{$business->id}]: ".$e->getMessage());
+            }
+        }
 
         return redirect()->route('business.show', $business)->with('success', 'ბიზნესი განახლდა');
     }
 
     public function destroy(Business $business): RedirectResponse
     {
+        $business->update(['drive_folder_url' => null]);
         $business->delete();
 
         return redirect()->route('business.dashboard')->with('success', 'ბიზნესი წაიშალა');

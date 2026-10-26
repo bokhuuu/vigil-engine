@@ -457,4 +457,24 @@ class GoogleDriveService
             fn (string $name) => ! in_array($name, $exclude, true),
         ));
     }
+
+    /**
+     * Rename a Drive folder by its ID.
+     */
+    public function renameFolder(string $folderId, string $newName): void
+    {
+        $this->getUserDrive()->files->update(
+            $folderId,
+            new DriveFile(['name' => $newName]),
+            ['fields' => 'id,name'],
+        );
+    }
+
+    /**
+     * Extract folder ID from a Drive URL — public wrapper.
+     */
+    public function getFolderIdFromUrl(?string $url): ?string
+    {
+        return $this->folderIdFromUrl($url);
+    }
 }
