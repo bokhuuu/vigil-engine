@@ -18,10 +18,8 @@ class BusinessEmailMatcher
 
     public function match(string $subject, string $body): ?Business
     {
-        $text = $subject.' '.$body;
-
-        // Priority 1: match by registration code (9 digits)
-        preg_match_all('/\b\d{9}\b/', $text, $matches);
+        // Priority 1: match by registration code in subject
+        preg_match_all('/\b\d+\b/', $subject, $matches);
 
         foreach ($matches[0] as $code) {
             $business = $this->businesses->firstWhere('registration_code', $code);
@@ -30,9 +28,9 @@ class BusinessEmailMatcher
             }
         }
 
-        // Priority 2: match by business name
+        // Priority 2: match by business name in subject
         foreach ($this->businesses as $business) {
-            if (mb_stripos($text, $business->name) !== false) {
+            if (mb_stripos($subject, $business->name) !== false) {
                 return Business::on('business')->find($business->id);
             }
         }
@@ -42,9 +40,7 @@ class BusinessEmailMatcher
 
     public function matchedBy(string $subject, string $body): string
     {
-        $text = $subject.' '.$body;
-
-        preg_match_all('/\b\d{9}\b/', $text, $matches);
+        preg_match_all('/\b\d+\b/', $subject, $matches);
         foreach ($matches[0] as $code) {
             if ($this->businesses->firstWhere('registration_code', $code)) {
                 return 'registration_code';
@@ -52,7 +48,7 @@ class BusinessEmailMatcher
         }
 
         foreach ($this->businesses as $business) {
-            if (mb_stripos($text, $business->name) !== false) {
+            if (mb_stripos($subject, $business->name) !== false) {
                 return 'name';
             }
         }

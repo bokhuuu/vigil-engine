@@ -73,9 +73,7 @@ class WatchGmail extends Command
 
             $attachments = $this->gmail->getAttachments($message);
             $count = count($attachments);
-            $internalEmails = config('services.business.internal_emails');
-            $isOutbound = collect($internalEmails)->contains(fn (string $e): bool => str_contains($from, $e));
-            $roundFolder = 'მიმოწერა/'.$openCorr->round.'/'.($isOutbound ? 'გამავალი' : 'შემომავალი');
+            $roundFolder = 'მიმოწერა/'.$openCorr->round;
 
             if ($business->drive_folder_url) {
                 $subfolderFolderId = $this->drive->ensureSubfolderPath(
@@ -85,11 +83,6 @@ class WatchGmail extends Command
                 $subfolderUrl = "https://drive.google.com/drive/folders/{$subfolderFolderId}";
 
                 $openCorr->update(['drive_folder_url' => $subfolderUrl]);
-
-                $this->drive->ensureSubfolderPath(
-                    $business->drive_folder_url,
-                    "მიმოწერა/{$openCorr->round}/გამავალი",
-                );
 
                 $filename = now()->format('Y-m-d_H-i').'_email.txt';
                 $textContent = "From: {$from}\nSubject: {$subject}\n\n{$body}";

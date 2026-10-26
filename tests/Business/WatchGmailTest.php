@@ -61,9 +61,9 @@ class WatchGmailTest extends BusinessTestCase
         $gmail->shouldReceive('getOrCreateLabel')->once()->andReturn('label-id');
         $gmail->shouldReceive('getUnreadMessages')->once()->andReturn([$message]);
         $gmail->shouldReceive('getMessage')->once()->andReturn($message);
-        $gmail->shouldReceive('getMessageSubject')->once()->andReturn('შპს ტესტი — პასუხი');
+        $gmail->shouldReceive('getMessageSubject')->once()->andReturn('123456789 — პასუხი');
         $gmail->shouldReceive('getMessageFrom')->once()->andReturn('sender@example.com');
-        $gmail->shouldReceive('getMessageBody')->once()->andReturn('123456789');
+        $gmail->shouldReceive('getMessageBody')->once()->andReturn('');
         $gmail->shouldReceive('applyLabel')->once();
         $gmail->shouldReceive('markAsRead')->once();
         $gmail->shouldReceive('getAttachments')->once()->andReturn([]);
@@ -72,7 +72,7 @@ class WatchGmailTest extends BusinessTestCase
         $telegram->shouldReceive('sendToMe')->once();
 
         $drive = \Mockery::mock(GoogleDriveService::class);
-        $drive->shouldReceive('ensureSubfolderPath')->twice()->andReturn('fake-folder-id');
+        $drive->shouldReceive('ensureSubfolderPath')->once()->andReturn('fake-folder-id');
         $drive->shouldReceive('uploadFileToSubfolder')->once();
         $command = new WatchGmail($gmail, $telegram, $drive);
         $this->app['Illuminate\Contracts\Console\Kernel']->registerCommand($command);
@@ -83,7 +83,7 @@ class WatchGmailTest extends BusinessTestCase
             'business_id' => $business->id,
             'round' => 1,
             'status' => 'pending',
-            'notes' => 'შპს ტესტი — პასუხი',
+            'notes' => '123456789 — პასუხი',
         ], 'business');
     }
 
