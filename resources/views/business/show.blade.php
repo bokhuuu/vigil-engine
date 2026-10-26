@@ -1352,7 +1352,8 @@
                 <div class="card" style="margin-top:1.25rem;">
                     <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
                         <span>📂 შემომავალი ფაილები</span>
-                        <button type="button" class="btn btn-edit" style="font-size:0.75rem;padding:0.25rem 0.75rem;"
+                        <button type="button" class="btn btn-edit"
+                            style="font-size:0.75rem;padding:0.25rem 0.75rem;text-transform:none;letter-spacing:0;"
                             onclick="loadDriveFiles(this)">ჩატვირთვა</button>
                     </div>
                     <div class="card-body" id="drive-files-body">
@@ -1361,6 +1362,7 @@
                     </div>
                 </div>
             @endif
+            {{-- /drive files card --}}
 
             {{-- UPLOAD MODAL --}}
             <div class="modal-overlay" id="upload-modal" onclick="if(event.target===this)closeUploadModal()">
@@ -1716,29 +1718,75 @@
                     });
                 });
 
-                {{-- DRIVE FILES CARD --}}
-                @if ($business->drive_folder_url)
-                    <
-                    div class = "card"
-                    style = "margin-top:1.25rem;" >
-                        <
-                        div class = "card-header"
-                    style = "display:flex;align-items:center;justify-content:space-between;" >
-                        <
-                        span > 📂შემომავალი ფაილები < /span> <
-                    button type = "button"
-                    class = "btn btn-edit"
-                    style = "font-size:0.75rem;padding:0.25rem 0.75rem;"
-                    onclick = "loadDriveFiles(this)" > ჩატვირთვა < /button> < /
-                        div > <
-                        div class = "card-body"
-                    id = "drive-files-body" >
-                        <
-                        p style = "color:var(--text-3);font-size:0.875rem;" > დააჭირეთ "ჩატვირთვა"
-                    შემომავალი ფაილების სანახავად. < /p> < /
-                        div > <
-                        /div>
-                @endif
+                // DRIVE FILES
+                async function loadDriveFiles(btn) {
+                    btn.disabled = true;
+                    btn.textContent = '⏳';
+                    const body = document.getElementById('drive-files-body');
+                    try {
+                        const res = await fetch('{{ route('business.move.files', $business) }}');
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        const data = await res.json();
+                        if (!data.files || !data.files.length) {
+                            body.innerHTML =
+                                '<p style="color:var(--text-3);font-size:0.875rem;">შემომავალი ფაილები არ მოიძებნა.</p>';
+                            btn.textContent = 'განახლება';
+                            btn.disabled = false;
+                            return;
+                        }
+                        const opts = data.subfolders.map(s => `<option value="${s}">${s}</option>`).join('');
+                        body.innerHTML = data.files.map(f => `
+                            <div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid var(--border);">
+                                <span style="flex:1;font-size:0.875rem;">${f.name} <span style="color:var(--text-3);font-size:0.78rem;">(${f.round ?? ''})</span></span>
+                                <select data-file-id="${f.id}" style="font-size:0.82rem;padding:0.25rem 0.5rem;border:1px solid var(--border);border-radius:6px;">
+                                    <option value="">— საქაღალდე —</option>${opts}
+                                </select>
+                                <button type="button" class="btn btn-edit" style="font-size:0.75rem;padding:0.25rem 0.625rem;" onclick="moveFile('${f.id}', this)">გადატანა</button>
+                            </div>
+                        `).join('');
+                    } catch (e) {
+                        body.innerHTML = '<p style="color:var(--red);font-size:0.875rem;">შეცდომა — სცადეთ თავიდან.</p>';
+                    }
+                    btn.textContent = 'განახლება';
+                    btn.disabled = false;
+                }
+
+                async function moveFile(fileId, btn) {
+                    const row = btn.closest('div');
+                    const sel = row.querySelector('select');
+                    if (!sel.value) {
+                        sel.style.borderColor = 'var(--red)';
+                        return;
+                    }
+                    sel.style.borderColor = '';
+                    btn.disabled = true;
+                    btn.textContent = '⏳';
+                    try {
+                        const res = await fetch('{{ route('business.move.store', $business) }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            },
+                            body: JSON.stringify({
+                                file_id: fileId,
+                                subfolder_name: sel.value,
+                            }),
+                        });
+                        const data = await res.json();
+                        if (data.ok) {
+                            btn.textContent = '✓';
+                            btn.style.background = 'var(--green)';
+                            setTimeout(() => row.remove(), 800);
+                        } else {
+                            btn.textContent = '❌';
+                            btn.disabled = false;
+                        }
+                    } catch (e) {
+                        btn.textContent = '❌';
+                        btn.disabled = false;
+                    }
+                }
             </script>
 
     </body>
