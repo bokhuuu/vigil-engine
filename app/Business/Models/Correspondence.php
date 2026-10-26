@@ -26,7 +26,6 @@ class Correspondence extends Model
         'drive_folder_url',
         'notes',
         'status',
-        'status',
         'recipient_email',
         'cc_emails',
         'subject',
