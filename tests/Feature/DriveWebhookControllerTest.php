@@ -21,18 +21,27 @@ test('drive webhook rejects request with invalid secret', function () {
     $response->assertStatus(401);
 });
 
-test('removed ფოტოები unticks checkbox and notifies managers', function () {
-    config(['vigil.telegram.bot_token' => 'test-token', 'vigil.telegram.my_chat_id' => '999']);
-
+test('removed სკანი does nothing', function () {
     Http::fake([
         'api.airtable.com/*' => Http::sequence()
-            // getActByNumber
+            ->push(['records' => [['id' => 'rec001', 'fields' => ['🔖 აქტის ნომერი' => '329']]]], 200),
+    ]);
+
+    $this->postJson('/webhook/drive?secret=test-secret', [
+        'act_number' => '329',
+        'subfolder' => 'სკანი',
+        'change_type' => 'removed',
+    ])->assertStatus(200);
+
+    Http::assertNotSent(fn ($request) => $request->method() === 'PATCH');
+    Http::assertNotSent(fn ($request) => str_contains($request->url(), 'api.telegram.org'));
+});
+
+test('removed ფოტოები unticks checkbox', function () {
+    Http::fake([
+        'api.airtable.com/*' => Http::sequence()
             ->push(['records' => [['id' => 'rec001', 'fields' => ['🔖 აქტის ნომერი' => '329']]]], 200)
-            // untickActCheckbox
-            ->push(['id' => 'rec001', 'fields' => []], 200)
-            // getManagers → getTeams
-            ->push(['records' => [['id' => 'm1', 'fields' => ['🏷️ როლი' => 'მენეჯერი', '✈️ Telegram' => '111']]]], 200),
-        'api.telegram.org/*' => Http::response(['ok' => true], 200),
+            ->push(['id' => 'rec001', 'fields' => []], 200),
     ]);
 
     $this->postJson('/webhook/drive?secret=test-secret', [
@@ -44,30 +53,7 @@ test('removed ფოტოები unticks checkbox and notifies managers', fun
     Http::assertSent(fn ($request) => $request->method() === 'PATCH'
         && $request['fields']['📥 ფოტოები'] === false);
 
-    Http::assertSent(fn ($request) => str_contains($request->url(), 'api.telegram.org')
-        && $request['chat_id'] === '111');
-});
-
-test('removed სკანი notifies but does not patch Airtable', function () {
-    config(['vigil.telegram.bot_token' => 'test-token', 'vigil.telegram.my_chat_id' => '999']);
-
-    Http::fake([
-        'api.airtable.com/*' => Http::sequence()
-            ->push(['records' => [['id' => 'rec001', 'fields' => ['🔖 აქტის ნომერი' => '329']]]], 200)
-            ->push(['records' => []], 200),
-        'api.telegram.org/*' => Http::response(['ok' => true], 200),
-    ]);
-
-    $this->postJson('/webhook/drive?secret=test-secret', [
-        'act_number' => '329',
-        'subfolder' => 'სკანი',
-        'change_type' => 'removed',
-    ])->assertStatus(200);
-
-    Http::assertNotSent(fn ($request) => $request->method() === 'PATCH');
-
-    Http::assertSent(fn ($request) => str_contains($request->url(), 'api.telegram.org')
-        && $request['chat_id'] === '999');
+    Http::assertNotSent(fn ($request) => str_contains($request->url(), 'api.telegram.org'));
 });
 
 test('removed in untracked folder does nothing', function () {

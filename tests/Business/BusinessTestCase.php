@@ -12,6 +12,11 @@ abstract class BusinessTestCase extends BaseTestCase
     {
         parent::setUp();
 
+        $this->artisan('db:wipe', [
+            '--database' => 'business',
+            '--force' => true,
+        ]);
+
         $this->artisan('migrate', [
             '--database' => 'business',
             '--path' => 'database/migrations/business',

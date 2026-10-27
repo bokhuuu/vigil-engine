@@ -10,7 +10,6 @@ class DriveEventService
 {
     public function __construct(
         private AirtableService $airtable,
-        private ManagerNotifier $notifier,
     ) {}
 
     /**
@@ -40,7 +39,7 @@ class DriveEventService
     }
 
     /**
-     * A tracked subfolder went empty — untick checkbox and alert.
+     * A tracked subfolder went empty — untick its Airtable checkbox.
      */
     public function fileRemoved(string $actNumber, string $subfolderName): void
     {
@@ -59,17 +58,5 @@ class DriveEventService
             $this->airtable->untickActCheckbox($act['id'], $field);
             Log::info("DriveEventService: unticked [{$field}] on ACT [{$actNumber}]");
         }
-
-        $folderUrl = $act['fields']['💼 საქაღალდე'] ?? null;
-
-        $message = '⚠️ <b>ACT '.e($actNumber).'</b> — '.e($subfolderName)." ცარიელია\n"
-            .'ფაილები წაიშალა Drive-იდან.';
-
-        if ($folderUrl) {
-            $message .= "\n🔗 <a href=\"".e($folderUrl).'">საქაღალდე</a>';
-        }
-
-        $this->notifier->notify($message);
-        Log::info("DriveEventService: removal alert sent for [{$subfolderName}] on ACT [{$actNumber}]");
     }
 }
