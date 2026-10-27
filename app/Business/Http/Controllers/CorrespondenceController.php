@@ -54,6 +54,19 @@ class CorrespondenceController extends Controller
             Log::warning("Drive folder creation failed for business [{$business->id}] round [{$round}]: ".$e->getMessage());
         }
 
+        if (! empty($validated['body'])) {
+            try {
+                $corr = $business->correspondence()->where('round', $round)->first();
+                if ($corr?->drive_folder_url) {
+                    $folderId = $this->driveService->getFolderIdFromUrl($corr->drive_folder_url);
+                    $this->driveService->uploadFileToDrive($folderId, 'წერილი.txt', $validated['body'], 'text/plain');
+                    Log::info("CorrespondenceController: saved outgoing body to Drive for business [{$business->id}] round [{$round}]");
+                }
+            } catch (\Throwable $e) {
+                Log::warning("CorrespondenceController: failed to save body to Drive for business [{$business->id}] round [{$round}]: ".$e->getMessage());
+            }
+        }
+
         return redirect()->route('business.show', $business)->with('success', 'მიმოწერა-'.$round.' დაემატა');
     }
 
