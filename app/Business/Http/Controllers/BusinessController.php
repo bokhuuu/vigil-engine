@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class BusinessController extends Controller
@@ -34,10 +35,10 @@ class BusinessController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'registration_code' => ['required', 'string', 'max:20'],
+            'registration_code' => ['required', 'string', 'max:20', Rule::unique('business.businesses', 'registration_code')->ignore($business->id)],
             'act_number' => ['nullable', 'string', 'max:20'],
             'lot_number' => ['required', 'integer'],
-            'cadastral_code' => ['nullable', 'string', 'max:50'],
+            'cadastral_code' => ['nullable', 'string', 'max:150'],
             'type' => ['required', 'array', 'min:1'],
             'type.*' => ['required', 'in:მეპატრონე,მოიჯარე,მეიჯარე,სხვა'],
             'status' => ['required', 'in:active,pending,complete'],

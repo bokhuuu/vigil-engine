@@ -27,7 +27,7 @@ class BusinessCreateController extends Controller
             'registration_code' => ['required', 'string', 'max:20', 'unique:business.businesses,registration_code'],
             'act_number' => ['nullable', 'string', 'max:20'],
             'lot_number' => ['required', 'integer', 'min:1'],
-            'cadastral_code' => ['nullable', 'string', 'max:50'],
+            'cadastral_code' => ['nullable', 'string', 'max:150'],
             'type' => ['required', 'array', 'min:1'],
             'type.*' => ['required', 'in:მეპატრონე,მოიჯარე,მეიჯარე,სხვა'],
             'status' => ['required', 'in:active,pending,complete'],
