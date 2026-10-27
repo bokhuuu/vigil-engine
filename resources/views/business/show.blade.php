@@ -1048,7 +1048,8 @@
                                     </span>
                                 @endif
                             @endforeach
-                            <span class="cc-chip locked" title="Engine — ყოველთვის CC-ში">
+                            <span class="cc-chip locked" data-email="{{ config('services.business.own_email') }}"
+                                title="Engine — ყოველთვის CC-ში">
                                 {{ config('services.business.own_email') }}
                             </span>
                             <input class="cc-add-input" id="cc-add" placeholder="დამატება..."
@@ -1102,7 +1103,7 @@
 
 მოწოდებული ინფორმაცია, მათ შორის თანამშრომლების პერსონალური მონაცემები, გამოყენებული იქნება მხოლოდ კომპენსაციის დაანგარიშების მიზნით და დაცული იქნება კონფიდენციალურობის მოთხოვნების შესაბამისად.
 
-გთხოვთ, აღნიშნული დოკუმენტები გამოგვიგზავნოთ არაუმეტეს 10 კალენდარულ დღეში.
+გთხოვთ, აღნიშნული დოკუმენტები გამოგვიგზავნოთ არაუმეტეს 10 კალენდარულ დღეში და წერილის სათაურში (subject line) მიუთითოთ იურიდიული სახელი და საიდენტიფიკაციო კოდი.
 
 პატივისცემით,</textarea>
                         <button type="button" class="btn-copy" onclick="draftCopy('draft-body-text', this)"
