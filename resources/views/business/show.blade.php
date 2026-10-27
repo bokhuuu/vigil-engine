@@ -725,7 +725,12 @@
                 width: 100%;
             }
 
+            .corr-edit-grid-2 {
                 grid-template-columns: 1fr;
+            }
+
+            .draft-textarea {
+                min-height: 160px;
             }
         }
 
@@ -1218,6 +1223,29 @@
                                                 value="{{ $corr->deadline_at?->format('Y-m-d') }}"
                                                 style="font-family:inherit;font-size:0.875rem;padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:8px;outline:none;">
                                         </div>
+                                        <div style="display:flex;flex-direction:column;gap:0.375rem;">
+                                            <label
+                                                style="font-size:0.78rem;font-weight:500;color:var(--text-2);">სტატუსი</label>
+                                            <select name="status"
+                                                style="font-family:inherit;font-size:0.875rem;padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:8px;outline:none;background:var(--surface);">
+                                                <option value="pending"
+                                                    {{ $corr->status === 'pending' ? 'selected' : '' }}>მოლოდინში
+                                                </option>
+                                                <option value="received"
+                                                    {{ $corr->status === 'received' ? 'selected' : '' }}>მიღებულია
+                                                </option>
+                                                <option value="overdue"
+                                                    {{ $corr->status === 'overdue' ? 'selected' : '' }}>
+                                                    ვადაგადაცილებული</option>
+                                            </select>
+                                        </div>
+                                        <div style="display:flex;flex-direction:column;gap:0.375rem;">
+                                            <label
+                                                style="font-size:0.78rem;font-weight:500;color:var(--text-2);">მიღებულია</label>
+                                            <input type="date" name="received_at"
+                                                value="{{ $corr->received_at?->format('Y-m-d') }}"
+                                                style="font-family:inherit;font-size:0.875rem;padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:8px;outline:none;">
+                                        </div>
                                     </div>
                                     <div
                                         style="display:flex;flex-direction:column;gap:0.375rem;margin-bottom:0.75rem;">
@@ -1257,7 +1285,8 @@
                             onclick="loadDriveFiles(this)">განახლება</button>
                     </div>
                     <div class="card-body" id="drive-files-body">
-                        <p style="color:var(--text-3);font-size:0.875rem;">დააჭირეთ "ჩატვირთვა" შემომავალი ფაილების
+                        // NEW
+                        <p style="color:var(--text-3);font-size:0.875rem;">დააჭირეთ "განახლება" შემომავალი ფაილების
                             სანახავად.</p>
                     </div>
                 </div>
