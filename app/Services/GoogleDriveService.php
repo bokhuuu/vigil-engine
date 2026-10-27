@@ -270,12 +270,15 @@ class GoogleDriveService
         ]);
     }
 
-    /**
-     * Whether a folder contains at least one file — public version for watcher.
-     */
     public function subfolderHasFiles(string $folderId): bool
     {
-        return $this->folderHasFiles($folderId);
+        $response = $this->getUserDrive()->files->listFiles([
+            'q' => "'{$folderId}' in parents and trashed = false",
+            'fields' => 'files(id)',
+            'pageSize' => 1,
+        ]);
+
+        return count($response->getFiles()) > 0;
     }
 
     /**
