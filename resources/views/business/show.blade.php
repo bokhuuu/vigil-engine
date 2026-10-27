@@ -1285,8 +1285,7 @@
                             onclick="loadDriveFiles(this)">განახლება</button>
                     </div>
                     <div class="card-body" id="drive-files-body">
-                        // NEW
-                        <p style="color:var(--text-3);font-size:0.875rem;">დააჭირეთ "განახლება" შემომავალი ფაილების
+                        <p style="color:var(--text-3);font-size:0.875rem;">დააჭირეთ "განახლებას" შემომავალი ფაილების
                             სანახავად.</p>
                     </div>
                 </div>
@@ -1661,16 +1660,19 @@
                                 '<p style="color:var(--text-3);font-size:0.875rem;">შემომავალი ფაილები არ მოიძებნა.</p>';
                             btn.textContent = 'განახლება';
                             btn.disabled = false;
+
                             return;
                         }
                         const opts = data.subfolders.map(s => `<option value="${s}">${s}</option>`).join('');
                         body.innerHTML = data.files.map(f => `
-                            <div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid var(--border);">
-                                <span style="flex:1;font-size:0.875rem;">${f.name} <span style="color:var(--text-3);font-size:0.78rem;">(${f.round ?? ''})</span></span>
-                                <select data-file-id="${f.id}" style="font-size:0.82rem;padding:0.25rem 0.5rem;border:1px solid var(--border);border-radius:6px;">
-                                    <option value="">— საქაღალდე —</option>${opts}
-                                </select>
-                                <button type="button" class="btn btn-edit" style="font-size:0.75rem;padding:0.25rem 0.625rem;" onclick="moveFile('${f.id}', this)">გადატანა</button>
+                            <div style="display:flex;flex-direction:column;gap:0.375rem;padding:0.625rem 0;border-bottom:1px solid var(--border);">
+                                <span style="font-size:0.875rem;font-weight:500;">${f.name} <span style="color:var(--text-3);font-size:0.78rem;">(${f.round ?? ''})</span></span>
+                                <div style="display:flex;gap:0.5rem;align-items:center;">
+                                    <select data-file-id="${f.id}" style="flex:1;font-size:0.82rem;padding:0.35rem 0.5rem;border:1px solid var(--border);border-radius:6px;min-width:0;">
+                                        <option value="">— საქაღალდე —</option>${opts}
+                                    </select>
+                                    <button type="button" class="btn btn-edit" style="font-size:0.75rem;padding:0.35rem 0.625rem;white-space:nowrap;flex-shrink:0;" onclick="moveFile('${f.id}', this)">გადატანა</button>
+                                </div>
                             </div>
                         `).join('');
                     } catch (e) {
