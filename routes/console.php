@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\DriveWatcherService;
 use Illuminate\Support\Facades\Schedule;
 
 // Morning run - 11:00 Georgia, Monday to Friday
@@ -26,6 +27,10 @@ Schedule::command('vigil:drive-watch')
 
 // Rebuild Drive watcher folder index hourly (picks up new ACT folders)
 Schedule::command('vigil:drive-watch --seed')->hourly();
+
+// Nightly rescan — corrects any state drift, 03:00 Georgia (23:00 UTC)
+Schedule::call(fn () => app(DriveWatcherService::class)->rescan())
+    ->dailyAt('23:00');
 
 // Weekly backup - Sunday 11:00 Georgia
 Schedule::command('vigil:backup')->weeklyOn(0, '11:00');
