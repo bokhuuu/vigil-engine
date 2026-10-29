@@ -83,12 +83,23 @@ class BusinessDriveService
     }
 
     /**
-     * List files currently in შემომავალი/ across all correspondence rounds for a business.
-     * Returns [['id' => ..., 'name' => ..., 'mimeType' => ..., 'folder_url' => ...], ...]
+     * List files currently in მიმოწერა/ for incoming rounds only (received, not sent by us).
+     * Returns [['id' => ..., 'name' => ..., 'mimeType' => ..., 'round' => ...], ...]
      */
     public function listIncomingFiles(Business $business): array
     {
         if (! $business->drive_folder_url) {
+            return [];
+        }
+
+        $incomingRounds = $business->correspondence()
+            ->whereNotNull('received_at')
+            ->whereNull('sent_at')
+            ->pluck('round')
+            ->map(fn ($r) => (string) $r)
+            ->toArray();
+
+        if (empty($incomingRounds)) {
             return [];
         }
 
@@ -97,6 +108,9 @@ class BusinessDriveService
         $files = [];
 
         foreach ($this->drive->listChildFolders($mimotsera) as $roundName => $roundId) {
+            if (! in_array($roundName, $incomingRounds, true)) {
+                continue;
+            }
             foreach ($this->drive->listFilesInFolder($roundId) as $file) {
                 $files[] = array_merge($file, ['round' => $roundName]);
             }
