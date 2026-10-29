@@ -1564,7 +1564,7 @@
 
                 function copyCC(btn) {
                     const chips = document.querySelectorAll('#cc-chips .cc-chip');
-                    const emails = Array.from(chips).map(c => c.dataset.email).filter(Boolean).join(', ');
+                    const emails = Array.from(chips).map(c => c.dataset.email).filter(Boolean).join('; ');
                     navigator.clipboard.writeText(emails).then(() => {
                         btn.classList.add('copied');
                         btn.textContent = '✓';
