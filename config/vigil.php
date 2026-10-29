@@ -267,9 +267,10 @@ return [
     |--------------------------------------------------------------------------
     */
     'schedule' => [
-        'morning_hour' => 10,  // Scripts run at 10:00
-        'backup_day' => 'sunday',
-        'backup_hour' => 2,
+        'morning_time' => '11:00',
+        'evening_time' => '20:00',
+        'backup_day' => 0,
+        'backup_time' => '11:00',
     ],
 
     /*
