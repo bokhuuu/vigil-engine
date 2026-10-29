@@ -247,7 +247,11 @@ class DriveWatcherService
             $prevState = $this->state->getSubfolderState($subfolderId);
 
             if ($prevState !== null && str_starts_with($prevState, 'grace:')) {
-                continue;
+                $since = (int) explode(':', $prevState)[1];
+                if ($nowMs - $since < self::GRACE_MS * 2) {
+                    continue;
+                }
+                // Stuck in grace — re-verify
             }
 
             $actInfo = $this->state->getActByFolderId($subfolder['act_folder_id']);
