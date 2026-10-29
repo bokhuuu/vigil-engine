@@ -5,16 +5,18 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Repositories\DriveWatcherStateRepository;
+use App\Services\DriveWatcherService;
 use Illuminate\Console\Command;
 
 class DriveHealthCommand extends Command
 {
-    protected $signature = 'vigil:drive-health';
+    protected $signature = 'vigil:drive-health {--fix : Automatically reseed if issues are found}';
 
     protected $description = 'Cross-reference drive-watcher-state.json sections and report mismatches.';
 
     public function __construct(
         private DriveWatcherStateRepository $state,
+        private DriveWatcherService $watcher,
     ) {
         parent::__construct();
     }
@@ -61,7 +63,18 @@ class DriveHealthCommand extends Command
             return self::SUCCESS;
         }
 
-        $this->error("Found {$issues} issue(s) in drive-watcher-state.json — run php artisan vigil:drive-watch --seed to resync.");
+        if ($this->option('fix')) {
+            $this->info("Found {$issues} issue(s) — reseeding now...");
+            $count = $this->watcher->seedFromAirtable();
+            $this->info("Seeded {$count} ACT folders. Re-running health check...");
+
+            // Re-check after seed
+            $this->state = app(DriveWatcherStateRepository::class);
+
+            return $this->handle();
+        }
+
+        $this->error("Found {$issues} issue(s) in drive-watcher-state.json — run php artisan vigil:drive-health --fix to auto-reseed.");
 
         return self::FAILURE;
     }
