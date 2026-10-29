@@ -478,7 +478,6 @@
 
     <script>
         (function() {
-            const PHONE_RE = /^[\d\s\+\-\(\)]*$/;
 
             function setError(input, msg) {
                 input.style.borderColor = 'var(--red)';
@@ -498,11 +497,6 @@
             }
 
             function validatePhone(input) {
-                const val = input.value.trim();
-                if (val && !PHONE_RE.test(val)) {
-                    setError(input, 'ტელეფონი: მხოლოდ ციფრები, +, -, (, )');
-                    return false;
-                }
                 clearError(input);
                 return true;
             }

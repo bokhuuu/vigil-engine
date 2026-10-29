@@ -981,8 +981,8 @@
 
                         <div class="info-row">
                             <span class="info-label">შენიშვნები</span>
-                            <span class="info-value {{ !$business->notes ? 'info-empty' : '' }}"
-                                id="view-notes">{{ $business->notes ?? '—' }}</span>
+                            <span class="info-value {{ !$business->notes ? 'info-empty' : '' }}" id="view-notes"
+                                style="white-space: pre-wrap;">{{ $business->notes ?? '—' }}</span>
                             <textarea class="edit-input" name="notes" rows="3" style="resize:vertical;" id="edit-notes">{{ $business->notes }}</textarea>
                         </div>
 
@@ -999,6 +999,18 @@
                 <span class="draft-chevron" id="draft-chevron">▶</span>
             </div>
             <div class="draft-body" id="draft-body">
+
+                @php
+                    $signatures = [
+                        'Levan.kalmakhelidze@colliers.ge' =>
+                            "\n\nLevan Kalmakhelidze\nValuation & Advisory Services\nLevan.kalmakhelidze@colliers.ge\nDirect:032 222 44 77 | Mobile:+995 557 65 38 73\nFreedom Square|Business Center Tabidze N1|Tbilisi/0105 |Georgia",
+                        'ramaz.sharabidze@colliers.ge' =>
+                            "\n\nRamaz Sharabidze\nValuation & Advisory Services\nramaz.sharabidze@colliers.ge\nDirect:032 222 44 77 | Mobile:+995 577 30 33 34\nFreedom Square|Business Center Tabidze N1|Tbilisi/0105 |Georgia",
+                    ];
+                    $userEmail = auth('business')->user()?->email ?? '';
+                    $signature = $signatures[$userEmail] ?? '';
+                @endphp
+
 
                 @php
                     $draftWarnings = [];
@@ -1105,7 +1117,7 @@
 
 გთხოვთ, აღნიშნული დოკუმენტები გამოგვიგზავნოთ არაუმეტეს 10 კალენდარულ დღეში და წერილის სათაურში (subject line) მიუთითოთ იურიდიული სახელი და საიდენტიფიკაციო კოდი.
 
-პატივისცემით,</textarea>
+პატივისცემით,{{ $signature }}</textarea>
                         <button type="button" class="btn-copy" onclick="draftCopy('draft-body-text', this)"
                             style="align-self:flex-start;" {{ $draftBlocked ? 'disabled' : '' }}>📋</button>
                     </div>
@@ -1582,21 +1594,8 @@
                 }
 
                 function validatePhone(input) {
-                    const PHONE_RE = /^[\d\s\+\-\(\)]*$/;
-                    const val = input.value.trim();
-                    let hint = input.parentNode.querySelector('.js-hint');
-                    if (val && !PHONE_RE.test(val)) {
-                        input.style.borderColor = 'var(--red)';
-                        if (!hint) {
-                            hint = document.createElement('span');
-                            hint.className = 'js-hint';
-                            hint.style.cssText = 'font-size:0.72rem;color:var(--red);margin-top:0.2rem;display:block;';
-                            input.parentNode.appendChild(hint);
-                        }
-                        hint.textContent = 'მხოლოდ ციფრები, +, -, (, )';
-                        return false;
-                    }
                     input.style.borderColor = '';
+                    const hint = input.parentNode.querySelector('.js-hint');
                     if (hint) hint.remove();
                     return true;
                 }
