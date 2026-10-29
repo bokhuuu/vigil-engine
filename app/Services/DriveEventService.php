@@ -41,10 +41,17 @@ class DriveEventService
     /**
      * A tracked subfolder went empty — untick its Airtable checkbox.
      */
+    // NEW
     public function fileRemoved(string $actNumber, string $subfolderName): void
     {
         $tracked = config('vigil.drive.tracked_subfolders');
         $field = $tracked[$subfolderName] ?? null;
+
+        if ($field === null) {
+            Log::info("DriveEventService: [{$subfolderName}] has no checkbox — skipping untick");
+
+            return;
+        }
 
         $act = $this->airtable->getActByNumber($actNumber);
 
@@ -54,9 +61,7 @@ class DriveEventService
             return;
         }
 
-        if ($field !== null) {
-            $this->airtable->untickActCheckbox($act['id'], $field);
-            Log::info("DriveEventService: unticked [{$field}] on ACT [{$actNumber}]");
-        }
+        $this->airtable->untickActCheckbox($act['id'], $field);
+        Log::info("DriveEventService: unticked [{$field}] on ACT [{$actNumber}]");
     }
 }
