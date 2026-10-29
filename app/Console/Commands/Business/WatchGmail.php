@@ -43,6 +43,12 @@ class WatchGmail extends Command
             $subject = $this->gmail->getMessageSubject($message);
             $from = $this->gmail->getMessageFrom($message);
             $body = $this->gmail->getMessageBody($message);
+            // Skip emails sent by our own team (CC copies of outgoing emails)
+            if (str_ends_with(strtolower($from), '@colliers.ge')) {
+                $this->gmail->markAsRead($msg->getId());
+
+                continue;
+            }
             $business = $matcher->match($subject, $body);
             $matchedBy = $matcher->matchedBy($subject, $body);
 
