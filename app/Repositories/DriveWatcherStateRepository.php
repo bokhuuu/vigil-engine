@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use Illuminate\Support\Facades\Log;
+
 class DriveWatcherStateRepository
 {
     private string $path;
@@ -167,7 +169,26 @@ class DriveWatcherStateRepository
             return $this->state;
         }
 
-        $this->state = json_decode(file_get_contents($this->path), true) ?? [];
+        $contents = file_get_contents($this->path);
+        $decoded = json_decode($contents, true);
+
+        if (! is_array($decoded)) {
+            Log::critical('DriveWatcherStateRepository: state file is corrupt or unreadable — starting with empty state', [
+                'path' => $this->path,
+                'json_error' => json_last_error_msg(),
+            ]);
+            $this->state = [
+                'page_token' => null,
+                'folder_index' => [],
+                'subfolder_index' => [],
+                'subfolder_states' => [],
+                'folder_colors' => [],
+            ];
+
+            return $this->state;
+        }
+
+        $this->state = $decoded;
 
         return $this->state;
     }
