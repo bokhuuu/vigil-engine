@@ -744,6 +744,27 @@
                 <form id="rescan-form" method="POST" action="{{ route('dashboard.rescan') }}" style="display:none;">
                     @csrf
                 </form>
+                @if ($downloadRunning)
+                    <span
+                        style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#8892a4;white-space:nowrap;cursor:not-allowed;opacity:0.6;">
+                        ⏳ გადმოწერა…
+                    </span>
+                @elseif ($downloadReady)
+                    <a href="{{ route('dashboard.download.file') }}"
+                        style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;white-space:nowrap;text-decoration:none;">
+                        ⬇️ ZIP გადმოწერა
+                    </a>
+                @else
+                    <button onclick="document.getElementById('download-form').submit()"
+                        style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;white-space:nowrap;cursor:pointer;">
+                        📦 სკანების გადმოწერა
+                    </button>
+                    <form id="download-form" method="POST" action="{{ route('dashboard.download') }}"
+                        style="display:none;">
+                        @csrf
+                    </form>
+                @endif
+
             @endif
         </div>
     </div>

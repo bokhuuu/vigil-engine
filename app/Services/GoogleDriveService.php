@@ -523,4 +523,15 @@ class GoogleDriveService
             ],
         );
     }
+
+    /**
+     * Download a file by its Drive ID and return the raw binary content.
+     * Uses OAuth user drive so permissions match the folder owner account.
+     */
+    public function downloadFile(string $fileId): string
+    {
+        $response = $this->getUserDrive()->files->get($fileId, ['alt' => 'media']);
+
+        return $response->getBody()->getContents();
+    }
 }

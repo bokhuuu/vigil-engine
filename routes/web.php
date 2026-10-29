@@ -37,3 +37,11 @@ Route::post('/upload', [DriveUploadController::class, 'upload'])
 Route::post('/dashboard/rescan', [DashboardController::class, 'rescan'])
     ->middleware(BasicAuthMiddleware::class)
     ->name('dashboard.rescan');
+
+Route::post('/dashboard/download', [DashboardController::class, 'download'])
+    ->middleware(BasicAuthMiddleware::class)
+    ->name('dashboard.download');
+
+Route::get('/dashboard/download/file', [DashboardController::class, 'downloadFile'])
+    ->middleware(BasicAuthMiddleware::class)
+    ->name('dashboard.download.file');

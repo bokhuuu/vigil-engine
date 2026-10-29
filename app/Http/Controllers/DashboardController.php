@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Exceptions\AirtableException;
+use App\Jobs\DriveDownloadJob;
 use App\Jobs\DriveRescanJob;
 use App\Services\ActRequirements;
 use App\Services\AirtableService;
@@ -13,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DashboardController
 {
@@ -257,6 +259,8 @@ class DashboardController
 
         $hasActiveFilter = $activeStatus || $activeMissing || $activeHas || $activeKvleva || $activeBiznes;
         $rescanRunning = (bool) Cache::get('rescan_running', false);
+        $downloadRunning = (bool) Cache::get('download_running', false);
+        $downloadReady = Cache::has('download_ready_path');
 
         return view('dashboard', [
             'acts' => $acts,
@@ -276,6 +280,8 @@ class DashboardController
             'activeHas' => $activeHas,
             'hasActiveFilter' => $hasActiveFilter,
             'rescanRunning' => $rescanRunning,
+            'downloadRunning' => $downloadRunning,
+            'downloadReady' => $downloadReady,
             'role' => $request->attributes->get('vigil_role', 'manager'),
             'filteredTotal' => $filteredTotal,
             'filteredComplete' => $filteredComplete,
@@ -298,5 +304,43 @@ class DashboardController
         DriveRescanJob::dispatch();
 
         return redirect()->route('dashboard')->with('success', 'სრული სკანი დაიწყო.');
+    }
+
+    /**
+     * Dispatch a full სკანი download job (manager only).
+     */
+    public function download(Request $request): RedirectResponse
+    {
+        if ($request->attributes->get('vigil_role') !== 'manager') {
+            abort(403);
+        }
+
+        if (Cache::get('download_running')) {
+            return redirect()->route('dashboard')->with('error', 'გადმოწერა უკვე მიმდინარეობს');
+        }
+
+        Cache::put('download_running', true, now()->addMinutes(60));
+        Cache::forget('download_ready_path');
+        Cache::forget('download_ready_name');
+        DriveDownloadJob::dispatch();
+
+        return redirect()->route('dashboard')->with('success', '⏳ გადმოწერა დაიწყო — Telegram-ზე მიიღებ შეტყობინებას');
+    }
+
+    /**
+     * Stream the ready ZIP to the browser.
+     */
+    public function downloadFile(): StreamedResponse|RedirectResponse
+    {
+        $path = Cache::get('download_ready_path');
+        $name = Cache::get('download_ready_name', 'scans.zip');
+
+        if (! $path || ! file_exists($path)) {
+            return redirect()->route('dashboard')->with('error', 'ფაილი არ არის მზად ან ვადა გავიდა');
+        }
+
+        return response()->streamDownload(function () use ($path) {
+            readfile($path);
+        }, $name, ['Content-Type' => 'application/zip']);
     }
 }
