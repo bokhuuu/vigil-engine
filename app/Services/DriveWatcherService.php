@@ -75,8 +75,14 @@ class DriveWatcherService
             }
 
             $actNumber = $actInfo['act_number'];
-            $hasFiles = $this->driveService->subfolderHasFiles($id);
             $prevState = $this->state->getSubfolderState($id);
+            $hasFiles = $this->driveService->subfolderHasFiles($id);
+
+            // Drive fires metadata events on browse/view — briefly returns empty.
+            // Double-check before starting grace to prevent false ❌ on dashboard.
+            if ($prevState === 'full' && ! $hasFiles) {
+                $hasFiles = $this->driveService->subfolderHasFiles($id);
+            }
 
             $newState = $this->reconcileSubfolder(
                 $actNumber,
