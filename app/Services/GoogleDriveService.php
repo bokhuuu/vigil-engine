@@ -187,7 +187,7 @@ class GoogleDriveService
         $folders = [];
 
         foreach ($response->getFiles() as $file) {
-            $folders[$file->getName()] ??= $file->getId();
+            $folders[(string) $file->getName()] ??= $file->getId();
         }
 
         return $folders;

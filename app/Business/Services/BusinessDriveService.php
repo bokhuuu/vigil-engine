@@ -112,7 +112,7 @@ class BusinessDriveService
         }
 
         foreach ($this->drive->listChildFoldersAsUser($mimotsera) as $roundName => $roundId) {
-            if (! in_array($roundName, $incomingRounds, true)) {
+            if (! in_array((string) $roundName, $incomingRounds, true)) {
                 continue;
             }
             foreach ($this->drive->listFilesInFolder($roundId) as $file) {
