@@ -261,6 +261,7 @@ class DashboardController
         $rescanRunning = (bool) Cache::get('rescan_running', false);
         $downloadRunning = (bool) Cache::get('download_running', false);
         $downloadReady = Cache::has('download_ready_path');
+        $downloadProgress = Cache::get('download_progress');
 
         return view('dashboard', [
             'acts' => $acts,
@@ -282,6 +283,7 @@ class DashboardController
             'rescanRunning' => $rescanRunning,
             'downloadRunning' => $downloadRunning,
             'downloadReady' => $downloadReady,
+            'downloadProgress' => $downloadProgress,
             'role' => $request->attributes->get('vigil_role', 'manager'),
             'filteredTotal' => $filteredTotal,
             'filteredComplete' => $filteredComplete,
@@ -345,7 +347,7 @@ class DashboardController
             }
 
             while (! feof($handle)) {
-                echo fread($handle, 1024 * 1024); // 1 MB chunks
+                echo fread($handle, 1024 * 1024);
                 flush();
             }
 

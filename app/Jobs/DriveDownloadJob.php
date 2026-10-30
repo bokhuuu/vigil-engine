@@ -30,6 +30,8 @@ class DriveDownloadJob implements ShouldQueue
 
         $folderIndex = $stateRepo->getFolderIndex();
 
+        $total = count($folderIndex);
+
         if (empty($folderIndex)) {
             Log::warning('DriveDownloadJob: folder_index is empty — aborting');
             Cache::forget('download_running');
@@ -64,9 +66,18 @@ class DriveDownloadJob implements ShouldQueue
         Cache::forget('download_skipped_files');
         Cache::forget('download_skipped_warnings');
 
-        // folder_index: folderId => ['act_number' => ..., 'act_record_id' => ...]
+        $processed = 0;
+
         foreach ($folderIndex as $actFolderId => $actInfo) {
             $actNumber = $actInfo['act_number'];
+            $processed++;
+
+            if ($processed % 5 === 0 || $processed === 1) {
+                Cache::put('download_progress', [
+                    'done' => $processed,
+                    'total' => $total,
+                ], now()->addMinutes(60));
+            }
 
             try {
                 $subfolders = $drive->listChildFolders($actFolderId);
@@ -136,5 +147,6 @@ class DriveDownloadJob implements ShouldQueue
                 "\n⬇️ {$downloadUrl}"
         );
         Cache::forget('download_running');
+        Cache::forget('download_progress');
     }
 }

@@ -744,27 +744,10 @@
                 <form id="rescan-form" method="POST" action="{{ route('dashboard.rescan') }}" style="display:none;">
                     @csrf
                 </form>
-                @if ($downloadRunning)
-                    <span
-                        style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#8892a4;white-space:nowrap;cursor:not-allowed;opacity:0.6;">
-                        ⏳ გადმოწერა…
-                    </span>
-                @elseif ($downloadReady)
-                    <a href="{{ route('dashboard.download.file') }}"
-                        style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;white-space:nowrap;text-decoration:none;">
-                        ⬇️ ZIP გადმოწერა
-                    </a>
-                @else
-                    <button onclick="document.getElementById('download-form').submit()"
-                        style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;white-space:nowrap;cursor:pointer;">
-                        📦 სკანების გადმოწერა
-                    </button>
-                    <form id="download-form" method="POST" action="{{ route('dashboard.download') }}"
-                        style="display:none;">
-                        @csrf
-                    </form>
-                @endif
-
+                <button onclick="document.getElementById('tools-modal').style.display='flex'"
+                    style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;white-space:nowrap;cursor:pointer;">
+                    🛠️ Tools
+                </button>
             @endif
         </div>
     </div>
@@ -1417,6 +1400,12 @@
         document.getElementById('upload-modal').addEventListener('click', e => {
             if (e.target === document.getElementById('upload-modal')) closeUploadModal();
         });
+
+        document.getElementById('tools-modal').addEventListener('click', e => {
+            if (e.target === document.getElementById('tools-modal')) {
+                document.getElementById('tools-modal').style.display = 'none';
+            }
+        });
     </script>
 
 
@@ -1434,6 +1423,57 @@
                     style="padding:8px 18px;border-radius:6px;border:1px solid #e4e8f0;background:#fff;color:#4b5563;font-size:13px;cursor:pointer;">გაუქმება</button>
                 <button onclick="submitRescan()"
                     style="padding:8px 18px;border-radius:6px;border:none;background:#2563eb;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">დადასტურება</button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Tools modal --}}
+    <div id="tools-modal"
+        style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
+        <div
+            style="background:#fff;border-radius:10px;padding:28px 32px;min-width:320px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.25);position:relative;">
+            <button onclick="document.getElementById('tools-modal').style.display='none'"
+                style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#666;">✕</button>
+            <h3 style="margin:0 0 20px;font-size:1rem;color:#1a1f36;">🛠️ Bulk Tools</h3>
+
+            {{-- Scan download tool --}}
+            <div style="border:1px solid #e4e8f0;border-radius:8px;padding:14px 16px;margin-bottom:10px;">
+                <div style="font-size:12px;font-weight:600;color:#1a1f36;margin-bottom:4px;">📦 სკანების გადმოწერა
+                </div>
+                <div style="font-size:11px;color:#8892a4;margin-bottom:12px;">ყველა ACT-ის სკანი — ერთი ZIP ფაილი</div>
+
+                @if ($downloadRunning)
+                    <div style="font-size:11px;color:#8892a4;">
+                        ⏳ მიმდინარეობს…
+                        @if ($downloadProgress)
+                            <span style="font-family:'IBM Plex Mono',monospace;color:#4b5563;">
+                                {{ $downloadProgress['done'] }} / {{ $downloadProgress['total'] }} ACT
+                            </span>
+                        @endif
+                    </div>
+                @elseif ($downloadReady)
+                    <a href="{{ route('dashboard.download.file') }}"
+                        style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">
+                        ⬇️ ZIP გადმოწერა
+                    </a>
+                @else
+                    <button
+                        onclick="document.getElementById('download-form').submit();document.getElementById('tools-modal').style.display='none'"
+                        style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">
+                        📦 დაწყება
+                    </button>
+                    <form id="download-form" method="POST" action="{{ route('dashboard.download') }}"
+                        style="display:none;">
+                        @csrf
+                    </form>
+                @endif
+            </div>
+
+            {{-- Placeholder for future tools --}}
+            <div style="border:1px dashed #e4e8f0;border-radius:8px;padding:14px 16px;opacity:0.5;">
+                <div style="font-size:12px;font-weight:600;color:#8892a4;margin-bottom:2px;">📸 ფოტოების გადმოწერა
+                </div>
+                <div style="font-size:11px;color:#b3bac5;">მალე…</div>
             </div>
         </div>
     </div>
