@@ -15,7 +15,6 @@ uses(TestCase::class);
 
 function makeFolderIndex(array $entries = []): array
 {
-    // $entries: [folderId => actNumber]
     $index = [];
     foreach ($entries as $id => $number) {
         $index[$id] = ['act_number' => $number, 'act_record_id' => 'rec_'.$number];
@@ -50,7 +49,7 @@ function runJob(
     );
 
     $telegram = Mockery::mock(TelegramService::class);
-    $telegram->allows('send')->withAnyArgs();
+    $telegram->allows('sendToGroup')->withAnyArgs();
 
     makeJob()->handle($stateRepo, $drive, $telegram);
 }
@@ -65,7 +64,7 @@ test('clears download_running and aborts when folder_index is empty', function (
 
     $drive = Mockery::mock(GoogleDriveService::class);
     $telegram = Mockery::mock(TelegramService::class);
-    $telegram->expects('send')->never();
+    $telegram->expects('sendToGroup')->never();
 
     makeJob()->handle($stateRepo, $drive, $telegram);
 
@@ -77,10 +76,9 @@ test('skips ACT folders that have no სკანი subfolder', function () {
 
     runJob(
         folderIndex: makeFolderIndex(['folder1' => '1-1']),
-        childFolders: ['folder1' => ['ფოტოები' => 'photo_id']], // no სკანი
+        childFolders: ['folder1' => ['ფოტოები' => 'photo_id']],
     );
 
-    // job completed — download_running cleared, no ZIP with files in it
     expect(Cache::get('download_running'))->toBeNull();
     expect(Cache::has('download_ready_path'))->toBeFalse();
 });
@@ -106,7 +104,7 @@ test('creates a ZIP and sets cache keys when files are downloaded', function () 
     @unlink($zipPath);
 });
 
-test('ZIP contains file nested under ACT number directory', function () {
+test('ZIP contains file flat (no ACT subfolder)', function () {
     runJob(
         folderIndex: makeFolderIndex(['folder1' => '2-3']),
         childFolders: ['folder1' => ['სკანი' => 'skani1']],
@@ -124,7 +122,7 @@ test('ZIP contains file nested under ACT number directory', function () {
     }
     $zip->close();
 
-    expect($names)->toContain('2-3/scan.pdf');
+    expect($names)->toContain('scan.pdf');
 
     @unlink($zipPath);
 });
@@ -152,7 +150,7 @@ test('continues when a single file download fails', function () {
     });
 
     $telegram = Mockery::mock(TelegramService::class);
-    $telegram->allows('send');
+    $telegram->allows('sendToGroup');
 
     makeJob()->handle($stateRepo, $drive, $telegram);
 
@@ -191,12 +189,35 @@ test('sends Telegram message after successful download', function () {
     $drive->allows('downloadFile')->andReturn('content');
 
     $telegram = Mockery::mock(TelegramService::class);
-    $telegram->expects('send')->once()->with(
-        Mockery::any(),
+    $telegram->expects('sendToGroup')->once()->with(
         Mockery::on(fn (string $msg) => str_contains($msg, 'სკანების გადმოწერა დასრულდა'))
     );
 
     makeJob()->handle($stateRepo, $drive, $telegram);
+
+    @unlink(Cache::get('download_ready_path'));
+});
+
+test('skips non-PDF files in სკანი and never downloads them', function () {
+    $drive = Mockery::mock(GoogleDriveService::class);
+    $drive->allows('listChildFolders')->andReturn(['სკანი' => 'skani1']);
+    $drive->allows('listFilesInFolder')->andReturn([
+        ['id' => 'f1', 'name' => 'scan.pdf',  'mimeType' => 'application/pdf'],
+        ['id' => 'f2', 'name' => 'photo.jpg', 'mimeType' => 'image/jpeg'],
+    ]);
+    $drive->expects('downloadFile')->once()->with('f1')->andReturn('content');
+
+    $stateRepo = Mockery::mock(DriveWatcherStateRepository::class);
+    $stateRepo->allows('getFolderIndex')->andReturn(
+        makeFolderIndex(['folder1' => '1-1'])
+    );
+
+    $telegram = Mockery::mock(TelegramService::class);
+    $telegram->allows('sendToGroup')->withAnyArgs();
+
+    makeJob()->handle($stateRepo, $drive, $telegram);
+
+    expect(Cache::has('download_skipped_warnings'))->toBeTrue();
 
     @unlink(Cache::get('download_ready_path'));
 });

@@ -61,6 +61,9 @@ class DriveDownloadJob implements ShouldQueue
         $skipped = 0;
         $failed = 0;
 
+        Cache::forget('download_skipped_files');
+        Cache::forget('download_skipped_warnings');
+
         // folder_index: folderId => ['act_number' => ..., 'act_record_id' => ...]
         foreach ($folderIndex as $actFolderId => $actInfo) {
             $actNumber = $actInfo['act_number'];
@@ -79,9 +82,20 @@ class DriveDownloadJob implements ShouldQueue
 
                 foreach ($files as $file) {
                     try {
-                        $content = $drive->downloadFile($file['id']);
+                        $mimeType = $file['mimeType'] ?? '';
                         $safeName = preg_replace('/[^\w.\-]/u', '_', $file['name']);
-                        $zip->addFromString("{$actNumber}/{$safeName}", $content);
+                        if ($mimeType !== 'application/pdf') {
+                            Log::warning("DriveDownloadJob: skipping non-PDF [{$file['name']}] in ACT {$actNumber}");
+                            $existing = Cache::get('download_skipped_files', []);
+                            $existing[] = "ACT {$actNumber}: {$file['name']} ({$mimeType})";
+                            Cache::put('download_skipped_files', $existing, now()->addHours(2));
+                            $skipped++;
+
+                            continue;
+                        }
+                        $content = $drive->downloadFile($file['id']);
+                        $zip->addFromString($safeName, $content);
+                        $zip->setCompressionName($safeName, ZipArchive::CM_STORE);
                         $downloaded++;
                     } catch (\Throwable $e) {
                         Log::warning("DriveDownloadJob: failed to download [{$file['id']}] for ACT {$actNumber} — ".$e->getMessage());
@@ -101,6 +115,11 @@ class DriveDownloadJob implements ShouldQueue
         if ($downloaded > 0) {
             Cache::put('download_ready_path', $zipPath, now()->addHours(24));
             Cache::put('download_ready_name', "scans-{$timestamp}.zip", now()->addHours(24));
+            $skippedFiles = Cache::get('download_skipped_files', []);
+            if (! empty($skippedFiles)) {
+                Cache::put('download_skipped_warnings', $skippedFiles, now()->addHours(24));
+            }
+            Cache::forget('download_skipped_files');
         } else {
             // Nothing downloaded — remove the empty ZIP
             if (file_exists($zipPath)) {
@@ -109,15 +128,13 @@ class DriveDownloadJob implements ShouldQueue
         }
 
         $downloadUrl = rtrim(config('app.url'), '/').'/dashboard/download/file';
-        $telegram->send(
-            config('vigil.telegram.group_chat_id'),
+        $telegram->sendToGroup(
             "📦 სკანების გადმოწერა დასრულდა\n\n".
                 "✅ ჩამოწერილია: {$downloaded}\n".
                 "⏭️ სკანი არ აქვს: {$skipped}\n".
                 ($failed > 0 ? "❌ შეცდომა: {$failed}\n" : '').
                 "\n⬇️ {$downloadUrl}"
         );
-
         Cache::forget('download_running');
     }
 }
