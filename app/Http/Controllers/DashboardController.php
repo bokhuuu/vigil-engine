@@ -327,9 +327,6 @@ class DashboardController
         return redirect()->route('dashboard')->with('success', '⏳ გადმოწერა დაიწყო — Telegram-ზე მიიღებ შეტყობინებას');
     }
 
-    /**
-     * Stream the ready ZIP to the browser.
-     */
     public function downloadFile(): StreamedResponse|RedirectResponse
     {
         $path = Cache::get('download_ready_path');
@@ -339,8 +336,24 @@ class DashboardController
             return redirect()->route('dashboard')->with('error', 'ფაილი არ არის მზად ან ვადა გავიდა');
         }
 
-        return response()->streamDownload(function () use ($path) {
-            readfile($path);
-        }, $name, ['Content-Type' => 'application/zip']);
+        $size = filesize($path);
+
+        return response()->stream(function () use ($path): void {
+            $handle = fopen($path, 'rb');
+            if ($handle === false) {
+                return;
+            }
+
+            while (! feof($handle)) {
+                echo fread($handle, 1024 * 1024); // 1 MB chunks
+                flush();
+            }
+
+            fclose($handle);
+        }, 200, [
+            'Content-Type' => 'application/zip',
+            'Content-Disposition' => 'attachment; filename="'.$name.'"',
+            'Content-Length' => (string) $size,
+        ]);
     }
 }
