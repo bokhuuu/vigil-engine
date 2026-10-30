@@ -104,10 +104,14 @@ class BusinessDriveService
         }
 
         $businessFolderId = $this->getFolderIdFromUrl($business->drive_folder_url);
-        $mimotsera = $this->drive->findOrCreateFolder('მიმოწერა', $businessFolderId);
+        $mimotsera = $this->drive->findChildFolderAsUser('მიმოწერა', $businessFolderId);
         $files = [];
 
-        foreach ($this->drive->listChildFolders($mimotsera) as $roundName => $roundId) {
+        if ($mimotsera === null) {
+            return [];
+        }
+
+        foreach ($this->drive->listChildFoldersAsUser($mimotsera) as $roundName => $roundId) {
             if (! in_array($roundName, $incomingRounds, true)) {
                 continue;
             }

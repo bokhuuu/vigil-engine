@@ -194,6 +194,42 @@ class GoogleDriveService
     }
 
     /**
+     * List child folders using the OAuth user account (same account that creates them via ensureSubfolderPath).
+     */
+    public function listChildFoldersAsUser(string $parentId): array
+    {
+        $response = $this->getUserDrive()->files->listFiles([
+            'q' => "'{$parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
+            'fields' => 'files(id, name)',
+            'pageSize' => 100,
+        ]);
+
+        $folders = [];
+
+        foreach ($response->getFiles() as $file) {
+            $folders[$file->getName()] ??= $file->getId();
+        }
+
+        return $folders;
+    }
+
+    /**
+     * Find a child folder by name using the OAuth user account.
+     */
+    public function findChildFolderAsUser(string $name, string $parentId): ?string
+    {
+        $escaped = str_replace(['\\', "'"], ['\\\\', "\\'"], $name);
+
+        $response = $this->getUserDrive()->files->listFiles([
+            'q' => "name = '{$escaped}' and '{$parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
+            'fields' => 'files(id)',
+            'pageSize' => 1,
+        ]);
+
+        return ($response->getFiles()[0] ?? null)?->getId();
+    }
+
+    /**
      * Find a child folder by exact name, or null.
      */
     protected function findChildFolder(string $name, string $parentId): ?string
