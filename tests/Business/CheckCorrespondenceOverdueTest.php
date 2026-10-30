@@ -12,7 +12,7 @@ it('marks pending correspondence as overdue when deadline has passed', function 
     $corr = Correspondence::factory()->create([
         'business_id' => $business->id,
         'deadline_at' => now()->subDays(2),
-        'status' => 'pending',
+        'status' => 'active',
     ]);
 
     $this->mock(TelegramService::class)

@@ -22,7 +22,7 @@ class CheckCorrespondenceOverdue extends Command
     public function handle(): void
     {
         $overdue = Correspondence::on('business')
-            ->where('status', 'pending')
+            ->where('status', 'active')
             ->where('deadline_at', '<', now()->toDateString())
             ->with('business')
             ->get();

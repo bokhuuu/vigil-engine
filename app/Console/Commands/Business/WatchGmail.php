@@ -47,15 +47,62 @@ class WatchGmail extends Command
             preg_match('/<([^>]+)>/', $from, $matches);
             $fromEmail = strtolower($matches[1] ?? $from);
 
-            if (str_ends_with($fromEmail, '@colliers.ge')) {
-                $this->gmail->markAsRead($msg->getId());
+            $isColliers = str_ends_with($fromEmail, '@colliers.ge');
 
-                continue;
-            }
             $business = $matcher->match($subject, $body);
             $matchedBy = $matcher->matchedBy($subject, $body);
 
             if (! $business) {
+                if ($isColliers) {
+                    $this->gmail->markAsRead($msg->getId());
+                }
+
+                continue;
+            }
+
+            if ($isColliers) {
+                $this->gmail->applyLabel($msg->getId(), $labelId);
+                $this->gmail->markAsRead($msg->getId());
+
+                BusinessEmail::create([
+                    'business_id' => $business->id,
+                    'email_from' => $from,
+                    'email_subject' => $subject,
+                    'matched_by' => $matchedBy,
+                    'processed_at' => now(),
+                ]);
+
+                $nextRound = ($business->correspondence()->max('round') ?? 0) + 1;
+                $openCorr = $business->correspondence()->create([
+                    'round' => $nextRound,
+                    'sent_at' => now(),
+                    'deadline_at' => now()->addDays(10),
+                    'status' => 'pending',
+                    'notes' => $subject,
+                ]);
+
+                $roundFolder = 'მიმოწერა/'.$openCorr->round;
+
+                if ($business->drive_folder_url) {
+                    $subfolderFolderId = $this->drive->ensureSubfolderPath(
+                        $business->drive_folder_url,
+                        $roundFolder,
+                    );
+                    $openCorr->update([
+                        'drive_folder_url' => "https://drive.google.com/drive/folders/{$subfolderFolderId}",
+                    ]);
+
+                    $filename = now()->format('Y-m-d_H-i').'_წერილი.txt';
+                    $textContent = "From: {$from}\nSubject: {$subject}\n\n{$body}";
+                    $this->drive->uploadFileToSubfolder(
+                        $business->drive_folder_url,
+                        $roundFolder,
+                        $filename,
+                        'text/plain',
+                        $textContent,
+                    );
+                }
+
                 continue;
             }
 
@@ -76,7 +123,7 @@ class WatchGmail extends Command
             $openCorr = $business->correspondence()->create([
                 'round' => $nextRound,
                 'received_at' => now(),
-                'status' => 'pending',
+                'status' => 'received',
                 'notes' => $subject,
             ]);
 

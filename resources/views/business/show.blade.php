@@ -1014,9 +1014,6 @@
 
                 @php
                     $draftWarnings = [];
-                    if (!$business->owner_email && !$business->accountant_email) {
-                        $draftWarnings[] = 'TO ველი ცარიელია — მეპატრონის ან ბუღალტრის ელ-ფოსტა შეიყვანეთ';
-                    }
                     if (!$business->cadastral_code) {
                         $draftWarnings[] = 'საკადასტრო კოდი არ არის — შეიყვანეთ ძირითად ინფოში';
                     }
@@ -1039,7 +1036,7 @@
                     <label class="draft-label">TO</label>
                     <div class="draft-input-row">
                         <input class="draft-input" id="draft-to"
-                            value="{{ collect([$business->owner_email, $business->accountant_email])->filter()->implode(', ') }}"
+                            value="{{ collect([$business->owner_email, $business->accountant_email])->filter()->implode('; ') }}"
                             placeholder="მიმღების ელ-ფოსტა">
                         <button type="button" class="btn-copy" onclick="draftCopy('draft-to', this)"
                             {{ $draftBlocked ? 'disabled' : '' }}>📋</button>
@@ -1138,6 +1135,7 @@
                         <input type="hidden" name="cc_emails" id="draft-sent-cc">
                         <input type="hidden" name="subject" id="draft-sent-subject">
                         <input type="hidden" name="body" id="draft-sent-body">
+                        <input type="hidden" name="status" value="active">
                         <button type="button" class="btn-sent" onclick="submitDraftSent()"
                             {{ $draftBlocked ? 'disabled' : '' }}>გაგზავნილია ✓</button>
                     </form>
@@ -1164,6 +1162,10 @@
                                 <span class="corr-title">{{ $corr->round }}</span>
                                 <span class="badge badge-{{ $corr->status }}">
                                     @switch($corr->status)
+                                        @case('active')
+                                            მიმდინარე
+                                        @break
+
                                         @case('received')
                                             მიღებულია
                                         @break
@@ -1241,6 +1243,9 @@
                                                 style="font-size:0.78rem;font-weight:500;color:var(--text-2);">სტატუსი</label>
                                             <select name="status"
                                                 style="font-family:inherit;font-size:0.875rem;padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:8px;outline:none;background:var(--surface);">
+                                                <option value="active"
+                                                    {{ $corr->status === 'active' ? 'selected' : '' }}>მიმდინარე
+                                                </option>
                                                 <option value="pending"
                                                     {{ $corr->status === 'pending' ? 'selected' : '' }}>მოლოდინში
                                                 </option>
@@ -1577,10 +1582,6 @@
 
                 function submitDraftSent() {
                     const to = document.getElementById('draft-to').value.trim();
-                    if (!to) {
-                        alert('TO ველი ცარიელია');
-                        return;
-                    }
 
                     const chips = document.querySelectorAll('#cc-chips .cc-chip');
                     const ccArr = Array.from(chips).map(c => c.dataset.email).filter(Boolean);

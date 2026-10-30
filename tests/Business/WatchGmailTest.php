@@ -82,7 +82,7 @@ class WatchGmailTest extends BusinessTestCase
         $this->assertDatabaseHas('business_correspondence', [
             'business_id' => $business->id,
             'round' => 1,
-            'status' => 'pending',
+            'status' => 'received',
             'notes' => '123456789 — პასუხი',
         ], 'business');
     }
@@ -105,6 +105,85 @@ class WatchGmailTest extends BusinessTestCase
         $telegram->shouldReceive('sendToMe')->never();
 
         $drive = \Mockery::mock(GoogleDriveService::class);
+        $command = new WatchGmail($gmail, $telegram, $drive);
+        $this->app['Illuminate\Contracts\Console\Kernel']->registerCommand($command);
+
+        $this->artisan('business:watch-gmail')->assertSuccessful();
+
+        $this->assertDatabaseCount('business_correspondence', 0, 'business');
+    }
+
+    public function test_colliers_email_matched_creates_sent_round_with_deadline(): void
+    {
+        $business = Business::factory()->create([
+            'name' => 'შპს ტესტი',
+            'registration_code' => '123456789',
+            'drive_folder_url' => 'https://drive.google.com/drive/folders/fake-folder-id',
+        ]);
+
+        $message = \Mockery::mock(Message::class);
+        $message->shouldReceive('getId')->andReturn('msg-003');
+
+        $gmail = \Mockery::mock(GmailService::class);
+        $gmail->shouldReceive('getOrCreateLabel')->once()->andReturn('label-id');
+        $gmail->shouldReceive('getUnreadMessages')->once()->andReturn([$message]);
+        $gmail->shouldReceive('getMessage')->once()->andReturn($message);
+        $gmail->shouldReceive('getMessageSubject')->once()->andReturn('123456789 — მოთხოვნა');
+        $gmail->shouldReceive('getMessageFrom')->once()->andReturn('Levan Kalmakhelidze <levan.kalmakhelidze@colliers.ge>');
+        $gmail->shouldReceive('getMessageBody')->once()->andReturn('მოგესალმებით');
+        $gmail->shouldReceive('applyLabel')->once();
+        $gmail->shouldReceive('markAsRead')->once();
+        $gmail->shouldReceive('getAttachments')->never();
+
+        $telegram = \Mockery::mock(TelegramService::class);
+        $telegram->shouldReceive('sendToMe')->never();
+
+        $drive = \Mockery::mock(GoogleDriveService::class);
+        $drive->shouldReceive('ensureSubfolderPath')->once()->andReturn('fake-round-folder-id');
+        $drive->shouldReceive('uploadFileToSubfolder')->once();
+
+        $command = new WatchGmail($gmail, $telegram, $drive);
+        $this->app['Illuminate\Contracts\Console\Kernel']->registerCommand($command);
+
+        $this->artisan('business:watch-gmail')->assertSuccessful();
+
+        $this->assertDatabaseHas('business_correspondence', [
+            'business_id' => $business->id,
+            'round' => 1,
+            'status' => 'pending',
+            'notes' => '123456789 — მოთხოვნა',
+        ], 'business');
+
+        $corr = $business->correspondence()->first();
+        $this->assertNotNull($corr->sent_at);
+        $this->assertNull($corr->received_at);
+        $this->assertNotNull($corr->deadline_at);
+        $this->assertEquals(
+            now()->addDays(10)->toDateString(),
+            $corr->deadline_at->toDateString()
+        );
+    }
+
+    public function test_colliers_email_unmatched_is_marked_read_and_skipped(): void
+    {
+        $message = \Mockery::mock(Message::class);
+        $message->shouldReceive('getId')->andReturn('msg-004');
+
+        $gmail = \Mockery::mock(GmailService::class);
+        $gmail->shouldReceive('getOrCreateLabel')->once()->andReturn('label-id');
+        $gmail->shouldReceive('getUnreadMessages')->once()->andReturn([$message]);
+        $gmail->shouldReceive('getMessage')->once()->andReturn($message);
+        $gmail->shouldReceive('getMessageSubject')->once()->andReturn('უცხო თემა');
+        $gmail->shouldReceive('getMessageFrom')->once()->andReturn('levan.kalmakhelidze@colliers.ge');
+        $gmail->shouldReceive('getMessageBody')->once()->andReturn('no match');
+        $gmail->shouldReceive('markAsRead')->once();
+        $gmail->shouldReceive('applyLabel')->never();
+
+        $telegram = \Mockery::mock(TelegramService::class);
+        $telegram->shouldReceive('sendToMe')->never();
+
+        $drive = \Mockery::mock(GoogleDriveService::class);
+
         $command = new WatchGmail($gmail, $telegram, $drive);
         $this->app['Illuminate\Contracts\Console\Kernel']->registerCommand($command);
 

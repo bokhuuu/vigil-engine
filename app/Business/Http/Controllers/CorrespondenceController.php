@@ -86,7 +86,7 @@ class CorrespondenceController extends Controller
             'sent_at' => ['required', 'date'],
             'deadline_at' => ['required', 'date'],
             'received_at' => ['nullable', 'date'],
-            'status' => ['required', 'in:pending,received,overdue'],
+            'status' => ['required', 'in:pending,active,received,overdue'],
             'notes' => ['nullable', 'string'],
         ]);
 
