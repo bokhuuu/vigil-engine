@@ -1401,7 +1401,7 @@
             if (e.target === document.getElementById('upload-modal')) closeUploadModal();
         });
 
-        document.getElementById('tools-modal').addEventListener('click', e => {
+        document.getElementById('tools-modal')?.addEventListener('click', e => {
             if (e.target === document.getElementById('tools-modal')) {
                 document.getElementById('tools-modal').style.display = 'none';
             }
@@ -1431,7 +1431,7 @@
     <div id="tools-modal"
         style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
         <div
-            style="background:#fff;border-radius:10px;padding:28px 32px;min-width:320px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.25);position:relative;">
+            style="background:#fff;border-radius:10px;padding:20px 18px;min-width:0;max-width:420px;width:95%;box-shadow:0 8px 32px rgba(0,0,0,.25);position:relative;">
             <button onclick="document.getElementById('tools-modal').style.display='none'"
                 style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#666;">✕</button>
             <h3 style="margin:0 0 20px;font-size:1rem;color:#1a1f36;">🛠️ Bulk Tools</h3>
