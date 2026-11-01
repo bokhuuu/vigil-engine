@@ -525,7 +525,7 @@ class GoogleDriveService
     {
         $response = $this->getUserDrive()->files->listFiles([
             'q' => "'{$folderId}' in parents and mimeType != 'application/vnd.google-apps.folder' and trashed = false",
-            'fields' => 'files(id, name, mimeType)',
+            'fields' => 'files(id, name, mimeType, webViewLink)',
             'pageSize' => 100,
         ]);
 
@@ -535,6 +535,7 @@ class GoogleDriveService
                 'id' => $file->getId(),
                 'name' => $file->getName(),
                 'mimeType' => $file->getMimeType(),
+                'webViewLink' => $file->getWebViewLink(),
             ];
         }
 
