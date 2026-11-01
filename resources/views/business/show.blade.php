@@ -982,7 +982,7 @@
                         <div class="info-row">
                             <span class="info-label">შენიშვნები</span>
                             <span class="info-value {{ !$business->notes ? 'info-empty' : '' }}" id="view-notes"
-                                style="white-space: pre-wrap;">{{ $business->notes ?? '—' }}</span>
+                                style="white-space: pre-wrap; word-break: break-word;">{{ $business->notes ?? '—' }}</span>
                             <textarea class="edit-input" name="notes" rows="3" style="resize:vertical;" id="edit-notes">{{ $business->notes }}</textarea>
                         </div>
 
@@ -1650,13 +1650,16 @@
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     const data = await res.json();
                     if (!data.files || !data.files.length) {
-                        body.innerHTML =
+                        const allMoved = body.dataset.filesLoaded === '1';
+                        body.innerHTML = allMoved ?
+                            '<p style="color:var(--text-3);font-size:0.875rem;">📁 ყველა ფაილი გადატანილია.</p>' :
                             '<p style="color:var(--text-3);font-size:0.875rem;">შემომავალი ფაილები არ მოიძებნა.</p>';
                         btn.textContent = 'განახლება';
                         btn.disabled = false;
 
                         return;
                     }
+                    body.dataset.filesLoaded = '1';
                     const opts = data.subfolders.map(s => `<option value="${s}">${s}</option>`).join('');
                     body.innerHTML = data.files.map(f => `
                             <div style="display:flex;flex-direction:column;gap:0.375rem;padding:0.625rem 0;border-bottom:1px solid var(--border);">
