@@ -14,6 +14,9 @@ class DashboardController extends Controller
     public function index(Request $request): View
     {
         $businesses = Business::with('correspondence')
+            ->withCount([
+                'correspondence as incoming_count' => fn ($q) => $q->whereNotNull('received_at')->whereNull('sent_at'),
+            ])
             ->orderBy('lot_number')
             ->orderBy('name')
             ->get();

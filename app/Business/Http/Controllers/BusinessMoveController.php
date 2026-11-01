@@ -18,10 +18,15 @@ class BusinessMoveController extends Controller
     {
         $files = $this->driveService->listIncomingFiles($business);
         $subfolders = config('vigil.business.drive_subfolders');
+        $hasIncomingRounds = $business->correspondence()
+            ->whereNotNull('received_at')
+            ->whereNull('sent_at')
+            ->exists();
 
         return response()->json([
             'files' => $files,
             'subfolders' => $subfolders,
+            'has_incoming_rounds' => $hasIncomingRounds,
         ]);
     }
 

@@ -1650,8 +1650,7 @@
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     const data = await res.json();
                     if (!data.files || !data.files.length) {
-                        const allMoved = body.dataset.filesLoaded === '1';
-                        body.innerHTML = allMoved ?
+                        body.innerHTML = data.has_incoming_rounds ?
                             '<p style="color:var(--text-3);font-size:0.875rem;">📁 ყველა ფაილი გადატანილია.</p>' :
                             '<p style="color:var(--text-3);font-size:0.875rem;">შემომავალი ფაილები არ მოიძებნა.</p>';
                         btn.textContent = 'განახლება';

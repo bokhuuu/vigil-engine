@@ -644,7 +644,12 @@
                                 data-overdue="{{ $business->correspondence->where('status', 'overdue')->count() > 0 ? 'true' : 'false' }}"
                                 onclick="window.location='{{ route('business.show', $business) }}'"
                                 style="cursor:pointer;">
-                                <td class="td-name">{{ $business->name }}</td>
+                                <td class="td-name">
+                                    {{ $business->name }}
+                                    @if ($business->incoming_count > 0)
+                                        <span style="margin-left:0.375rem;font-size:0.75rem;">📥</span>
+                                    @endif
+                                </td>
                                 <td class="td-code">{{ $business->registration_code }}</td>
                                 <td class="td-type">
                                     @php
