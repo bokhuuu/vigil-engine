@@ -1713,14 +1713,14 @@
                                     '<p style="color:var(--text-3);font-size:0.875rem;">📁 ყველა ფაილი გადატანილია.</p>';
                             }
                         }, 800);
+                    } else {
+                        btn.textContent = '❌';
+                        btn.disabled = false;
                     }
-                } else {
+                } catch (e) {
                     btn.textContent = '❌';
                     btn.disabled = false;
                 }
-            } catch (e) {
-                btn.textContent = '❌';
-                btn.disabled = false;
             }
         </script>
 
