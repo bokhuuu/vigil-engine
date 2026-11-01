@@ -1722,7 +1722,6 @@
                 btn.textContent = '❌';
                 btn.disabled = false;
             }
-            }
         </script>
 
 </body>
