@@ -1664,7 +1664,7 @@
                             <div style="display:flex;flex-direction:column;gap:0.375rem;padding:0.625rem 0;border-bottom:1px solid var(--border);">
                                 <span style="font-size:0.875rem;font-weight:500;">
                                     ${f.webViewLink ? `<a href="${f.webViewLink}" target="_blank" style="color:var(--blue);text-decoration:none;">${f.name}</a>` : f.name}
-                                    <span style="color:var(--text-3);font-size:0.78rem;">(${f.round ?? ''})</span>
+                                    <span style="color:var(--text-3);font-size:0.78rem;">📥 შემოსული · #${f.round ?? ''}</span>
                                 </span>
                                 <div style="display:flex;gap:0.5rem;align-items:center;">
                                     <select data-file-id="${f.id}" style="flex:1;font-size:0.82rem;padding:0.35rem 0.5rem;border:1px solid var(--border);border-radius:6px;min-width:0;">
