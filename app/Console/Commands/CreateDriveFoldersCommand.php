@@ -58,11 +58,19 @@ class CreateDriveFoldersCommand extends Command
 
         $success = 0;
         $failed = 0;
+        $skipped = 0;
 
         foreach ($acts as $act) {
             $recordId = $act['id'];
             $fields = $act['fields'] ?? [];
-            $actNumber = (string) ($fields['🔖 აქტის ნომერი'] ?? $recordId);
+            $actNumber = (string) ($fields['🔖 აქტის ნომერი'] ?? '');
+
+            if ($actNumber === '') {
+                $this->warn("⚠️ Skipping {$recordId} — no ACT number in Airtable.");
+                $skipped++;
+
+                continue;
+            }
 
             try {
                 $folderUrl = $this->drive->ensureActFolders($actNumber, $fields);
@@ -93,10 +101,18 @@ class CreateDriveFoldersCommand extends Command
 
         $synced = 0;
         $failed = 0;
+        $skipped = 0;
 
         foreach ($acts as $act) {
             $fields = $act['fields'] ?? [];
-            $actNumber = (string) ($fields['🔖 აქტის ნომერი'] ?? $act['id']);
+            $actNumber = (string) ($fields['🔖 აქტის ნომერი'] ?? '');
+
+            if ($actNumber === '') {
+                $this->warn("⚠️ Skipping {$act['id']} — no ACT number in Airtable.");
+                $skipped++;
+
+                continue;
+            }
 
             try {
                 $folderUrl = $fields['💼 საქაღალდე'];
