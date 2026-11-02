@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Vigil · აქტები</title>
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563eb'><path d='M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z'/></svg>">
@@ -527,6 +528,27 @@
             opacity: 0.6;
         }
 
+        .excel-enter-btn {
+            font-size: 10px;
+            font-family: 'IBM Plex Sans', sans-serif;
+            padding: 2px 8px;
+            border: 1px solid #6d28d9;
+            border-radius: 10px;
+            background: #f5f3ff;
+            color: #6d28d9;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .excel-enter-btn:hover:not(:disabled) {
+            background: #ede9fe;
+        }
+
+        .excel-enter-btn:disabled {
+            cursor: wait;
+            opacity: 0.6;
+        }
+
         .flash {
             padding: 8px 24px;
             font-size: 12px;
@@ -912,6 +934,18 @@
                 class="biznes-btn {{ $activeBiznes === 'yes' ? 'active' : '' }}">ბიზნესი</a>
         </div>
 
+        {{-- Excel --}}
+        @if ($role === 'manager')
+            <div class="biznes-filters">
+                <a href="{{ request()->fullUrlWithQuery(['excel' => $activeExcel === 'entered' ? null : 'entered']) }}"
+                    class="biznes-btn {{ $activeExcel === 'entered' ? 'active' : '' }}">📊 Excel-შია</a>
+            </div>
+            <div class="biznes-filters">
+                <a href="{{ request()->fullUrlWithQuery(['excel' => $activeExcel === 'not_entered' ? null : 'not_entered']) }}"
+                    class="biznes-btn {{ $activeExcel === 'not_entered' ? 'active' : '' }}">📊 Excel-ში არ არის</a>
+            </div>
+        @endif
+
         @if ($hasActiveFilter)
             <a href="/dashboard" class="clear-btn">✕ გასუფთავება</a>
         @endif
@@ -1001,7 +1035,21 @@
                             @foreach ($docFields as $label => $cfg)
                                 @php $colClass = in_array($cfg['airtable'], ['📥 ფოტოები', '📥 ხელმოწერები']) ? 'col-manual' : 'col-auto'; @endphp
                                 <td class="center {{ $colClass }}">
-                                    @if (in_array($cfg['airtable'], $required))
+                                    @if ($cfg['airtable'] === '📥 ხარჯთაღრიცხვა')
+                                        @if ($act['_excel_entered'])
+                                            <span class="doc-check" title="Excel-ში შეტანილია">✅</span>
+                                        @elseif (($act['_drive_doc']['📥 ხარჯთაღრიცხვა'] ?? false) && $role === 'manager')
+                                            <button class="excel-enter-btn" data-record-id="{{ $act['_id'] }}"
+                                                data-act-number="{{ $act['🔖 აქტის ნომერი'] ?? '' }}"
+                                                onclick="openExcelModal(this)" title="Excel-ში შეტანა">📊
+                                                შეტანა</button>
+                                        @elseif (in_array($cfg['airtable'], $required))
+                                            <span
+                                                class="doc-check">{{ $act['_drive_doc'][$cfg['airtable']] ?? false ? '✅' : '❌' }}</span>
+                                        @else
+                                            <span style="color:#d0d7de;font-size:16px;">·</span>
+                                        @endif
+                                    @elseif (in_array($cfg['airtable'], $required))
                                         <span
                                             class="doc-check">{{ $act['_drive_doc'][$cfg['airtable']] ?? false ? '✅' : '❌' }}</span>
                                     @else
@@ -1477,6 +1525,76 @@
             </div>
         </div>
     </div>
+
+    {{-- Excel entry confirm modal --}}
+    <div id="excel-modal"
+        style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
+        <div
+            style="background:#fff;border-radius:10px;padding:28px 32px;max-width:380px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.25);">
+            <h3 style="margin:0 0 12px;font-size:1rem;color:#1a1f36;">📊 Excel-ში შეტანა</h3>
+            <p id="excel-modal-text" style="font-size:13px;color:#4b5563;margin:0 0 20px;line-height:1.6;"></p>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button onclick="closeExcelModal()"
+                    style="padding:8px 18px;border-radius:6px;border:1px solid #e4e8f0;background:#fff;color:#4b5563;font-size:13px;cursor:pointer;">გაუქმება</button>
+                <button id="excel-modal-confirm"
+                    style="padding:8px 18px;border-radius:6px;border:none;background:#6d28d9;color:#fff;font-size:13px;font-weight:600;cursor:pointer;"
+                    onclick="submitExcelEntry()">დადასტურება</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let _excelBtn = null;
+
+        function openExcelModal(btn) {
+            _excelBtn = btn;
+            const actNumber = btn.dataset.actNumber;
+            document.getElementById('excel-modal-text').textContent =
+                'ACT ' + actNumber + ' — დარწმუნებული ხარ, რომ Excel-ში შეტანილია?';
+            document.getElementById('excel-modal').style.display = 'flex';
+        }
+
+        function closeExcelModal() {
+            document.getElementById('excel-modal').style.display = 'none';
+            _excelBtn = null;
+        }
+
+        async function submitExcelEntry() {
+            if (!_excelBtn) return;
+
+            const btn = _excelBtn;
+            const recordId = btn.dataset.recordId;
+            closeExcelModal();
+
+            btn.disabled = true;
+            btn.textContent = '⏳';
+
+            try {
+                const res = await fetch('/dashboard/acts/' + recordId + '/excel-entered', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ??
+                            '{{ csrf_token() }}'
+                    },
+                });
+
+                if (!res.ok) throw new Error('server error');
+
+                // Swap button to ✅ checkmark
+                const td = btn.closest('td');
+                td.innerHTML = '<span class="doc-check" title="Excel-ში შეტანილია">✅</span>';
+
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = '📊 შეტანა';
+                alert('შეცდომა — სცადეთ თავიდან');
+            }
+        }
+
+        document.getElementById('excel-modal').addEventListener('click', e => {
+            if (e.target === document.getElementById('excel-modal')) closeExcelModal();
+        });
+    </script>
 
 </body>
 
