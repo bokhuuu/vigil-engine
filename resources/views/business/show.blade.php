@@ -1136,7 +1136,7 @@
                         <input type="hidden" name="subject" id="draft-sent-subject">
                         <input type="hidden" name="body" id="draft-sent-body">
                         <input type="hidden" name="status" value="active">
-                        <button type="button" class="btn-sent" onclick="submitDraftSent()"
+                        <button type="button" class="btn-sent" id="draft-sent-btn" onclick="submitDraftSent()"
                             {{ $draftBlocked ? 'disabled' : '' }}>გაგზავნილია ✓</button>
                     </form>
                 </div>
@@ -1574,6 +1574,10 @@
             }
 
             function submitDraftSent() {
+                const btn = document.getElementById('draft-sent-btn');
+                btn.disabled = true;
+                btn.textContent = '⏳ იგზავნება...';
+
                 const to = document.getElementById('draft-to').value.trim();
 
                 const chips = document.querySelectorAll('#cc-chips .cc-chip');
