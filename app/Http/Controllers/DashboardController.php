@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\AirtableException;
 use App\Jobs\DriveDownloadJob;
 use App\Jobs\DriveRescanJob;
+use App\Models\ActExcelEntry;
 use App\Services\ActRequirements;
 use App\Services\AirtableService;
 use Carbon\Carbon;
@@ -137,9 +138,16 @@ class DashboardController
         $activeKvleva = $request->query('kvleva');
         $activeBiznes = $request->query('biznes');
         $activeHas = $request->query('has');
+        $activeExcel = $request->query('excel');
+
+        try {
+            $enteredIds = ActExcelEntry::pluck('act_record_id')->flip()->all();
+        } catch (\Throwable) {
+            $enteredIds = [];
+        }
 
         $acts = collect($data)
-            ->map(function ($act) use ($driveStates) {
+            ->map(function ($act) use ($driveStates, $enteredIds) {
                 $fields = $act['fields'];
                 $actDrive = $driveStates[$act['id']] ?? [];
 
@@ -163,6 +171,7 @@ class DashboardController
                     '_has_corr' => ! empty($fields['📨 კორესპონდენცია'] ?? []),
                     '_kvleva' => $fields['📊 კვლევა'] ?? null,
                     '_scan' => $actDrive['სკანი'] ?? null,
+                    '_excel_entered' => isset($enteredIds[$act['id']]),
                     '_drive_doc' => $driveDoc,
                 ]);
             })
@@ -234,6 +243,13 @@ class DashboardController
             ->when($activeBiznes === 'yes', fn ($col) => $col->filter(
                 fn ($f) => $f['_biznes_count'] > 0
             ))
+            ->when($activeExcel === 'entered', fn ($col) => $col->filter(
+                fn ($f) => $f['_excel_entered'] === true
+            ))
+            ->when($activeExcel === 'not_entered', fn ($col) => $col->filter(
+                fn ($f) => ($f['_drive_doc']['📥 ხარჯთაღრიცხვა'] ?? false) === true
+                    && $f['_excel_entered'] === false
+            ))
             ->sortBy(function ($f) {
                 $num = $f['🔖 აქტის ნომერი'] ?? '0';
                 $parts = explode('-', $num);
@@ -257,7 +273,7 @@ class DashboardController
             fn ($f) => ($f['_kvleva'] ?? '') === '⏳ გამოსაკითხია'
         )->count();
 
-        $hasActiveFilter = $activeStatus || $activeMissing || $activeHas || $activeKvleva || $activeBiznes;
+        $hasActiveFilter = $activeStatus || $activeMissing || $activeHas || $activeKvleva || $activeBiznes || $activeExcel;
         $rescanRunning = (bool) Cache::get('rescan_running', false);
         $downloadRunning = (bool) Cache::get('download_running', false);
         $downloadReady = Cache::has('download_ready_path');
@@ -279,6 +295,7 @@ class DashboardController
             'activeKvleva' => $activeKvleva,
             'activeBiznes' => $activeBiznes,
             'activeHas' => $activeHas,
+            'activeExcel' => $activeExcel,
             'hasActiveFilter' => $hasActiveFilter,
             'rescanRunning' => $rescanRunning,
             'downloadRunning' => $downloadRunning,

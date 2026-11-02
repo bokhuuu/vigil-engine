@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DashboardFolderController;
 use App\Http\Controllers\DriveUploadController;
 use App\Http\Controllers\DriveWebhookController;
+use App\Http\Controllers\ExcelEntryController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Middleware\BasicAuthMiddleware;
 use App\Http\Middleware\VerifyWebhookSecret;
@@ -45,3 +46,8 @@ Route::post('/dashboard/download', [DashboardController::class, 'download'])
 Route::get('/dashboard/download/file', [DashboardController::class, 'downloadFile'])
     ->middleware(BasicAuthMiddleware::class)
     ->name('dashboard.download.file');
+
+Route::post('/dashboard/acts/{recordId}/excel-entered', [ExcelEntryController::class, 'store'])
+    ->where('recordId', 'rec[A-Za-z0-9]+')
+    ->middleware(BasicAuthMiddleware::class)
+    ->name('dashboard.excel-entered');
