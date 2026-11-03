@@ -595,6 +595,7 @@
                 <option value="pending">გასაგზავნი</option>
                 <option value="complete">დასრულებული</option>
                 <option value="overdue">⚠️ ვადაგადაცილებული</option>
+                <option value="incoming">📥 გვიპასუხა</option>
             </select>
 
             <select class="filter-select" id="filter-type">
@@ -642,6 +643,7 @@
                                 data-type="{{ implode(',', (array) $business->type) }}"
                                 data-lot="{{ $business->lot_number }}"
                                 data-overdue="{{ $business->correspondence->where('status', 'overdue')->count() > 0 ? 'true' : 'false' }}"
+                                data-incoming="{{ $business->incoming_count > 0 ? 'true' : 'false' }}"
                                 onclick="window.location='{{ route('business.show', $business) }}'"
                                 style="cursor:pointer;">
                                 <td class="td-name">
@@ -760,7 +762,9 @@
                         act.includes(q);
 
                     const matchStatus = !status ||
-                        (status === 'overdue' ? row.dataset.overdue === 'true' : row.dataset.status === status);
+                        (status === 'overdue' ? row.dataset.overdue === 'true' :
+                            status === 'incoming' ? row.dataset.incoming === 'true' :
+                            row.dataset.status === status);
                     const matchType = !type || row.dataset.type.split(',').includes(type);
                     const matchLot = !lot || row.dataset.lot === lot;
                     const show = matchSearch && matchStatus && matchType && matchLot;
