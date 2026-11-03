@@ -1166,14 +1166,8 @@
                                         📥 შემოსული · #{{ $corr->round }}
                                     @endif
                                 </span>
-                                @if (in_array($corr->status, ['received', 'overdue']))
-                                    <span class="badge badge-{{ $corr->status }}">
-                                        @if ($corr->status === 'received')
-                                            მიღებულია
-                                        @else
-                                            ვადაგადაცილებული
-                                        @endif
-                                    </span>
+                                @if ($corr->status === 'overdue')
+                                    <span class="badge badge-overdue">ვადაგადაცილებული</span>
                                 @endif
                                 <div style="display:flex;gap:0.375rem;align-items:center;">
                                     <button type="button" class="btn btn-edit"
