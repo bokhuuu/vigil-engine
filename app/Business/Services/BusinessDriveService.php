@@ -93,8 +93,7 @@ class BusinessDriveService
         }
 
         $incomingRounds = $business->correspondence()
-            ->whereNotNull('received_at')
-            ->whereNull('sent_at')
+            ->whereNotNull('drive_folder_url')
             ->pluck('round')
             ->map(fn ($r) => (string) $r)
             ->toArray();
