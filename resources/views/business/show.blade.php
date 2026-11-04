@@ -780,9 +780,18 @@
         <div class="biz-header">
             <div class="biz-title-wrap">
                 <h1 class="biz-title">{{ $business->name }}</h1>
-                <span class="badge badge-{{ $business->status }}">
+                @php
+                    $headerBadgeClass = match ($business->status) {
+                        'active', 'მიმდინარე' => 'badge-active',
+                        'complete' => 'badge-complete',
+                        'pending' => 'badge-pending',
+                        default => 'badge-active',
+                    };
+                @endphp
+                <span class="badge {{ $headerBadgeClass }}">
                     @switch($business->status)
                         @case('active')
+                        @case('მიმდინარე')
                             მიმდინარე
                         @break
 
@@ -796,6 +805,7 @@
                     @endswitch
                 </span>
             </div>
+
             <div class="biz-actions">
                 <button class="btn btn-edit" id="btn-edit" onclick="startEdit()">✏️ რედაქტირება</button>
                 <button class="btn btn-save" id="btn-save" onclick="submitEdit()">შენახვა</button>
@@ -872,6 +882,7 @@
                             <span class="info-value" id="view-status">
                                 @switch($business->status)
                                     @case('active')
+                                    @case('მიმდინარე')
                                         მიმდინარე
                                     @break
 
@@ -885,7 +896,8 @@
                                 @endswitch
                             </span>
                             <select class="edit-select" name="status" id="edit-status">
-                                <option value="active" {{ $business->status === 'active' ? 'selected' : '' }}>
+                                <option value="active" <option value="active"
+                                    {{ in_array($business->status, ['active', 'მიმდინარე']) ? 'selected' : '' }}>
                                     მიმდინარე
                                 </option>
                                 <option value="pending" {{ $business->status === 'pending' ? 'selected' : '' }}>
@@ -1156,7 +1168,7 @@
             <div class="card" style="grid-column: span 2;">
                 <div class="card-header">მიმოწერა</div>
                 <div class="card-body" style="max-height:520px;overflow-y:auto;">
-                    @forelse($business->correspondence->sortBy('round') as $corr)
+                    @forelse($business->correspondence->whereNotNull('received_at')->sortBy('round') as $corr)
                         <div class="corr-item">
                             <div class="corr-header">
                                 <span class="corr-title">
@@ -1312,11 +1324,11 @@
                         </span>
                     @endif
                 </div>
-                <div class="card-body" style="display:flex;flex-wrap:wrap;gap:0.5rem 1rem;">
+                <div class="card-body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem 1rem;">
                     @foreach ([...config('vigil.business.drive_subfolders'), 'მიმოწერა'] as $subfolder)
                         @php $state = $driveStates->get($subfolder); @endphp
                         <div
-                            style="display:flex;align-items:center;gap:0.375rem;font-size:0.82rem;color:var(--text-2);min-width:160px;">
+                            style="display:flex;align-items:center;gap:0.375rem;font-size:0.82rem;color:var(--text-2);">
                             <span>{{ $state?->has_files ? '✅' : '⬜' }}</span>
                             <span>{{ $subfolder }}</span>
                         </div>
