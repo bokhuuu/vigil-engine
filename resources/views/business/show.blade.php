@@ -689,6 +689,12 @@
             margin-bottom: 0.75rem;
         }
 
+        .drive-states-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem 1rem;
+        }
+
         /* RESPONSIVE */
         @media (max-width: 600px) {
             .info-row {
@@ -726,6 +732,10 @@
             }
 
             .corr-edit-grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .drive-states-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -1324,7 +1334,7 @@
                         </span>
                     @endif
                 </div>
-                <div class="card-body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem 1rem;">
+                <div class="card-body drive-states-grid">
                     @foreach ([...config('vigil.business.drive_subfolders'), 'მიმოწერა'] as $subfolder)
                         @php $state = $driveStates->get($subfolder); @endphp
                         <div
