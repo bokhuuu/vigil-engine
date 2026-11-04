@@ -26,7 +26,7 @@ class BusinessController extends Controller
 
     public function show(Business $business): View
     {
-        $business->load('correspondence');
+        $business->load('correspondence', 'driveStates');
 
         return view('business.show', compact('business'));
     }

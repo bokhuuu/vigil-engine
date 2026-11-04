@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Business\Services;
 
 use App\Business\Models\Business;
+use App\Business\Models\BusinessDriveState;
 use App\Business\Models\Correspondence;
 use App\Services\GoogleDriveService;
 use Illuminate\Support\Facades\Log;
@@ -131,5 +132,40 @@ class BusinessDriveService
         $destinationId = $this->drive->findOrCreateFolder($subfolderName, $businessFolderId);
 
         $this->drive->moveFile($fileId, $destinationId);
+    }
+
+    /**
+     * Sync Drive subfolder file-presence states to DB for a given business.
+     * Reads each top-level subfolder (from config) + მიმოწერა, checks for files, upserts DB.
+     */
+    public function syncSubfolderStates(Business $business): void
+    {
+        if (! $business->drive_folder_url) {
+            return;
+        }
+
+        $businessFolderId = $this->getFolderIdFromUrl($business->drive_folder_url);
+        $subfolders = config('vigil.business.drive_subfolders');
+        $subfolders[] = 'მიმოწერა';
+
+        $now = now();
+
+        foreach ($subfolders as $subfolderName) {
+            $subfolderId = $this->drive->findOrCreateFolder($subfolderName, $businessFolderId);
+            $hasFiles = count($this->drive->listFilesInFolder($subfolderId)) > 0;
+
+            BusinessDriveState::updateOrCreate(
+                [
+                    'business_id' => $business->id,
+                    'subfolder_name' => $subfolderName,
+                ],
+                [
+                    'has_files' => $hasFiles,
+                    'synced_at' => $now,
+                ]
+            );
+        }
+
+        Log::info("BusinessDriveService: synced subfolder states for [{$business->name}]");
     }
 }

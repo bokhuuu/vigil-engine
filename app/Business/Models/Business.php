@@ -50,6 +50,11 @@ class Business extends Model
         return $this->hasMany(BusinessEmail::class);
     }
 
+    public function driveStates(): HasMany
+    {
+        return $this->hasMany(BusinessDriveState::class);
+    }
+
     protected static function newFactory(): BusinessFactory
     {
         return BusinessFactory::new();

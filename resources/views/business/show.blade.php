@@ -1297,6 +1297,38 @@
         @endif
         {{-- /drive files card --}}
 
+        {{-- DRIVE STATES CARD --}}
+        @if ($business->drive_folder_url)
+            @php
+                $driveStates = $business->driveStates->keyBy('subfolder_name');
+                $syncedAt = $business->driveStates->max('synced_at');
+            @endphp
+            <div class="card" style="margin-top:1.25rem;">
+                <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+                    <span>🗂 საქაღალდეების სტატუსი</span>
+                    @if ($syncedAt)
+                        <span style="font-size:0.72rem;font-weight:400;color:var(--text-3);letter-spacing:0;">
+                            განახლდა {{ \Carbon\Carbon::parse($syncedAt)->setTimezone('Asia/Tbilisi')->format('H:i') }}
+                        </span>
+                    @endif
+                </div>
+                <div class="card-body" style="display:flex;flex-wrap:wrap;gap:0.5rem 1rem;">
+                    @foreach ([...config('vigil.business.drive_subfolders'), 'მიმოწერა'] as $subfolder)
+                        @php $state = $driveStates->get($subfolder); @endphp
+                        <div
+                            style="display:flex;align-items:center;gap:0.375rem;font-size:0.82rem;color:var(--text-2);min-width:160px;">
+                            <span>{{ $state?->has_files ? '✅' : '⬜' }}</span>
+                            <span>{{ $subfolder }}</span>
+                        </div>
+                    @endforeach
+                    @if ($driveStates->isEmpty())
+                        <p style="color:var(--text-3);font-size:0.875rem;">სინქრონიზაცია ჯერ არ მომხდარა.</p>
+                    @endif
+                </div>
+            </div>
+        @endif
+        {{-- /drive states card --}}
+
         {{-- UPLOAD MODAL --}}
         <div class="modal-overlay" id="upload-modal" onclick="if(event.target===this)closeUploadModal()">
             <div class="modal">

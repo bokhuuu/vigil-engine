@@ -39,6 +39,9 @@ Schedule::command('vigil:backup')->weeklyOn(config('vigil.schedule.backup_day'),
 // Business module — Gmail watcher
 Schedule::command('business:watch-gmail')->everyMinute()->withoutOverlapping(2)->runInBackground();
 
+// Business module — Drive subfolder state sync
+Schedule::command('business:sync-drive-states')->everyFifteenMinutes()->withoutOverlapping(10);
+
 // Drive folders — every 15 min, all days: new ACTs (limited per run) + sync recently changed
 Schedule::command('vigil:create-drive-folders', [
     '--limit' => config('vigil.drive.create_limit_per_run'),
