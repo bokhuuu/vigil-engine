@@ -263,6 +263,31 @@ class DashboardController
             fn ($a) => ($a['fields']['🚦სტატუსი'] ?? '') === '✅ დასრულებული'
         )->count();
 
+        // Acts where status=done AND scan=full AND all required docs present
+        $closed = collect($data)->filter(function ($a) use ($driveStates) {
+            $fields = $a['fields'];
+            if (($fields['🚦სტატუსი'] ?? '') !== '✅ დასრულებული') {
+                return false;
+            }
+            $actDrive = $driveStates[$a['id']] ?? [];
+            if (($actDrive['სკანი'] ?? null) !== 'full') {
+                return false;
+            }
+            $required = $this->requirements->requiredDocFields($fields);
+            foreach ($required as $field) {
+                $cfg = collect($this->docFields)->firstWhere('airtable', $field);
+                $subfolder = $cfg['drive'] ?? null;
+                $present = $subfolder
+                    ? (($actDrive[$subfolder] ?? null) === 'full')
+                    : (bool) ($fields[$field] ?? false);
+                if (! $present) {
+                    return false;
+                }
+            }
+
+            return true;
+        })->count();
+
         $filteredTotal = $acts->count();
         $filteredComplete = $acts->filter(
             fn ($f) => ($f['🚦სტატუსი'] ?? '') === '✅ დასრულებული'
@@ -286,6 +311,8 @@ class DashboardController
             'total' => $total,
             'complete' => $complete,
             'incomplete' => $total - $complete,
+            'closed' => $closed,
+            'incompleteDocs' => $complete - $closed,
             'fetchedAt' => $fetchedAt,
             'isStale' => $snapshot['stale'],
             'cacheMinutes' => $cacheMinutes,

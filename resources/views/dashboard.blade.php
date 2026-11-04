@@ -796,6 +796,12 @@
         <div class="stat-card">
             <div class="stat-label">დასრულებული</div>
             <div class="stat-value green">{{ $complete }}</div>
+            <div style="margin-top:5px;display:flex;gap:10px;">
+                <span style="font-size:10px;color:#059669;font-family:'IBM Plex Mono',monospace;"
+                    title="სრულად დახურული">✅ {{ $closed }}</span>
+                <span style="font-size:10px;color:#92400e;font-family:'IBM Plex Mono',monospace;"
+                    title="დასრულებული, მაგრამ დოკუმენტები არასრულია">⚠️ {{ $incompleteDocs }}</span>
+            </div>
         </div>
         <div class="stat-card">
             <div class="stat-label">მიმდინარე</div>
@@ -803,12 +809,23 @@
         </div>
         <div class="stat-card progress-card">
             <div class="stat-label">პროგრესი</div>
-            @php $pct = $total > 0 ? round($complete / $total * 100, 1) : 0; @endphp
+            @php
+                $pctClosed = $total > 0 ? round(($closed / $total) * 100, 1) : 0;
+                $pctWarn = $total > 0 ? round(($incompleteDocs / $total) * 100, 1) : 0;
+                $pctTotal = $total > 0 ? round(($complete / $total) * 100, 1) : 0;
+            @endphp
             <div class="progress-bar-wrap">
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" style="width: {{ $pct }}%"></div>
+                <div class="progress-bar-bg" style="display:flex;overflow:hidden;border-radius:3px;">
+                    <div style="height:6px;background:#059669;width:{{ $pctClosed }}%;transition:width 0.5s;"></div>
+                    <div style="height:6px;background:#f59e0b;width:{{ $pctWarn }}%;transition:width 0.5s;"></div>
                 </div>
-                <span class="progress-pct">{{ $pct }}%</span>
+                <span
+                    style="font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace;white-space:nowrap;color:#374151;">
+                    <span style="color:#059669;" title="სრულად დახურული">✅ {{ $pctClosed }}%</span>
+                    &nbsp;<span style="color:#92400e;" title="დასრულებული, მაგრამ დოკუმენტები არასრულია">⚠️
+                        {{ $pctWarn }}%</span>
+                    &nbsp;<span style="color:#8892a4;">= {{ $pctTotal }}%</span>
+                </span>
             </div>
         </div>
     </div>
