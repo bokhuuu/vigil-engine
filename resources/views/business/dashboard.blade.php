@@ -649,15 +649,12 @@
                                 <td class="td-name">
                                     {{ $business->name }}
                                     @if ($business->incoming_count > 0)
-                                        <span style="margin-left:0.375rem;font-size:0.75rem;">📥</span>
+                                        <span style="margin-left:0.375rem;font-size:0.75rem;"
+                                            title="შემოსული მიმოწერა">📥</span>
                                     @endif
                                     @if (!$business->owner_email && !$business->accountant_email)
                                         <span style="margin-left:0.25rem;font-size:0.75rem;"
                                             title="ელფოსტა არ არის">⚠️</span>
-                                    @endif
-                                    @if ($business->status === 'მიმდინარე')
-                                        <span style="margin-left:0.25rem;font-size:0.75rem;"
-                                            title="წერილი გაგზავნილია, პასუხის მოლოდინში">📧</span>
                                     @endif
                                 </td>
                                 <td class="td-code">{{ $business->registration_code }}</td>
