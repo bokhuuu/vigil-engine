@@ -23,7 +23,7 @@ class DashboardController extends Controller
 
         $stats = [
             'total' => $businesses->count(),
-            'active' => $businesses->where('status', 'active')->count(),
+            'active' => $businesses->whereIn('status', ['active', 'მიმდინარე'])->count(),
             'complete' => $businesses->where('status', 'complete')->count(),
             'pending' => $businesses->where('status', 'pending')->count(),
             'overdue' => $businesses->filter(fn ($b) => $b->correspondence

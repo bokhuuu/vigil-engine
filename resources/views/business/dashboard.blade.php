@@ -677,8 +677,18 @@
                                 <td class="td-code td-act" style="white-space:nowrap;">
                                     {{ $business->act_number ?? '—' }}</td>
                                 <td>
-                                    <span
-                                        class="badge {{ $business->correspondence->where('status', 'overdue')->count() > 0 ? 'badge-overdue' : 'badge-' . $business->status }}">
+                                    @php
+                                        $badgeClass =
+                                            $business->correspondence->where('status', 'overdue')->count() > 0
+                                                ? 'badge-overdue'
+                                                : match ($business->status) {
+                                                    'active', 'მიმდინარე' => 'badge-active',
+                                                    'complete' => 'badge-complete',
+                                                    'pending' => 'badge-pending',
+                                                    default => 'badge-active',
+                                                };
+                                    @endphp
+                                    <span class="badge {{ $badgeClass }}">
                                         @switch($business->status)
                                             @case('active')
                                                 მიმდინარე
