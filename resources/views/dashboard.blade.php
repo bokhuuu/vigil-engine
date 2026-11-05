@@ -1519,11 +1519,17 @@
                             @endif
                         </div>
                     @elseif ($downloadScanReady)
-                        <a id="scan-download-link"
-                            href="{{ route('dashboard.download.file', ['range' => $scanSlug]) }}"
-                            style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">
-                            ⬇️ ZIP გადმოწერა
-                        </a>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <a id="scan-download-link"
+                                href="{{ route('dashboard.download.file', ['range' => $scanSlug]) }}"
+                                style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">
+                                ⬇️ ZIP გადმოწერა
+                            </a>
+                            <button onclick="resetScanDownload()"
+                                style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid #6b778c;background:transparent;color:#8892a4;cursor:pointer;">
+                                ↺ ახალი
+                            </button>
+                        </div>
                     @else
                         <button onclick="startScanDownload()"
                             style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">
@@ -1563,11 +1569,17 @@
                             @endif
                         </div>
                     @elseif ($downloadPhotosReady)
-                        <a id="photos-download-link"
-                            href="{{ route('dashboard.download.photos.file', ['range' => $photosSlug]) }}"
-                            style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">
-                            ⬇️ ZIP გადმოწერა
-                        </a>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <a id="photos-download-link"
+                                href="{{ route('dashboard.download.photos.file', ['range' => $photosSlug]) }}"
+                                style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">
+                                ⬇️ ZIP გადმოწერა
+                            </a>
+                            <button onclick="resetPhotosDownload()"
+                                style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid #6b778c;background:transparent;color:#8892a4;cursor:pointer;">
+                                ↺ ახალი
+                            </button>
+                        </div>
                     @else
                         <button onclick="startPhotosDownload()"
                             style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">
@@ -1681,8 +1693,11 @@
                             '</span></div>';
                         setTimeout(() => pollScanStatus(slug), 5000);
                     } else if (data.ready) {
-                        box.innerHTML = '<a href="/dashboard/download/file?range=' + encodeURIComponent(slug) +
-                            '" style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">⬇️ ZIP გადმოწერა</a>';
+                        box.innerHTML =
+                            '<div style="display:flex;gap:8px;align-items:center;"><a href="/dashboard/download/file?range=' +
+                            encodeURIComponent(slug) +
+                            '" style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">⬇️ ZIP გადმოწერა</a>' +
+                            '<button onclick="resetScanDownload()" style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid #6b778c;background:transparent;color:#8892a4;cursor:pointer;">↺ ახალი</button></div>';
                     }
                 })
                 .catch(() => setTimeout(() => pollScanStatus(slug), 8000));
@@ -1697,10 +1712,11 @@
                 return;
             }
             const parts = raw.split('-');
-            if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1]) || (parseInt(parts[1]) - parseInt(parts[0])) >
-                199) {
+            const from = parseInt(parts[0]);
+            const to = parseInt(parts[1]);
+            if (parts.length !== 2 || isNaN(from) || isNaN(to) || from < 1 || to <= from || (to - from) > 199) {
                 if (errBox) {
-                    errBox.textContent = 'range უნდა იყოს მაქსიმუმ 200 ACT (მაგ. 1-100)';
+                    errBox.textContent = 'range უნდა იყოს მაქსიმუმ 200 ACT, from < to (მაგ. 1-100)';
                     errBox.style.display = 'block';
                 }
                 return;
@@ -1727,11 +1743,31 @@
                             '</span></div>';
                         setTimeout(() => pollPhotosStatus(slug), 5000);
                     } else if (data.ready) {
-                        box.innerHTML = '<a href="/dashboard/download/photos/file?range=' + encodeURIComponent(slug) +
-                            '" style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">⬇️ ZIP გადმოწერა</a>';
+                        box.innerHTML =
+                            '<div style="display:flex;gap:8px;align-items:center;"><a href="/dashboard/download/photos/file?range=' +
+                            encodeURIComponent(slug) +
+                            '" style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">⬇️ ZIP გადმოწერა</a>' +
+                            '<button onclick="resetPhotosDownload()" style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid #6b778c;background:transparent;color:#8892a4;cursor:pointer;">↺ ახალი</button></div>';
                     }
                 })
                 .catch(() => setTimeout(() => pollPhotosStatus(slug), 8000));
+        }
+
+        function resetScanDownload() {
+            const box = document.getElementById('scan-status');
+            if (!box) return;
+            box.innerHTML =
+                '<button onclick="startScanDownload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📦 დაწყება</button>' +
+                '<form id="download-scan-form" method="POST" action="/dashboard/download" style="display:none;"><input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="range" id="scan-range-hidden" value="all"></form>';
+        }
+
+        function resetPhotosDownload() {
+            const box = document.getElementById('photos-status');
+            if (!box) return;
+            box.innerHTML =
+                '<button onclick="startPhotosDownload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📸 დაწყება</button>' +
+                '<div id="photos-range-error" style="display:none;font-size:11px;color:#f87171;margin-top:4px;">range სავალდებულოა (მაგ. 1-100)</div>' +
+                '<form id="download-photos-form" method="POST" action="/dashboard/download/photos" style="display:none;"><input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="range" id="photos-range-hidden" value=""></form>';
         }
 
         document.getElementById('tools-modal')?.addEventListener('click', e => {
