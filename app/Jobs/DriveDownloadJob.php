@@ -169,7 +169,7 @@ class DriveDownloadJob implements ShouldQueue
                         $file = $pdfs[0];
 
                         try {
-                            $safeName = 'ACT_'.$actNumber.'_'.preg_replace('/[^\w.\-]/u', '_', $file['name']);
+                            $safeName = 'სკანი_'.$actNumber.'.pdf';
                             $content = $drive->downloadFile($file['id']);
                             $zip->addFromString($safeName, $content);
                             $zip->setCompressionName($safeName, ZipArchive::CM_STORE);

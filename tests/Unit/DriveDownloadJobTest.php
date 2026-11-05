@@ -122,7 +122,7 @@ test('ZIP contains file flat (no ACT subfolder)', function () {
     }
     $zip->close();
 
-    expect($names)->toContain('ACT_2-3_scan.pdf');
+    expect($names)->toContain('სკანი_2-3.pdf');
 
     @unlink($zipPath);
 });
