@@ -1675,9 +1675,16 @@
             document.getElementById('scan-range-hidden').value = slug;
             const btn = document.querySelector('[onclick="startScanDownload()"]');
             if (btn) btn.disabled = true;
-            document.getElementById('download-scan-form').submit();
+            const form = document.getElementById('download-scan-form');
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                },
+                body: new FormData(form),
+            }).then(() => pollScanStatus(slug));
             document.getElementById('tools-modal').style.display = 'none';
-            setTimeout(() => pollScanStatus(slug), 3000);
         }
 
         function pollScanStatus(slug) {
@@ -1725,9 +1732,16 @@
             const btn = document.querySelector('[onclick="startPhotosDownload()"]');
             if (btn) btn.disabled = true;
             document.getElementById('photos-range-hidden').value = raw;
-            document.getElementById('download-photos-form').submit();
+            const form = document.getElementById('download-photos-form');
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                },
+                body: new FormData(form),
+            }).then(() => pollPhotosStatus(raw));
             document.getElementById('tools-modal').style.display = 'none';
-            setTimeout(() => pollPhotosStatus(raw), 3000);
         }
 
         function pollPhotosStatus(slug) {
