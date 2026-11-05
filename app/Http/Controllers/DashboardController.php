@@ -6,11 +6,14 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\AirtableException;
 use App\Jobs\DriveDownloadJob;
+use App\Jobs\DrivePhotosDownloadJob;
 use App\Jobs\DriveRescanJob;
 use App\Models\ActExcelEntry;
 use App\Services\ActRequirements;
 use App\Services\AirtableService;
+use App\Support\ActRangeHelper;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -299,10 +302,25 @@ class DashboardController
         )->count();
 
         $hasActiveFilter = $activeStatus || $activeMissing || $activeHas || $activeKvleva || $activeBiznes || $activeExcel;
+
         $rescanRunning = (bool) Cache::get('rescan_running', false);
+
+        // Legacy full-range scan download (backwards compat)
         $downloadRunning = (bool) Cache::get('download_running', false);
         $downloadReady = Cache::has('download_ready_path');
         $downloadProgress = Cache::get('download_progress');
+
+        // Slug-aware scans download state (Tools modal)
+        $scanSlug = $request->query('scan_range', 'all');
+        $downloadScanRunning = (bool) Cache::get("download_scan_running:{$scanSlug}", false);
+        $downloadScanReady = Cache::has("download_scan_ready_path:{$scanSlug}");
+        $downloadScanProgress = Cache::get("download_scan_progress:{$scanSlug}");
+
+        // Slug-aware photos download state (Tools modal)
+        $photosSlug = $request->query('photos_range');
+        $downloadPhotosRunning = $photosSlug ? (bool) Cache::get("download_photos_running:{$photosSlug}", false) : false;
+        $downloadPhotosReady = $photosSlug ? Cache::has("download_photos_ready_path:{$photosSlug}") : false;
+        $downloadPhotosProgress = $photosSlug ? Cache::get("download_photos_progress:{$photosSlug}") : null;
 
         return view('dashboard', [
             'acts' => $acts,
@@ -328,6 +346,12 @@ class DashboardController
             'downloadRunning' => $downloadRunning,
             'downloadReady' => $downloadReady,
             'downloadProgress' => $downloadProgress,
+            'downloadScanRunning' => $downloadScanRunning,
+            'downloadScanReady' => $downloadScanReady,
+            'downloadScanProgress' => $downloadScanProgress,
+            'downloadPhotosRunning' => $downloadPhotosRunning,
+            'downloadPhotosReady' => $downloadPhotosReady,
+            'downloadPhotosProgress' => $downloadPhotosProgress,
             'role' => $request->attributes->get('vigil_role', 'manager'),
             'filteredTotal' => $filteredTotal,
             'filteredComplete' => $filteredComplete,
@@ -353,7 +377,8 @@ class DashboardController
     }
 
     /**
-     * Dispatch a full სკანი download job (manager only).
+     * Dispatch a slug-aware სკანი download job (manager only).
+     * POST body: range={slug}  (optional — defaults to 'all')
      */
     public function download(Request $request): RedirectResponse
     {
@@ -361,22 +386,26 @@ class DashboardController
             abort(403);
         }
 
-        if (Cache::get('download_running')) {
-            return redirect()->route('dashboard')->with('error', 'გადმოწერა უკვე მიმდინარეობს');
+        $slug = $request->input('range', 'all');
+        $actRange = ActRangeHelper::rangeFromSlug($slug);
+
+        if (Cache::get("download_scan_running:{$slug}")) {
+            return redirect()->route('dashboard')->with('error', 'სკანების გადმოწერა უკვე მიმდინარეობს');
         }
 
-        Cache::put('download_running', true, now()->addMinutes(60));
-        Cache::forget('download_ready_path');
-        Cache::forget('download_ready_name');
-        DriveDownloadJob::dispatch();
+        Cache::put("download_scan_running:{$slug}", true, now()->addMinutes(60));
+        Cache::forget("download_scan_ready_path:{$slug}");
+        Cache::forget("download_scan_ready_name:{$slug}");
+        DriveDownloadJob::dispatch($actRange);
 
-        return redirect()->route('dashboard')->with('success', '⏳ გადმოწერა დაიწყო — Telegram-ზე მიიღებ შეტყობინებას');
+        return redirect()->route('dashboard')->with('success', '⏳ სკანების გადმოწერა დაიწყო');
     }
 
-    public function downloadFile(): StreamedResponse|RedirectResponse
+    public function downloadFile(Request $request): StreamedResponse|RedirectResponse
     {
-        $path = Cache::get('download_ready_path');
-        $name = Cache::get('download_ready_name', 'scans.zip');
+        $slug = $request->query('range', 'all');
+        $path = Cache::get("download_scan_ready_path:{$slug}");
+        $name = Cache::get("download_scan_ready_name:{$slug}", "scans-{$slug}.zip");
 
         if (! $path || ! file_exists($path)) {
             return redirect()->route('dashboard')->with('error', 'ფაილი არ არის მზად ან ვადა გავიდა');
@@ -400,6 +429,100 @@ class DashboardController
             'Content-Type' => 'application/zip',
             'Content-Disposition' => 'attachment; filename="'.$name.'"',
             'Content-Length' => (string) $size,
+        ]);
+    }
+
+    /**
+     * Dispatch a slug-aware ფოტოები download job (manager only).
+     * POST body: range={slug}  (required)
+     */
+    public function downloadPhotos(Request $request): RedirectResponse
+    {
+        if ($request->attributes->get('vigil_role') !== 'manager') {
+            abort(403);
+        }
+
+        $slug = $request->input('range');
+
+        if (! $slug) {
+            return redirect()->route('dashboard')->with('error', 'ფოტოების გადმოწერისთვის საჭიროა range');
+        }
+
+        $actRange = ActRangeHelper::rangeFromSlug($slug);
+
+        if (Cache::get("download_photos_running:{$slug}")) {
+            return redirect()->route('dashboard')->with('error', 'ფოტოების გადმოწერა უკვე მიმდინარეობს');
+        }
+
+        Cache::put("download_photos_running:{$slug}", true, now()->addMinutes(60));
+        Cache::forget("download_photos_ready_path:{$slug}");
+        Cache::forget("download_photos_ready_name:{$slug}");
+        DrivePhotosDownloadJob::dispatch($actRange);
+
+        return redirect()->route('dashboard')->with('success', '⏳ ფოტოების გადმოწერა დაიწყო');
+    }
+
+    /**
+     * Stream the ready photos ZIP for a given range slug.
+     * GET /dashboard/download/photos/file?range={slug}
+     */
+    public function downloadPhotosFile(Request $request): StreamedResponse|RedirectResponse
+    {
+        $slug = $request->query('range');
+
+        if (! $slug) {
+            return redirect()->route('dashboard')->with('error', 'range პარამეტრი სავალდებულოა');
+        }
+
+        $path = Cache::get("download_photos_ready_path:{$slug}");
+        $name = Cache::get("download_photos_ready_name:{$slug}", "photos-{$slug}.zip");
+
+        if (! $path || ! file_exists($path)) {
+            return redirect()->route('dashboard')->with('error', 'ფაილი არ არის მზად ან ვადა გავიდა');
+        }
+
+        $size = filesize($path);
+
+        return response()->stream(function () use ($path): void {
+            $handle = fopen($path, 'rb');
+            if ($handle === false) {
+                return;
+            }
+
+            while (! feof($handle)) {
+                echo fread($handle, 1024 * 1024);
+                flush();
+            }
+
+            fclose($handle);
+        }, 200, [
+            'Content-Type' => 'application/zip',
+            'Content-Disposition' => 'attachment; filename="'.$name.'"',
+            'Content-Length' => (string) $size,
+        ]);
+    }
+
+    /**
+     * JSON status endpoint for download progress polling.
+     * GET /dashboard/download/status?type=scans|photos&range={slug}
+     */
+    public function downloadStatus(Request $request): JsonResponse
+    {
+        $type = $request->query('type', 'scans');
+        $slug = $request->query('range', 'all');
+
+        if ($type === 'photos') {
+            return response()->json([
+                'running' => (bool) Cache::get("download_photos_running:{$slug}", false),
+                'ready' => Cache::has("download_photos_ready_path:{$slug}"),
+                'progress' => Cache::get("download_photos_progress:{$slug}"),
+            ]);
+        }
+
+        return response()->json([
+            'running' => (bool) Cache::get("download_scan_running:{$slug}", false),
+            'ready' => Cache::has("download_scan_ready_path:{$slug}"),
+            'progress' => Cache::get("download_scan_progress:{$slug}"),
         ]);
     }
 }

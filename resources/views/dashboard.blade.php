@@ -1505,40 +1505,87 @@
             <div style="border:1px solid #e4e8f0;border-radius:8px;padding:14px 16px;margin-bottom:10px;">
                 <div style="font-size:12px;font-weight:600;color:#1a1f36;margin-bottom:4px;">📦 სკანების გადმოწერა
                 </div>
-                <div style="font-size:11px;color:#8892a4;margin-bottom:12px;">ყველა ACT-ის სკანი — ერთი ZIP ფაილი</div>
+                <div style="font-size:11px;color:#8892a4;margin-bottom:10px;">ACT range (სურვილისამებრ): მაგ.
+                    <code>1-100</code>
+                </div>
 
-                @if ($downloadRunning)
-                    <div style="font-size:11px;color:#8892a4;">
-                        ⏳ მიმდინარეობს…
-                        @if ($downloadProgress)
-                            <span style="font-family:'IBM Plex Mono',monospace;color:#4b5563;">
-                                {{ $downloadProgress['done'] }} / {{ $downloadProgress['total'] }} ACT
-                            </span>
-                        @endif
-                    </div>
-                @elseif ($downloadReady)
-                    <a href="{{ route('dashboard.download.file') }}"
-                        style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">
-                        ⬇️ ZIP გადმოწერა
-                    </a>
-                @else
-                    <button
-                        onclick="document.getElementById('download-form').submit();document.getElementById('tools-modal').style.display='none'"
-                        style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">
-                        📦 დაწყება
-                    </button>
-                    <form id="download-form" method="POST" action="{{ route('dashboard.download') }}"
-                        style="display:none;">
-                        @csrf
-                    </form>
-                @endif
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+                    <input id="scan-range-input" type="text" placeholder="ყველა" maxlength="20"
+                        style="font-size:11px;padding:4px 8px;border-radius:5px;border:1px solid #d1d5db;width:100px;font-family:'IBM Plex Mono',monospace;">
+                </div>
+
+                <div id="scan-status">
+                    @if ($downloadScanRunning)
+                        <div style="font-size:11px;color:#8892a4;">
+                            ⏳ მიმდინარეობს…
+                            @if ($downloadScanProgress)
+                                <span style="font-family:'IBM Plex Mono',monospace;color:#4b5563;">
+                                    {{ $downloadScanProgress['done'] }} / {{ $downloadScanProgress['total'] }} ACT
+                                </span>
+                            @endif
+                        </div>
+                    @elseif ($downloadScanReady)
+                        <a id="scan-download-link"
+                            href="{{ route('dashboard.download.file', ['range' => $scanSlug]) }}"
+                            style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">
+                            ⬇️ ZIP გადმოწერა
+                        </a>
+                    @else
+                        <button onclick="startScanDownload()"
+                            style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">
+                            📦 დაწყება
+                        </button>
+                        <form id="download-scan-form" method="POST" action="{{ route('dashboard.download') }}"
+                            style="display:none;">
+                            @csrf
+                            <input type="hidden" name="range" id="scan-range-hidden" value="all">
+                        </form>
+                    @endif
+                </div>
             </div>
 
-            {{-- Placeholder for future tools --}}
-            <div style="border:1px dashed #e4e8f0;border-radius:8px;padding:14px 16px;opacity:0.5;">
-                <div style="font-size:12px;font-weight:600;color:#8892a4;margin-bottom:2px;">📸 ფოტოების გადმოწერა
+            {{-- Photos download tool --}}
+            <div style="border:1px solid #e4e8f0;border-radius:8px;padding:14px 16px;margin-bottom:10px;">
+                <div style="font-size:12px;font-weight:600;color:#1a1f36;margin-bottom:4px;">📸 ფოტოების გადმოწერა
                 </div>
-                <div style="font-size:11px;color:#b3bac5;">მალე…</div>
+                <div style="font-size:11px;color:#8892a4;margin-bottom:10px;">ACT range (სავალდებულო): მაგ.
+                    <code>1-100</code>
+                </div>
+
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+                    <input id="photos-range-input" type="text" placeholder="მაგ. 1-100" maxlength="20"
+                        style="font-size:11px;padding:4px 8px;border-radius:5px;border:1px solid #d1d5db;width:100px;font-family:'IBM Plex Mono',monospace;">
+                </div>
+
+                <div id="photos-status">
+                    @if ($downloadPhotosRunning)
+                        <div style="font-size:11px;color:#8892a4;">
+                            ⏳ მიმდინარეობს…
+                            @if ($downloadPhotosProgress)
+                                <span style="font-family:'IBM Plex Mono',monospace;color:#4b5563;">
+                                    {{ $downloadPhotosProgress['done'] }} / {{ $downloadPhotosProgress['total'] }}
+                                    ACT
+                                </span>
+                            @endif
+                        </div>
+                    @elseif ($downloadPhotosReady)
+                        <a id="photos-download-link"
+                            href="{{ route('dashboard.download.photos.file', ['range' => $photosSlug]) }}"
+                            style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">
+                            ⬇️ ZIP გადმოწერა
+                        </a>
+                    @else
+                        <button onclick="startPhotosDownload()"
+                            style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">
+                            📸 დაწყება
+                        </button>
+                        <form id="download-photos-form" method="POST"
+                            action="{{ route('dashboard.download.photos') }}" style="display:none;">
+                            @csrf
+                            <input type="hidden" name="range" id="photos-range-hidden" value="">
+                        </form>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
@@ -1611,6 +1658,69 @@
         document.getElementById('excel-modal').addEventListener('click', e => {
             if (e.target === document.getElementById('excel-modal')) closeExcelModal();
         });
+
+        // ── Scan download ────────────────────────────────────────────────
+        function startScanDownload() {
+            const raw = document.getElementById('scan-range-input').value.trim();
+            const slug = raw === '' ? 'all' : raw;
+            document.getElementById('scan-range-hidden').value = slug;
+            document.getElementById('download-scan-form').submit();
+            document.getElementById('tools-modal').style.display = 'none';
+            setTimeout(() => pollScanStatus(slug), 3000);
+        }
+
+        function pollScanStatus(slug) {
+            fetch('/dashboard/download/status?type=scans&range=' + encodeURIComponent(slug))
+                .then(r => r.json())
+                .then(data => {
+                    const box = document.getElementById('scan-status');
+                    if (!box) return;
+                    if (data.running) {
+                        box.innerHTML =
+                            '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს… <span style="font-family:\'IBM Plex Mono\',monospace;color:#4b5563;">' +
+                            (data.progress ? data.progress.done + ' / ' + data.progress.total + ' ACT' : '') +
+                            '</span></div>';
+                        setTimeout(() => pollScanStatus(slug), 5000);
+                    } else if (data.ready) {
+                        box.innerHTML = '<a href="/dashboard/download/file?range=' + encodeURIComponent(slug) +
+                            '" style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">⬇️ ZIP გადმოწერა</a>';
+                    }
+                })
+                .catch(() => setTimeout(() => pollScanStatus(slug), 8000));
+        }
+
+        // ── Photos download ──────────────────────────────────────────────
+        function startPhotosDownload() {
+            const raw = document.getElementById('photos-range-input').value.trim();
+            if (!raw) {
+                alert('range სავალდებულოა ფოტოებისთვის (მაგ. 1-100)');
+                return;
+            }
+            document.getElementById('photos-range-hidden').value = raw;
+            document.getElementById('download-photos-form').submit();
+            document.getElementById('tools-modal').style.display = 'none';
+            setTimeout(() => pollPhotosStatus(raw), 3000);
+        }
+
+        function pollPhotosStatus(slug) {
+            fetch('/dashboard/download/status?type=photos&range=' + encodeURIComponent(slug))
+                .then(r => r.json())
+                .then(data => {
+                    const box = document.getElementById('photos-status');
+                    if (!box) return;
+                    if (data.running) {
+                        box.innerHTML =
+                            '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს… <span style="font-family:\'IBM Plex Mono\',monospace;color:#4b5563;">' +
+                            (data.progress ? data.progress.done + ' / ' + data.progress.total + ' ACT' : '') +
+                            '</span></div>';
+                        setTimeout(() => pollPhotosStatus(slug), 5000);
+                    } else if (data.ready) {
+                        box.innerHTML = '<a href="/dashboard/download/photos/file?range=' + encodeURIComponent(slug) +
+                            '" style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">⬇️ ZIP გადმოწერა</a>';
+                    }
+                })
+                .catch(() => setTimeout(() => pollPhotosStatus(slug), 8000));
+        }
     </script>
 
 </body>

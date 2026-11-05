@@ -571,4 +571,84 @@ class GoogleDriveService
 
         return $response->getBody()->getContents();
     }
+
+    public function listAllInFolder(string $folderId, string $pathPrefix = ''): array
+    {
+        $results = [];
+        $items = $this->listFilesInFolder($folderId);
+
+        foreach ($items as $file) {
+            $path = $pathPrefix !== '' ? "{$pathPrefix}/{$file['name']}" : $file['name'];
+            $results[] = [
+                'id' => $file['id'],
+                'name' => $file['name'],
+                'mimeType' => $file['mimeType'],
+                'path' => $path,
+            ];
+        }
+
+        // Recurse into subfolders
+        $subfolders = $this->listChildFolders($folderId);
+
+        foreach ($subfolders as $name => $subId) {
+            $subPrefix = $pathPrefix !== '' ? "{$pathPrefix}/{$name}" : $name;
+            $nested = $this->listAllInFolder($subId, $subPrefix);
+            $results = array_merge($results, $nested);
+        }
+
+        return $results;
+    }
+
+    public function downloadFileTo(string $fileId, string $localPath): void
+    {
+        $userDrive = $this->getUserDrive();
+
+        $response = $userDrive->files->get($fileId, [
+            'alt' => 'media',
+            'supportsAllDrives' => true,
+            'acknowledgeAbuse' => false,
+        ]);
+
+        $stream = $response->getBody();
+        $handle = fopen($localPath, 'wb');
+
+        if ($handle === false) {
+            throw new \RuntimeException("Cannot open local path for writing: {$localPath}");
+        }
+
+        try {
+            while (! $stream->eof()) {
+                fwrite($handle, $stream->read(1024 * 256));
+            }
+        } finally {
+            fclose($handle);
+        }
+    }
+
+    public function trashFolderChildren(string $folderId): void
+    {
+        $drive = $this->drive();
+        $pageToken = null;
+
+        do {
+            $params = [
+                'q' => "'{$folderId}' in parents and trashed = false",
+                'fields' => 'nextPageToken, files(id)',
+                'supportsAllDrives' => true,
+                'includeItemsFromAllDrives' => true,
+                'pageSize' => 100,
+            ];
+
+            if ($pageToken !== null) {
+                $params['pageToken'] = $pageToken;
+            }
+
+            $result = $drive->files->listFiles($params);
+            $pageToken = $result->getNextPageToken();
+
+            foreach ($result->getFiles() as $file) {
+                $this->trashFolder($file->getId());
+            }
+        } while ($pageToken !== null);
+    }
 }

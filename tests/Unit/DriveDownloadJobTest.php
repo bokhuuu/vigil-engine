@@ -57,7 +57,7 @@ function runJob(
 // ── tests ──────────────────────────────────────────────────────────────────
 
 test('clears download_running and aborts when folder_index is empty', function () {
-    Cache::put('download_running', true, 60);
+    Cache::put('download_scan_running:all', true, 60);
 
     $stateRepo = Mockery::mock(DriveWatcherStateRepository::class);
     $stateRepo->allows('getFolderIndex')->andReturn([]);
@@ -68,23 +68,23 @@ test('clears download_running and aborts when folder_index is empty', function (
 
     makeJob()->handle($stateRepo, $drive, $telegram);
 
-    expect(Cache::get('download_running'))->toBeNull();
+    expect(Cache::get('download_scan_running:all'))->toBeNull();
 });
 
 test('skips ACT folders that have no სკანი subfolder', function () {
-    Cache::put('download_running', true, 60);
+    Cache::put('download_scan_running:all', true, 60);
 
     runJob(
         folderIndex: makeFolderIndex(['folder1' => '1-1']),
         childFolders: ['folder1' => ['ფოტოები' => 'photo_id']],
     );
 
-    expect(Cache::get('download_running'))->toBeNull();
-    expect(Cache::has('download_ready_path'))->toBeFalse();
+    expect(Cache::get('download_scan_running:all'))->toBeNull();
+    expect(Cache::has('download_scan_ready_path:all'))->toBeFalse();
 });
 
 test('creates a ZIP and sets cache keys when files are downloaded', function () {
-    Cache::put('download_running', true, 60);
+    Cache::put('download_scan_running:all', true, 60);
 
     runJob(
         folderIndex: makeFolderIndex(['folder1' => '1-1']),
@@ -93,11 +93,11 @@ test('creates a ZIP and sets cache keys when files are downloaded', function () 
         fileContents: ['f1' => '%PDF binary content'],
     );
 
-    expect(Cache::get('download_running'))->toBeNull();
-    expect(Cache::has('download_ready_path'))->toBeTrue();
-    expect(Cache::has('download_ready_name'))->toBeTrue();
+    expect(Cache::get('download_scan_running:all'))->toBeNull();
+    expect(Cache::has('download_scan_ready_path:all'))->toBeTrue();
+    expect(Cache::has('download_scan_ready_name:all'))->toBeTrue();
 
-    $zipPath = Cache::get('download_ready_path');
+    $zipPath = Cache::get('download_scan_ready_path:all');
     expect(file_exists($zipPath))->toBeTrue();
 
     // clean up
@@ -112,7 +112,7 @@ test('ZIP contains file flat (no ACT subfolder)', function () {
         fileContents: ['f1' => 'content'],
     );
 
-    $zipPath = Cache::get('download_ready_path');
+    $zipPath = Cache::get('download_scan_ready_path:all');
     $zip = new ZipArchive;
     $zip->open($zipPath);
 
@@ -122,13 +122,13 @@ test('ZIP contains file flat (no ACT subfolder)', function () {
     }
     $zip->close();
 
-    expect($names)->toContain('scan.pdf');
+    expect($names)->toContain('ACT_2-3_scan.pdf');
 
     @unlink($zipPath);
 });
 
 test('continues when a single file download fails', function () {
-    Cache::put('download_running', true, 60);
+    Cache::put('download_scan_running:all', true, 60);
 
     $stateRepo = Mockery::mock(DriveWatcherStateRepository::class);
     $stateRepo->allows('getFolderIndex')->andReturn(
@@ -154,14 +154,14 @@ test('continues when a single file download fails', function () {
 
     makeJob()->handle($stateRepo, $drive, $telegram);
 
-    expect(Cache::get('download_running'))->toBeNull();
-    expect(Cache::has('download_ready_path'))->toBeTrue();
+    expect(Cache::get('download_scan_running:all'))->toBeNull();
+    expect(Cache::has('download_scan_ready_path:all'))->toBeTrue();
 
-    @unlink(Cache::get('download_ready_path'));
+    @unlink(Cache::get('download_scan_ready_path:all'));
 });
 
 test('clears download_running after completion', function () {
-    Cache::put('download_running', true, 60);
+    Cache::put('download_scan_running:all', true, 60);
 
     runJob(
         folderIndex: makeFolderIndex(['folder1' => '1-1']),
@@ -170,9 +170,9 @@ test('clears download_running after completion', function () {
         fileContents: ['f1' => 'data'],
     );
 
-    expect(Cache::get('download_running'))->toBeNull();
+    expect(Cache::get('download_scan_running:all'))->toBeNull();
 
-    @unlink(Cache::get('download_ready_path'));
+    @unlink(Cache::get('download_scan_ready_path:all'));
 });
 
 test('sends Telegram message after successful download', function () {
@@ -195,7 +195,7 @@ test('sends Telegram message after successful download', function () {
 
     makeJob()->handle($stateRepo, $drive, $telegram);
 
-    @unlink(Cache::get('download_ready_path'));
+    @unlink(Cache::get('download_scan_ready_path:all'));
 });
 
 test('skips non-PDF files in სკანი and never downloads them', function () {
@@ -217,7 +217,7 @@ test('skips non-PDF files in სკანი and never downloads them', function
 
     makeJob()->handle($stateRepo, $drive, $telegram);
 
-    expect(Cache::has('download_skipped_warnings'))->toBeTrue();
+    expect(Cache::has('download_scan_ready_path:all'))->toBeTrue();
 
-    @unlink(Cache::get('download_ready_path'));
+    @unlink(Cache::get('download_scan_ready_path:all'));
 });

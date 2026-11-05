@@ -47,6 +47,18 @@ Route::get('/dashboard/download/file', [DashboardController::class, 'downloadFil
     ->middleware(BasicAuthMiddleware::class)
     ->name('dashboard.download.file');
 
+Route::post('/dashboard/download/photos', [DashboardController::class, 'downloadPhotos'])
+    ->middleware(BasicAuthMiddleware::class)
+    ->name('dashboard.download.photos');
+
+Route::get('/dashboard/download/photos/file', [DashboardController::class, 'downloadPhotosFile'])
+    ->middleware(BasicAuthMiddleware::class)
+    ->name('dashboard.download.photos.file');
+
+Route::get('/dashboard/download/status', [DashboardController::class, 'downloadStatus'])
+    ->middleware(BasicAuthMiddleware::class)
+    ->name('dashboard.download.status');
+
 Route::post('/dashboard/acts/{recordId}/excel-entered', [ExcelEntryController::class, 'store'])
     ->where('recordId', 'rec[A-Za-z0-9]+')
     ->middleware(BasicAuthMiddleware::class)
