@@ -215,7 +215,7 @@ class DrivePhotosDownloadJob implements ShouldQueue
         Cache::forget("download_photos_progress:{$slug}");
 
         // ── Telegram notification ─────────────────────────────────────────
-        $downloadUrl = rtrim(config('app.url'), '/').'/dashboard/download/photos?range='.urlencode($slug);
+        $downloadUrl = rtrim(config('app.url'), '/').'/dashboard/download/photos/file?range='.urlencode($slug);
         $telegram->sendToGroup(
             "📸 ფოტოების გადმოწერა დასრულდა [{$label}]\n\n".
                 "✅ ჩამოწერილია: {$downloaded}\n".
