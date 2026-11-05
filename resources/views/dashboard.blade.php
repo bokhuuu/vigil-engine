@@ -1465,12 +1465,6 @@
         document.getElementById('upload-modal').addEventListener('click', e => {
             if (e.target === document.getElementById('upload-modal')) closeUploadModal();
         });
-
-        document.getElementById('tools-modal')?.addEventListener('click', e => {
-            if (e.target === document.getElementById('tools-modal')) {
-                document.getElementById('tools-modal').style.display = 'none';
-            }
-        });
     </script>
 
 
@@ -1739,6 +1733,12 @@
                 })
                 .catch(() => setTimeout(() => pollPhotosStatus(slug), 8000));
         }
+
+        document.getElementById('tools-modal')?.addEventListener('click', e => {
+            if (e.target === document.getElementById('tools-modal')) {
+                document.getElementById('tools-modal').style.display = 'none';
+            }
+        });
     </script>
 
 </body>
