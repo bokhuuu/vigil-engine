@@ -1579,6 +1579,9 @@
                             style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">
                             📸 დაწყება
                         </button>
+                        <div id="photos-range-error"
+                            style="display:none;font-size:11px;color:#f87171;margin-top:4px;">range სავალდებულოა (მაგ.
+                            1-100)</div>
                         <form id="download-photos-form" method="POST"
                             action="{{ route('dashboard.download.photos') }}" style="display:none;">
                             @csrf
@@ -1664,6 +1667,8 @@
             const raw = document.getElementById('scan-range-input').value.trim();
             const slug = raw === '' ? 'all' : raw;
             document.getElementById('scan-range-hidden').value = slug;
+            const btn = document.querySelector('[onclick="startScanDownload()"]');
+            if (btn) btn.disabled = true;
             document.getElementById('download-scan-form').submit();
             document.getElementById('tools-modal').style.display = 'none';
             setTimeout(() => pollScanStatus(slug), 3000);
@@ -1692,10 +1697,23 @@
         // ── Photos download ──────────────────────────────────────────────
         function startPhotosDownload() {
             const raw = document.getElementById('photos-range-input').value.trim();
+            const errBox = document.getElementById('photos-range-error');
             if (!raw) {
-                alert('range სავალდებულოა ფოტოებისთვის (მაგ. 1-100)');
+                if (errBox) errBox.style.display = 'block';
                 return;
             }
+            const parts = raw.split('-');
+            if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1]) || (parseInt(parts[1]) - parseInt(parts[0])) >
+                199) {
+                if (errBox) {
+                    errBox.textContent = 'range უნდა იყოს მაქსიმუმ 200 ACT (მაგ. 1-100)';
+                    errBox.style.display = 'block';
+                }
+                return;
+            }
+            if (errBox) errBox.style.display = 'none';
+            const btn = document.querySelector('[onclick="startPhotosDownload()"]');
+            if (btn) btn.disabled = true;
             document.getElementById('photos-range-hidden').value = raw;
             document.getElementById('download-photos-form').submit();
             document.getElementById('tools-modal').style.display = 'none';
