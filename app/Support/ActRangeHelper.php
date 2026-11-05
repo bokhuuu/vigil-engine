@@ -41,6 +41,26 @@ class ActRangeHelper
     }
 
     /**
+     * Parse a slug back into a range array (reverse of slugForRange).
+     *
+     *   'all'   → null
+     *   '1-100' → ['from' => 1, 'to' => 100]
+     */
+    public static function rangeFromSlug(string $slug): ?array
+    {
+        if ($slug === 'all' || $slug === '') {
+            return null;
+        }
+
+        $parts = explode('-', $slug, 2);
+
+        return [
+            'from' => (int) ($parts[0] ?? 0),
+            'to' => (int) ($parts[1] ?? 0),
+        ];
+    }
+
+    /**
      * Human-readable label for display in the UI.
      *
      *   null                       → 'ყველა'
@@ -61,14 +81,6 @@ class ActRangeHelper
     /**
      * Filter a folderIndex array to only entries whose ACT primary number
      * falls within the given range (inclusive on both ends).
-     *
-     * folderIndex structure (from DriveWatcherStateRepository::getFolderIndex()):
-     *   [
-     *     'driveFolderId' => ['act_number' => '3-1', 'act_record_id' => 'recXXX', ...],
-     *     ...
-     *   ]
-     *
-     * When $range is null, the full index is returned unchanged.
      *
      * @param  array<string, array{act_number: string, act_record_id?: string}>  $folderIndex
      * @param  array{from: int, to: int}|null  $range
