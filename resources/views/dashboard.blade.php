@@ -1525,7 +1525,7 @@
                                 style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">
                                 ⬇️ ZIP გადმოწერა
                             </a>
-                            <button onclick="resetScanDownload()"
+                            <button onclick="resetScanDownload(event)"
                                 style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid #6b778c;background:transparent;color:#8892a4;cursor:pointer;">
                                 ↺ ახალი
                             </button>
@@ -1575,7 +1575,7 @@
                                 style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">
                                 ⬇️ ZIP გადმოწერა
                             </a>
-                            <button onclick="resetPhotosDownload()"
+                            <button onclick="resetPhotosDownload(event)"
                                 style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid #6b778c;background:transparent;color:#8892a4;cursor:pointer;">
                                 ↺ ახალი
                             </button>
@@ -1703,7 +1703,7 @@
                             '<div style="display:flex;gap:8px;align-items:center;"><a href="/dashboard/download/file?range=' +
                             encodeURIComponent(slug) +
                             '" style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">⬇️ ZIP გადმოწერა</a>' +
-                            '<button onclick="resetScanDownload()" style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid #6b778c;background:transparent;color:#8892a4;cursor:pointer;">↺ ახალი</button></div>';
+                            '<button onclick="resetScanDownload(event)" style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid #6b778c;background:transparent;color:#8892a4;cursor:pointer;">↺ ახალი</button></div>';
                     }
                 })
                 .catch(() => setTimeout(() => pollScanStatus(slug), 8000));
@@ -1759,13 +1759,14 @@
                             '<div style="display:flex;gap:8px;align-items:center;"><a href="/dashboard/download/photos/file?range=' +
                             encodeURIComponent(slug) +
                             '" style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">⬇️ ZIP გადმოწერა</a>' +
-                            '<button onclick="resetPhotosDownload()" style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid #6b778c;background:transparent;color:#8892a4;cursor:pointer;">↺ ახალი</button></div>';
+                            '<button onclick="resetPhotosDownload(event)" style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid #6b778c;background:transparent;color:#8892a4;cursor:pointer;">↺ ახალი</button></div>';
                     }
                 })
                 .catch(() => setTimeout(() => pollPhotosStatus(slug), 8000));
         }
 
-        function resetScanDownload() {
+        function resetScanDownload(e) {
+            e?.stopPropagation();
             const box = document.getElementById('scan-status');
             if (!box) return;
             box.innerHTML =
@@ -1773,7 +1774,8 @@
                 '<form id="download-scan-form" method="POST" action="/dashboard/download" style="display:none;"><input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="range" id="scan-range-hidden" value="all"></form>';
         }
 
-        function resetPhotosDownload() {
+        function resetPhotosDownload(e) {
+            e?.stopPropagation();
             const box = document.getElementById('photos-status');
             if (!box) return;
             box.innerHTML =
