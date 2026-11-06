@@ -1704,6 +1704,8 @@
                             encodeURIComponent(slug) +
                             '" style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">⬇️ ZIP გადმოწერა</a>' +
                             '<button onclick="resetScanDownload(event)" style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid #6b778c;background:transparent;color:#8892a4;cursor:pointer;">↺ ახალი</button></div>';
+                    } else {
+                        setTimeout(() => pollScanStatus(slug), 5000);
                     }
                 })
                 .catch(() => setTimeout(() => pollScanStatus(slug), 8000));
@@ -1760,6 +1762,8 @@
                             encodeURIComponent(slug) +
                             '" style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">⬇️ ZIP გადმოწერა</a>' +
                             '<button onclick="resetPhotosDownload(event)" style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid #6b778c;background:transparent;color:#8892a4;cursor:pointer;">↺ ახალი</button></div>';
+                    } else {
+                        setTimeout(() => pollPhotosStatus(slug), 5000);
                     }
                 })
                 .catch(() => setTimeout(() => pollPhotosStatus(slug), 8000));
