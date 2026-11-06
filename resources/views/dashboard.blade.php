@@ -1743,52 +1743,50 @@
         }
 
         function pollPhotosStatus(slug) {
+            fetch('/dashboard/download/status?type=photos&range=' + encodeURIComponent(slug))
+                .then(r => r.json())
+                .then(data => {
+                    const box = document.getElementById('photos-status');
+                    if (!box) return;
+                    if (data.running) {
+                        box.innerHTML =
+                            '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს… <span style="font-family:\'IBM Plex Mono\',monospace;color:#4b5563;">' +
+                            (data.progress ? data.progress.done + ' / ' + data.progress.total + ' ACT' : '') +
+                            '</span></div>';
+                        setTimeout(() => pollPhotosStatus(slug), 5000);
+                    } else if (data.ready) {
+                        box.innerHTML =
+                            '<div style="display:flex;gap:8px;align-items:center;"><a href="/dashboard/download/photos/file?range=' +
+                            encodeURIComponent(slug) +
+                            '" style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">⬇️ ZIP გადმოწერა</a>' +
+                            '<button onclick="resetPhotosDownload()" style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid #6b778c;background:transparent;color:#8892a4;cursor:pointer;">↺ ახალი</button></div>';
+                    }
+                })
+                .catch(() => setTimeout(() => pollPhotosStatus(slug), 8000));
+        }
 
-            function pollPhotosStatus(slug) {
-                fetch('/dashboard/download/status?type=photos&range=' + encodeURIComponent(slug))
-                    .then(r => r.json())
-                    .then(data => {
-                        const box = document.getElementById('photos-status');
-                        if (!box) return;
-                        if (data.running) {
-                            box.innerHTML =
-                                '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს… <span style="font-family:\'IBM Plex Mono\',monospace;color:#4b5563;">' +
-                                (data.progress ? data.progress.done + ' / ' + data.progress.total + ' ACT' : '') +
-                                '</span></div>';
-                            setTimeout(() => pollPhotosStatus(slug), 5000);
-                        } else if (data.ready) {
-                            box.innerHTML =
-                                '<div style="display:flex;gap:8px;align-items:center;"><a href="/dashboard/download/photos/file?range=' +
-                                encodeURIComponent(slug) +
-                                '" style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">⬇️ ZIP გადმოწერა</a>' +
-                                '<button onclick="resetPhotosDownload()" style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid #6b778c;background:transparent;color:#8892a4;cursor:pointer;">↺ ახალი</button></div>';
-                        }
-                    })
-                    .catch(() => setTimeout(() => pollPhotosStatus(slug), 8000));
+        function resetScanDownload() {
+            const box = document.getElementById('scan-status');
+            if (!box) return;
+            box.innerHTML =
+                '<button onclick="startScanDownload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📦 დაწყება</button>' +
+                '<form id="download-scan-form" method="POST" action="/dashboard/download" style="display:none;"><input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="range" id="scan-range-hidden" value="all"></form>';
+        }
+
+        function resetPhotosDownload() {
+            const box = document.getElementById('photos-status');
+            if (!box) return;
+            box.innerHTML =
+                '<button onclick="startPhotosDownload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📸 დაწყება</button>' +
+                '<div id="photos-range-error" style="display:none;font-size:11px;color:#f87171;margin-top:4px;">range სავალდებულოა (მაგ. 1-100)</div>' +
+                '<form id="download-photos-form" method="POST" action="/dashboard/download/photos" style="display:none;"><input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="range" id="photos-range-hidden" value=""></form>';
+        }
+
+        document.getElementById('tools-modal')?.addEventListener('click', e => {
+            if (!e.target.closest('#tools-modal > div')) {
+                document.getElementById('tools-modal').style.display = 'none';
             }
-
-            function resetScanDownload() {
-                const box = document.getElementById('scan-status');
-                if (!box) return;
-                box.innerHTML =
-                    '<button onclick="startScanDownload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📦 დაწყება</button>' +
-                    '<form id="download-scan-form" method="POST" action="/dashboard/download" style="display:none;"><input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="range" id="scan-range-hidden" value="all"></form>';
-            }
-
-            function resetPhotosDownload() {
-                const box = document.getElementById('photos-status');
-                if (!box) return;
-                box.innerHTML =
-                    '<button onclick="startPhotosDownload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📸 დაწყება</button>' +
-                    '<div id="photos-range-error" style="display:none;font-size:11px;color:#f87171;margin-top:4px;">range სავალდებულოა (მაგ. 1-100)</div>' +
-                    '<form id="download-photos-form" method="POST" action="/dashboard/download/photos" style="display:none;"><input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="range" id="photos-range-hidden" value=""></form>';
-            }
-
-            document.getElementById('tools-modal')?.addEventListener('click', e => {
-                if (e.target === document.getElementById('tools-modal')) {
-                    document.getElementById('tools-modal').style.display = 'none';
-                }
-            });
+        });
     </script>
 
 </body>
