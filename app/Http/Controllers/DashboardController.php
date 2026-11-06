@@ -452,8 +452,8 @@ class DashboardController
 
         $actRange = ActRangeHelper::rangeFromSlug($slug);
 
-        if ($actRange && ($actRange['to'] - $actRange['from']) > 199) {
-            return redirect()->route('dashboard')->with('error', 'ფოტოების range მაქსიმუმ 200 ACT');
+        if ($actRange && ($actRange['to'] - $actRange['from']) > 99) {
+            return redirect()->route('dashboard')->with('error', 'ფოტოების range მაქსიმუმ 100 ACT');
         }
 
         if (Cache::get("download_photos_running:{$slug}")) {
