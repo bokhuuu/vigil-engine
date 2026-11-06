@@ -311,7 +311,7 @@ class DashboardController
         $downloadProgress = Cache::get('download_progress');
 
         // Slug-aware scans download state (Tools modal)
-        $scanSlug = $request->query('scan_range', 'all');
+        $scanSlug = $request->query('scan_range', Cache::get('download_scan_last_slug', 'all'));
         $downloadScanRunning = (bool) Cache::get("download_scan_running:{$scanSlug}", false);
         $downloadScanReady = Cache::has("download_scan_ready_path:{$scanSlug}");
         $downloadScanProgress = Cache::get("download_scan_progress:{$scanSlug}");
@@ -396,6 +396,7 @@ class DashboardController
         }
 
         Cache::put("download_scan_running:{$slug}", true, now()->addMinutes(60));
+        Cache::put('download_scan_last_slug', $slug, now()->addHours(2));
         Cache::forget("download_scan_ready_path:{$slug}");
         Cache::forget("download_scan_ready_name:{$slug}");
         DriveDownloadJob::dispatch($actRange);
@@ -461,6 +462,7 @@ class DashboardController
         }
 
         Cache::put("download_photos_running:{$slug}", true, now()->addMinutes(60));
+        Cache::put('download_photos_last_slug', $slug, now()->addHours(2));
         Cache::forget("download_photos_ready_path:{$slug}");
         Cache::forget("download_photos_ready_name:{$slug}");
         DrivePhotosDownloadJob::dispatch($actRange);
