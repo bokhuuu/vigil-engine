@@ -73,35 +73,13 @@ class WatchGmail extends Command
                 ]);
 
                 $nextRound = ($business->correspondence()->max('round') ?? 0) + 1;
-                $openCorr = $business->correspondence()->create([
+                $business->correspondence()->create([
                     'round' => $nextRound,
                     'sent_at' => now(),
                     'deadline_at' => now()->addDays(10),
                     'status' => 'pending',
                     'notes' => $subject,
                 ]);
-
-                $roundFolder = 'მიმოწერა/'.$openCorr->round;
-
-                if ($business->drive_folder_url) {
-                    $subfolderFolderId = $this->drive->ensureSubfolderPath(
-                        $business->drive_folder_url,
-                        $roundFolder,
-                    );
-                    $openCorr->update([
-                        'drive_folder_url' => "https://drive.google.com/drive/folders/{$subfolderFolderId}",
-                    ]);
-
-                    $filename = now()->format('Y-m-d_H-i').'_წერილი.txt';
-                    $textContent = "From: {$from}\nSubject: {$subject}\n\n{$body}";
-                    $this->drive->uploadFileToSubfolder(
-                        $business->drive_folder_url,
-                        $roundFolder,
-                        $filename,
-                        'text/plain',
-                        $textContent,
-                    );
-                }
 
                 continue;
             }
@@ -130,11 +108,12 @@ class WatchGmail extends Command
             $attachments = $this->gmail->getAttachments($message);
             $count = count($attachments);
             $roundFolder = 'მიმოწერა/'.$openCorr->round;
+            $incomingFolder = $roundFolder.'/შემომავალი ფაილები';
 
             if ($business->drive_folder_url) {
                 $subfolderFolderId = $this->drive->ensureSubfolderPath(
                     $business->drive_folder_url,
-                    $roundFolder,
+                    $incomingFolder,
                 );
                 $subfolderUrl = "https://drive.google.com/drive/folders/{$subfolderFolderId}";
 
@@ -145,7 +124,7 @@ class WatchGmail extends Command
 
                 $this->drive->uploadFileToSubfolder(
                     $business->drive_folder_url,
-                    $roundFolder,
+                    $incomingFolder,
                     $filename,
                     'text/plain',
                     $textContent,
@@ -154,7 +133,7 @@ class WatchGmail extends Command
                 foreach ($attachments as $attachment) {
                     $this->drive->uploadFileToSubfolder(
                         $business->drive_folder_url,
-                        $roundFolder,
+                        $incomingFolder,
                         $attachment['filename'],
                         $attachment['mimeType'],
                         $attachment['data'],

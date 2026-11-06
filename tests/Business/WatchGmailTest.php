@@ -139,8 +139,9 @@ class WatchGmailTest extends BusinessTestCase
         $telegram->shouldReceive('sendToMe')->never();
 
         $drive = \Mockery::mock(GoogleDriveService::class);
-        $drive->shouldReceive('ensureSubfolderPath')->once()->andReturn('fake-round-folder-id');
-        $drive->shouldReceive('uploadFileToSubfolder')->once();
+        $drive = \Mockery::mock(GoogleDriveService::class);
+
+        $command = new WatchGmail($gmail, $telegram, $drive);
 
         $command = new WatchGmail($gmail, $telegram, $drive);
         $this->app['Illuminate\Contracts\Console\Kernel']->registerCommand($command);
