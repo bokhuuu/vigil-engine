@@ -317,7 +317,7 @@ class DashboardController
         $downloadScanProgress = Cache::get("download_scan_progress:{$scanSlug}");
 
         // Slug-aware photos download state (Tools modal)
-        $photosSlug = $request->query('photos_range');
+        $photosSlug = $request->query('photos_range', Cache::get('download_photos_last_slug'));
         $downloadPhotosRunning = $photosSlug ? (bool) Cache::get("download_photos_running:{$photosSlug}", false) : false;
         $downloadPhotosReady = $photosSlug ? Cache::has("download_photos_ready_path:{$photosSlug}") : false;
         $downloadPhotosProgress = $photosSlug ? Cache::get("download_photos_progress:{$photosSlug}") : null;
