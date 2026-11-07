@@ -95,6 +95,7 @@ class BusinessDriveService
 
         $incomingRounds = $business->correspondence()
             ->whereNotNull('drive_folder_url')
+            ->whereNotNull('received_at')
             ->pluck('round')
             ->map(fn ($r) => (string) $r)
             ->toArray();
@@ -115,7 +116,9 @@ class BusinessDriveService
             if (! in_array((string) $roundName, $incomingRounds, true)) {
                 continue;
             }
-            foreach ($this->drive->listFilesInFolder($roundId) as $file) {
+            $incomingSubfolderId = $this->drive->findChildFolderAsUser('შემომავალი ფაილები', $roundId);
+            $scanFolderId = $incomingSubfolderId ?? $roundId;
+            foreach ($this->drive->listFilesInFolder($scanFolderId) as $file) {
                 $files[] = array_merge($file, ['round' => $roundName]);
             }
         }
