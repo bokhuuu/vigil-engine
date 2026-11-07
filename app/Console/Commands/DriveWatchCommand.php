@@ -50,6 +50,15 @@ class DriveWatchCommand extends Command
             $changedIds = $this->reader->getChangedIds();
             $this->watcher->process($changedIds, $dryRun);
         } catch (\Exception $e) {
+            if (str_contains($e->getMessage(), 'Invalid token')) {
+                Log::warning('vigil:drive-watch: stale page token — reinitialising and retrying');
+                $this->watcher->initPageToken();
+                $changedIds = $this->reader->getChangedIds();
+                $this->watcher->process($changedIds, $dryRun);
+
+                return self::SUCCESS;
+            }
+
             Log::error('vigil:drive-watch failed: '.$e->getMessage());
 
             $this->telegram->sendToMe(
