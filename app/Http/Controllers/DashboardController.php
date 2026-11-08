@@ -416,7 +416,7 @@ class DashboardController
 
         $size = filesize($path);
 
-        return response()->stream(function () use ($path): void {
+        return response()->stream(function () use ($path, $slug): void {
             $handle = fopen($path, 'rb');
             if ($handle === false) {
                 return;
@@ -428,6 +428,11 @@ class DashboardController
             }
 
             fclose($handle);
+
+            @unlink($path);
+            Cache::forget("download_scan_ready_path:{$slug}");
+            Cache::forget("download_scan_ready_name:{$slug}");
+            Cache::forget("download_scan_running:{$slug}");
         }, 200, [
             'Content-Type' => 'application/zip',
             'Content-Disposition' => 'attachment; filename="'.$name.'"',
@@ -491,7 +496,7 @@ class DashboardController
 
         $size = filesize($path);
 
-        return response()->stream(function () use ($path): void {
+        return response()->stream(function () use ($path, $slug): void {
             $handle = fopen($path, 'rb');
             if ($handle === false) {
                 return;
@@ -503,12 +508,20 @@ class DashboardController
             }
 
             fclose($handle);
+
+            @unlink($path);
+            Cache::forget("download_photos_ready_path:{$slug}");
+            Cache::forget("download_photos_ready_name:{$slug}");
+            Cache::forget("download_photos_running:{$slug}");
         }, 200, [
             'Content-Type' => 'application/zip',
             'Content-Disposition' => 'attachment; filename="'.$name.'"',
             'Content-Length' => (string) $size,
         ]);
     }
+
+    /**
+     * JSON status endpoint
 
     /**
      * JSON status endpoint for download progress polling.
