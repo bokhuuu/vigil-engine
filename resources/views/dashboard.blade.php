@@ -1619,16 +1619,6 @@
                             target="_blank" style="font-size:10px;color:#2563eb;text-decoration:none;">📁
                             staging/scans →</a>
                     </div>
-                    <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;">
-                        <label
-                            style="font-size:11px;color:#4b5563;display:flex;align-items:center;gap:4px;cursor:pointer;">
-                            <input type="radio" name="scans-upload-mode" value="skip" checked> გამოტოვება
-                        </label>
-                        <label
-                            style="font-size:11px;color:#4b5563;display:flex;align-items:center;gap:4px;cursor:pointer;">
-                            <input type="radio" name="scans-upload-mode" value="replace"> ჩანაცვლება
-                        </label>
-                    </div>
                     <div id="scans-upload-status">
                         @if ($uploadScansRunning)
                             <div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…</div>
@@ -1870,8 +1860,6 @@
         }
 
         function startScansUpload() {
-            const mode = document.querySelector('input[name="scans-upload-mode"]:checked')?.value ?? 'skip';
-            document.getElementById('scans-upload-mode-hidden').value = mode;
             const btn = document.querySelector('[onclick="startScansUpload()"]');
             if (btn) {
                 btn.disabled = true;
