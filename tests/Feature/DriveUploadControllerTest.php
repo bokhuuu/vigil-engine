@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Services\GoogleDriveService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
@@ -16,16 +18,16 @@ beforeEach(function () {
     ]);
 });
 
-// ── helpers ──────────────────────────────────────────────────────────────────
+// ── helpers ───────────────────────────────────────────────────────────────────
 
 function managerAuth(): array
 {
-    return ['Authorization' => 'Basic '.base64_encode('vigil:test-password')];
+    return ['vigil_role' => 'manager'];
 }
 
 function uploaderAuth(): array
 {
-    return ['Authorization' => 'Basic '.base64_encode('colliers:upload-password')];
+    return ['vigil_role' => 'uploader'];
 }
 
 function fakeActs(): array
@@ -54,14 +56,14 @@ function fakeActs(): array
 // ── POST /upload ──────────────────────────────────────────────────────────────
 
 test('upload endpoint requires authentication', function () {
-    $this->postJson('/upload')->assertStatus(401);
+    $this->postJson('/upload')->assertRedirect(route('acts.login'));
 });
 
 test('upload endpoint returns 404 for unknown act', function () {
     Cache::flush();
     Http::fake(['api.airtable.com/*' => Http::response(fakeActs(), 200)]);
 
-    $this->withHeaders(uploaderAuth())
+    $this->withSession(uploaderAuth())
         ->post('/upload', [
             'act_id' => 'recNOTEXIST',
             'folder' => 'ფოტოები',
@@ -83,7 +85,7 @@ test('upload endpoint returns 422 when act has no Drive folder', function () {
         ], 200),
     ]);
 
-    $this->withHeaders(uploaderAuth())
+    $this->withSession(uploaderAuth())
         ->post('/upload', [
             'act_id' => 'recNOFOLDER',
             'folder' => 'ფოტოები',
@@ -107,7 +109,7 @@ test('upload endpoint calls Drive service and returns uploaded filenames', funct
 
     app()->instance(GoogleDriveService::class, $driveMock);
 
-    $response = $this->withHeaders(uploaderAuth())
+    $response = $this->withSession(uploaderAuth())
         ->post('/upload', [
             'act_id' => 'rec001',
             'folder' => 'ფოტოები',
@@ -128,7 +130,7 @@ test('upload endpoint accepts manager credentials too', function () {
 
     app()->instance(GoogleDriveService::class, $driveMock);
 
-    $this->withHeaders(managerAuth())
+    $this->withSession(managerAuth())
         ->post('/upload', [
             'act_id' => 'rec001',
             'folder' => 'ფოტოები',

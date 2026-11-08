@@ -771,6 +771,13 @@
                     🛠️ Tools
                 </button>
             @endif
+            <form method="POST" action="{{ route('acts.logout') }}" style="display:inline;">
+                @csrf
+                <button type="submit"
+                    style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #4b5563;background:transparent;color:#8892a4;white-space:nowrap;cursor:pointer;">
+                    გასვლა
+                </button>
+            </form>
         </div>
     </div>
 
@@ -1092,10 +1099,12 @@
                             <td class="center col-drive">
                                 @if ($folder)
                                     <a href="{{ $folder }}" target="_blank" class="drive-link">📁</a>
-                                    <button class="upload-btn" data-act-id="{{ $act['_id'] }}"
-                                        data-act-number="{{ $act['🔖 აქტის ნომერი'] ?? '' }}"
-                                        title="ფაილების ატვირთვა"
-                                        style="cursor:pointer;background:none;border:none;padding:0;margin-left:6px;">⬆️</button>
+                                    @if ($role !== 'viewer')
+                                        <button class="upload-btn" data-act-id="{{ $act['_id'] }}"
+                                            data-act-number="{{ $act['🔖 აქტის ნომერი'] ?? '' }}"
+                                            title="ფაილების ატვირთვა"
+                                            style="cursor:pointer;background:none;border:none;padding:0;margin-left:6px;">⬆️</button>
+                                    @endif
                                 @elseif ($role === 'manager')
                                     <form method="POST" action="{{ route('dashboard.folder', $act['_id']) }}"
                                         onsubmit="const b = this.querySelector('button'); b.disabled = true; b.textContent = '…';">

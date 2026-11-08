@@ -257,6 +257,8 @@ return [
         'password' => env('DASHBOARD_PASSWORD'),
         'uploader_user' => env('DASHBOARD_UPLOADER_USER', 'uploader'),
         'uploader_password' => env('DASHBOARD_UPLOADER_PASSWORD'),
+        'viewer_user' => env('DASHBOARD_VIEWER_USER', 'viewer'),
+        'viewer_password' => env('DASHBOARD_VIEWER_PASSWORD'),
         'cache_minutes' => 5,
         'airtable_stats_url' => 'https://airtable.com/appuF9IUa53xy31el/pagQSR870y97XR5PC',
     ],

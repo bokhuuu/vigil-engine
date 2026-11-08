@@ -324,7 +324,7 @@ class DashboardController
         $downloadPhotosReady = $photosSlug ? Cache::has("download_photos_ready_path:{$photosSlug}") : false;
         $downloadPhotosProgress = $photosSlug ? Cache::get("download_photos_progress:{$photosSlug}") : null;
 
-        return view('dashboard', [
+        return view('acts.dashboard', [
             'acts' => $acts,
             'docFields' => $this->docFields,
             'kvlevaColors' => $this->kvlevaColors,

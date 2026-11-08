@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -14,19 +16,21 @@ beforeEach(function () {
     ]);
 });
 
-test('dashboard rejects request without credentials', function () {
-    $response = $this->get('/dashboard');
-    $response->assertStatus(401);
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
+test('dashboard rejects request without session', function () {
+    $this->get('/dashboard')->assertRedirect(route('acts.login'));
 });
 
-test('dashboard rejects request with wrong credentials', function () {
-    $response = $this->get('/dashboard', [
-        'Authorization' => 'Basic '.base64_encode('vigil:wrongpassword'),
-    ]);
-    $response->assertStatus(401);
+test('dashboard rejects request with invalid session role', function () {
+    $this->withSession(['vigil_role' => 'hacker'])
+        ->get('/dashboard')
+        ->assertRedirect(route('acts.login'));
 });
 
-test('dashboard returns 200 with correct credentials', function () {
+// ── 200 responses ─────────────────────────────────────────────────────────────
+
+test('dashboard returns 200 with manager session', function () {
     Cache::flush();
 
     Http::fake([
@@ -44,13 +48,13 @@ test('dashboard returns 200 with correct credentials', function () {
         ], 200),
     ]);
 
-    $response = $this->withHeaders([
-        'Authorization' => 'Basic '.base64_encode('vigil:test-password'),
-    ])->get('/dashboard');
-
-    $response->assertStatus(200);
-    $response->assertViewIs('dashboard');
+    $this->withSession(['vigil_role' => 'manager'])
+        ->get('/dashboard')
+        ->assertStatus(200)
+        ->assertViewIs('acts.dashboard');
 });
+
+// ── Filtering ─────────────────────────────────────────────────────────────────
 
 test('dashboard filters by status incomplete', function () {
     Cache::flush();
@@ -60,29 +64,23 @@ test('dashboard filters by status incomplete', function () {
             'records' => [
                 [
                     'id' => 'rec001',
-                    'fields' => [
-                        '🔖 აქტის ნომერი' => '329',
-                        '🚦სტატუსი' => '⏳ მიმდინარე',
-                    ],
+                    'fields' => ['🔖 აქტის ნომერი' => '329', '🚦სტატუსი' => '⏳ მიმდინარე'],
                 ],
                 [
                     'id' => 'rec002',
-                    'fields' => [
-                        '🔖 აქტის ნომერი' => '330',
-                        '🚦სტატუსი' => '✅ დასრულებული',
-                    ],
+                    'fields' => ['🔖 აქტის ნომერი' => '330', '🚦სტატუსი' => '✅ დასრულებული'],
                 ],
             ],
         ], 200),
     ]);
 
-    $response = $this->withHeaders([
-        'Authorization' => 'Basic '.base64_encode('vigil:test-password'),
-    ])->get('/dashboard?status=incomplete');
-
-    $response->assertStatus(200);
-    $response->assertViewHas('acts', fn ($acts) => $acts->count() === 1);
+    $this->withSession(['vigil_role' => 'manager'])
+        ->get('/dashboard?status=incomplete')
+        ->assertStatus(200)
+        ->assertViewHas('acts', fn ($acts) => $acts->count() === 1);
 });
+
+// ── Required fields ───────────────────────────────────────────────────────────
 
 test('dashboard requiredFields returns only always-required for land-only act', function () {
     Cache::flush();
@@ -92,25 +90,20 @@ test('dashboard requiredFields returns only always-required for land-only act', 
             'records' => [
                 [
                     'id' => 'rec001',
-                    'fields' => [
-                        '🔖 აქტის ნომერი' => '329',
-                        '🚦სტატუსი' => '⏳ მიმდინარე',
-                    ],
+                    'fields' => ['🔖 აქტის ნომერი' => '329', '🚦სტატუსი' => '⏳ მიმდინარე'],
                 ],
             ],
         ], 200),
     ]);
 
-    $response = $this->withHeaders([
-        'Authorization' => 'Basic '.base64_encode('vigil:test-password'),
-    ])->get('/dashboard');
+    $this->withSession(['vigil_role' => 'manager'])
+        ->get('/dashboard')
+        ->assertStatus(200)
+        ->assertViewHas('acts', function ($acts) {
+            $required = $acts->first()['_required'];
 
-    $response->assertStatus(200);
-    $response->assertViewHas('acts', function ($acts) {
-        $required = $acts->first()['_required'];
-
-        return $required === ['📥 ფოტოები', '📥 ხელმოწერები'];
-    });
+            return $required === ['📥 ფოტოები', '📥 ხელმოწერები'];
+        });
 });
 
 test('dashboard requiredFields includes შიდა ნახაზები when შენობა flag set', function () {
@@ -131,18 +124,18 @@ test('dashboard requiredFields includes შიდა ნახაზები wh
         ], 200),
     ]);
 
-    $response = $this->withHeaders([
-        'Authorization' => 'Basic '.base64_encode('vigil:test-password'),
-    ])->get('/dashboard');
+    $this->withSession(['vigil_role' => 'manager'])
+        ->get('/dashboard')
+        ->assertStatus(200)
+        ->assertViewHas('acts', function ($acts) {
+            $required = $acts->first()['_required'];
 
-    $response->assertStatus(200);
-    $response->assertViewHas('acts', function ($acts) {
-        $required = $acts->first()['_required'];
-
-        return in_array('📥 შიდა ნახაზები', $required)
-            && in_array('📥 ხარჯთაღრიცხვა', $required);
-    });
+            return in_array('📥 შიდა ნახაზები', $required)
+                && in_array('📥 ხარჯთაღრიცხვა', $required);
+        });
 });
+
+// ── Fetch time ────────────────────────────────────────────────────────────────
 
 test('dashboard shows the real fetch time', function () {
     Cache::flush();
@@ -154,9 +147,8 @@ test('dashboard shows the real fetch time', function () {
         ], 200),
     ]);
 
-    $this->withHeaders([
-        'Authorization' => 'Basic '.base64_encode('vigil:test-password'),
-    ])->get('/dashboard')
+    $this->withSession(['vigil_role' => 'manager'])
+        ->get('/dashboard')
         ->assertOk()
         ->assertSee('განახლდა 14:32');
 });
@@ -170,14 +162,16 @@ test('refreshing the page does not change the fetch time', function () {
         ], 200),
     ]);
 
-    $auth = ['Authorization' => 'Basic '.base64_encode('vigil:test-password')];
+    $session = ['vigil_role' => 'manager'];
 
     $this->travelTo(Carbon::parse('2026-09-24 14:32:00', config('app.timezone')));
-    $this->withHeaders($auth)->get('/dashboard')->assertSee('განახლდა 14:32');
+    $this->withSession($session)->get('/dashboard')->assertSee('განახლდა 14:32');
 
     $this->travelTo(Carbon::parse('2026-09-24 14:34:00', config('app.timezone')));
-    $this->withHeaders($auth)->get('/dashboard')->assertSee('განახლდა 14:32');
+    $this->withSession($session)->get('/dashboard')->assertSee('განახლდა 14:32');
 });
+
+// ── Fallback ──────────────────────────────────────────────────────────────────
 
 test('dashboard falls back to last good data when Airtable fails', function () {
     Cache::flush();
@@ -196,17 +190,19 @@ test('dashboard falls back to last good data when Airtable fails', function () {
         'api.telegram.org/*' => Http::response(['ok' => true], 200),
     ]);
 
-    $auth = ['Authorization' => 'Basic '.base64_encode('vigil:test-password')];
+    $session = ['vigil_role' => 'manager'];
 
-    $this->withHeaders($auth)->get('/dashboard')->assertOk();
+    $this->withSession($session)->get('/dashboard')->assertOk();
 
-    Cache::forget('dashboard_snapshot'); // simulate the 5-minute cache expiring
+    Cache::forget('dashboard_snapshot');
 
-    $this->withHeaders($auth)->get('/dashboard')
+    $this->withSession($session)->get('/dashboard')
         ->assertOk()
         ->assertSee('Airtable მიუწვდომელია')
         ->assertSee('329');
 });
+
+// ── HTML structure ────────────────────────────────────────────────────────────
 
 test('dashboard head has no stray text and loads fonts via link tag', function () {
     Cache::flush();
@@ -215,9 +211,9 @@ test('dashboard head has no stray text and loads fonts via link tag', function (
         'api.airtable.com/*' => Http::response(['records' => []], 200),
     ]);
 
-    $html = $this->withHeaders([
-        'Authorization' => 'Basic '.base64_encode('vigil:test-password'),
-    ])->get('/dashboard')->getContent();
+    $html = $this->withSession(['vigil_role' => 'manager'])
+        ->get('/dashboard')
+        ->getContent();
 
     expect($html)->toContain('<link rel="stylesheet"');
     expect($html)->not->toMatch('/>\s*href="https:\/\/fonts\.googleapis\.com/');
@@ -236,9 +232,8 @@ test('dashboard links each ACT number to its Airtable record', function () {
         .config('vigil.airtable.base_id').'/'
         .config('vigil.airtable.tables.acts').'/rec329';
 
-    $this->withHeaders([
-        'Authorization' => 'Basic '.base64_encode('vigil:test-password'),
-    ])->get('/dashboard')
+    $this->withSession(['vigil_role' => 'manager'])
+        ->get('/dashboard')
         ->assertOk()
         ->assertSee($expected, false);
 });

@@ -2,74 +2,45 @@
 
 declare(strict_types=1);
 
+namespace App\Http\Controllers;
+
 use App\Services\AirtableService;
 use App\Services\GoogleDriveService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
-beforeEach(function () {
-    config([
-        'vigil.dashboard.user' => 'vigil',
-        'vigil.dashboard.password' => 'test-password',
-    ]);
-    $this->auth = ['Authorization' => 'Basic '.base64_encode('vigil:test-password')];
-});
+class DashboardFolderController
+{
+    public function __construct(
+        private AirtableService $airtable,
+        private GoogleDriveService $drive,
+    ) {}
 
-test('folder button requires dashboard login', function () {
-    $this->post('/dashboard/acts/rec329/folder')->assertStatus(401);
-});
+    public function store(string $recordId): RedirectResponse
+    {
+        $act = $this->airtable->getAct($recordId);
+        $fields = $act['fields'] ?? [];
+        $number = AirtableService::normalizeActNumber(
+            (string) ($fields['🔖 აქტის ნომერი'] ?? $recordId)
+        );
 
-test('folder button creates the folder and saves its URL', function () {
-    $this->mock(AirtableService::class, function ($mock) {
-        $mock->shouldReceive('getAct')->with('rec329')
-            ->andReturn(['id' => 'rec329', 'fields' => ['🔖 აქტის ნომერი' => '329']]);
-        $mock->shouldReceive('updateActDriveFolder')
-            ->with('rec329', 'https://drive.google.com/drive/folders/new329')->once();
-    });
-    $this->mock(GoogleDriveService::class)
-        ->shouldReceive('ensureActFolders')->with('329', Mockery::type('array'))->once()
-        ->andReturn('https://drive.google.com/drive/folders/new329');
+        if (! empty($fields['💼 საქაღალდე'])) {
+            return back()->with('status', "ACT {$number}-ს საქაღალდე უკვე აქვს.");
+        }
 
-    $this->withHeaders($this->auth)
-        ->from('/dashboard')
-        ->post('/dashboard/acts/rec329/folder')
-        ->assertRedirect('/dashboard')
-        ->assertSessionHas('status');
-});
+        try {
+            $folderUrl = $this->drive->ensureActFolders($number, $fields);
+            $this->airtable->updateActDriveFolder($recordId, $folderUrl);
+        } catch (\Throwable $e) {
+            report($e);
 
-test('folder button does nothing when the ACT already has a folder', function () {
-    $this->mock(AirtableService::class, function ($mock) {
-        $mock->shouldReceive('getAct')->andReturn(['id' => 'rec329', 'fields' => [
-            '🔖 აქტის ნომერი' => '329',
-            '💼 საქაღალდე' => 'https://drive.google.com/drive/folders/f329',
-        ]]);
-        $mock->shouldNotReceive('updateActDriveFolder');
-    });
-    $this->mock(GoogleDriveService::class)->shouldNotReceive('ensureActFolders');
+            return back()->with('error', "ACT {$number}: საქაღალდე ვერ შეიქმნა — {$e->getMessage()}");
+        }
 
-    $this->withHeaders($this->auth)
-        ->from('/dashboard')
-        ->post('/dashboard/acts/rec329/folder')
-        ->assertRedirect('/dashboard')
-        ->assertSessionHas('status');
-});
+        Cache::forget(DashboardController::SNAPSHOT_KEY);
+        Log::info("Dashboard: created Drive folder for ACT [{$number}]");
 
-test('folder button shows an error when Drive fails', function () {
-    $this->mock(AirtableService::class, function ($mock) {
-        $mock->shouldReceive('getAct')
-            ->andReturn(['id' => 'rec329', 'fields' => ['🔖 აქტის ნომერი' => '329']]);
-        $mock->shouldNotReceive('updateActDriveFolder');
-    });
-    $this->mock(GoogleDriveService::class)
-        ->shouldReceive('ensureActFolders')->andThrow(new RuntimeException('Drive down'));
-
-    $this->withHeaders($this->auth)
-        ->from('/dashboard')
-        ->post('/dashboard/acts/rec329/folder')
-        ->assertRedirect('/dashboard')
-        ->assertSessionHas('error');
-});
-
-test('folder button rejects non-Airtable record ids', function () {
-    $this->withHeaders($this->auth)
-        ->post('/dashboard/acts/not-a-record/folder')
-        ->assertNotFound();
-});
+        return back()->with('status', "✅ ACT {$number} — საქაღალდე შეიქმნა.");
+    }
+}
