@@ -314,6 +314,7 @@ class DashboardController
         // Slug-aware scans download state (Tools modal)
         $scanSlug = $request->query('scan_range', Cache::get('download_scan_last_slug', 'all'));
         $downloadScanRunning = (bool) Cache::get("download_scan_running:{$scanSlug}", false);
+        $uploadScansRunning = (bool) Cache::get('upload_scans_running');
         $downloadScanReady = Cache::has("download_scan_ready_path:{$scanSlug}");
         $downloadScanProgress = Cache::get("download_scan_progress:{$scanSlug}");
 
@@ -348,6 +349,7 @@ class DashboardController
             'downloadReady' => $downloadReady,
             'downloadProgress' => $downloadProgress,
             'downloadScanRunning' => $downloadScanRunning,
+            'uploadScansRunning' => $uploadScansRunning,
             'downloadScanReady' => $downloadScanReady,
             'downloadScanProgress' => $downloadScanProgress,
             'scanSlug' => $scanSlug,
