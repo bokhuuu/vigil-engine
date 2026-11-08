@@ -36,6 +36,9 @@ Schedule::call(fn () => app(DriveWatcherService::class)->rescan())
 // Weekly backup - Sunday 11:00 Georgia
 Schedule::command('vigil:backup')->weeklyOn(config('vigil.schedule.backup_day'), config('vigil.schedule.backup_time'));
 
+// Storage cleanup — delete stale download ZIPs older than 2 hours
+Schedule::command('storage:cleanup')->hourly();
+
 // Business module — Gmail watcher
 Schedule::command('business:watch-gmail')->everyMinute()->withoutOverlapping(2)->runInBackground();
 

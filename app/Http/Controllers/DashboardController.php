@@ -546,4 +546,34 @@ class DashboardController
             'progress' => Cache::get("download_scan_progress:{$slug}"),
         ]);
     }
+
+    /**
+     * Cancel a pending download — delete the ZIP and clear cache keys.
+     * DELETE /dashboard/download/cancel?type=scans|photos&range={slug}
+     */
+    public function downloadCancel(Request $request): JsonResponse
+    {
+        $type = $request->query('type', 'scans');
+        $slug = $request->query('range', 'all');
+
+        if ($type === 'photos') {
+            $path = Cache::get("download_photos_ready_path:{$slug}");
+            if ($path && file_exists($path)) {
+                @unlink($path);
+            }
+            Cache::forget("download_photos_ready_path:{$slug}");
+            Cache::forget("download_photos_ready_name:{$slug}");
+            Cache::forget("download_photos_running:{$slug}");
+        } else {
+            $path = Cache::get("download_scan_ready_path:{$slug}");
+            if ($path && file_exists($path)) {
+                @unlink($path);
+            }
+            Cache::forget("download_scan_ready_path:{$slug}");
+            Cache::forget("download_scan_ready_name:{$slug}");
+            Cache::forget("download_scan_running:{$slug}");
+        }
+
+        return response()->json(['ok' => true]);
+    }
 }

@@ -1771,6 +1771,13 @@
 
         function resetScanDownload(e) {
             e?.stopPropagation();
+            const slug = document.getElementById('scan-range-input')?.value.trim() || 'all';
+            fetch('/dashboard/download/cancel?type=scans&range=' + encodeURIComponent(slug), {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
             const box = document.getElementById('scan-status');
             if (!box) return;
             box.innerHTML =
@@ -1780,6 +1787,15 @@
 
         function resetPhotosDownload(e) {
             e?.stopPropagation();
+            const slug = document.getElementById('photos-range-input')?.value.trim() || '';
+            if (slug) {
+                fetch('/dashboard/download/cancel?type=photos&range=' + encodeURIComponent(slug), {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    }
+                });
+            }
             const box = document.getElementById('photos-status');
             if (!box) return;
             box.innerHTML =

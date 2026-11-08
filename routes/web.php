@@ -59,6 +59,10 @@ Route::get('/dashboard/download/status', [DashboardController::class, 'downloadS
     ->middleware(BasicAuthMiddleware::class)
     ->name('dashboard.download.status');
 
+Route::delete('/dashboard/download/cancel', [DashboardController::class, 'downloadCancel'])
+    ->middleware(BasicAuthMiddleware::class)
+    ->name('dashboard.download.cancel');
+
 Route::post('/dashboard/acts/{recordId}/excel-entered', [ExcelEntryController::class, 'store'])
     ->where('recordId', 'rec[A-Za-z0-9]+')
     ->middleware(BasicAuthMiddleware::class)
