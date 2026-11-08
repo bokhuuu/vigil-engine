@@ -31,8 +31,8 @@ test('create-drive-folders processes acts and writes folder url', function () {
         ->with(2)
         ->once()
         ->andReturn([
-            ['id' => 'rec001', 'fields' => ['🔖 აქტის ნომერი' => '001']],
-            ['id' => 'rec002', 'fields' => ['🔖 აქტის ნომერი' => '002']],
+            ['id' => 'rec001', 'createdTime' => now()->subMinutes(5)->toISOString(), 'fields' => ['🔖 აქტის ნომერი' => '001']],
+            ['id' => 'rec002', 'createdTime' => now()->subMinutes(5)->toISOString(), 'fields' => ['🔖 აქტის ნომერი' => '002']],
         ]);
     $airtable->shouldReceive('getRecentlyChangedActsWithFolder')->andReturn([]);
 
@@ -59,7 +59,7 @@ test('create-drive-folders counts failed acts correctly', function () {
         ->with(null)
         ->once()
         ->andReturn([
-            ['id' => 'rec001', 'fields' => ['🔖 აქტის ნომერი' => '001']],
+            ['id' => 'rec001', 'createdTime' => now()->subMinutes(5)->toISOString(), 'fields' => ['🔖 აქტის ნომერი' => '001']],
         ]);
     $airtable->shouldReceive('getRecentlyChangedActsWithFolder')->andReturn([]);
 

@@ -7,6 +7,7 @@ namespace App\Console\Commands;
 use App\Services\AirtableService;
 use App\Services\GoogleDriveService;
 use App\Services\TelegramService;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class CreateDriveFoldersCommand extends Command
@@ -67,6 +68,14 @@ class CreateDriveFoldersCommand extends Command
 
             if ($actNumber === '') {
                 $this->warn("⚠️ Skipping {$recordId} — no ACT number in Airtable.");
+                $skipped++;
+
+                continue;
+            }
+
+            // Skip records created less than 2 minutes ago — user may still be typing
+            $createdAt = Carbon::parse($act['createdTime'] ?? now());
+            if ($createdAt->diffInMinutes(now()) < 2) {
                 $skipped++;
 
                 continue;
