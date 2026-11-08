@@ -183,7 +183,7 @@ class DriveScansUploadJob implements ShouldQueue
                     }
 
                     // Upload via OAuth
-                    $drive->uploadFile($basename, $content, $skaniFolderId, 'application/pdf');
+                    $drive->uploadFile($skaniFolderId, $basename, $content, 'application/pdf');
                     $totalUploaded++;
 
                     Log::info("DriveScansUploadJob: uploaded [{$basename}] to ACT {$actNumber}");

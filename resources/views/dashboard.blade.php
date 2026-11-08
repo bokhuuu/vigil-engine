@@ -1899,6 +1899,7 @@
                         setTimeout(pollScansUploadStatus, 5000);
                     } else {
                         box.innerHTML =
+                            '<div style="font-size:11px;color:#4ade80;margin-bottom:6px;">✅ ატვირთვა დასრულდა</div>' +
                             '<button onclick="startScansUpload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📤 გაშვება</button>' +
                             '<form id="upload-scans-form" method="POST" action="{{ $uploadScansRoute }}" style="display:none;"><input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="mode" id="scans-upload-mode-hidden" value="skip"></form>';
                     }

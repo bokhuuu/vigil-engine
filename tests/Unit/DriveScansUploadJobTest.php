@@ -169,9 +169,9 @@ test('upload scans: uploads PDF to correct ACT სკანი subfolder', funct
         }
     );
     $drive->expects('uploadFile')->once()->with(
+        'skani1',
         'სკანი_1.pdf',
         Mockery::any(),
-        'skani1',
         'application/pdf'
     )->andReturn('new_id');
 
