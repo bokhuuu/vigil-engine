@@ -76,7 +76,7 @@ function runUploadJob(
             file_put_contents($tmpPath, '');
         }
     );
-    $drive->allows('uploadFileAsServiceAccount')->andReturn('new_file_id');
+    $drive->allows('uploadFile')->andReturn('new_file_id');
     $drive->allows('trashFolderChildren')->andReturn(null);
     $drive->allows('trashFile')->andReturn(null);
 
@@ -168,13 +168,12 @@ test('upload scans: uploads PDF to correct ACT სკანი subfolder', funct
             copy($zipPath, $tmpPath);
         }
     );
-    $drive->expects('uploadFileAsServiceAccount')->once()->with(
-        'skani1',
+    $drive->expects('uploadFile')->once()->with(
         'სკანი_1.pdf',
         Mockery::any(),
+        'skani1',
         'application/pdf'
     )->andReturn('new_id');
-    $drive->allows('trashFile')->andReturn(null);
 
     $telegram = Mockery::mock(TelegramService::class);
     $telegram->expects('sendToGroup')->once()->with(
@@ -213,7 +212,7 @@ test('upload scans: skip mode skips file that already exists', function () {
             copy($zipPath, $tmpPath);
         }
     );
-    $drive->expects('uploadFileAsServiceAccount')->never();
+    $drive->expects('uploadFile')->never();
     $drive->allows('trashFile')->andReturn(null);
 
     $telegram = Mockery::mock(TelegramService::class);
@@ -253,7 +252,7 @@ test('upload scans: replace mode trashes existing files before upload', function
         }
     );
     $drive->expects('trashFolderChildren')->once()->with('skani1');
-    $drive->allows('uploadFileAsServiceAccount')->andReturn('new_id');
+    $drive->allows('uploadFile')->andReturn('new_id');
     $drive->allows('trashFile')->andReturn(null);
 
     $telegram = Mockery::mock(TelegramService::class);
@@ -289,7 +288,7 @@ test('upload scans: skips PDF when ACT number not in folder_index', function () 
             copy($zipPath, $tmpPath);
         }
     );
-    $drive->expects('uploadFileAsServiceAccount')->never();
+    $drive->expects('uploadFile')->never();
     $drive->allows('trashFile')->andReturn(null);
 
     $telegram = Mockery::mock(TelegramService::class);
@@ -332,7 +331,7 @@ test('upload scans: skips non-PDF entries in ZIP silently', function () {
         }
     );
     // Only one upload — the PDF, not the txt
-    $drive->expects('uploadFileAsServiceAccount')->once()->andReturn('new_id');
+    $drive->expects('uploadFile')->once()->andReturn('new_id');
     $drive->allows('trashFile')->andReturn(null);
 
     $telegram = Mockery::mock(TelegramService::class);
@@ -369,7 +368,7 @@ test('upload scans: trashes staging ZIP after processing', function () {
             copy($zipPath, $tmpPath);
         }
     );
-    $drive->allows('uploadFileAsServiceAccount')->andReturn('new_id');
+    $drive->allows('uploadFile')->andReturn('new_id');
     $drive->expects('trashFile')->once()->with('zip1');
 
     $telegram = Mockery::mock(TelegramService::class);

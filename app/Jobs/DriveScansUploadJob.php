@@ -175,8 +175,15 @@ class DriveScansUploadJob implements ShouldQueue
                         continue;
                     }
 
-                    // Upload via service account
-                    $drive->uploadFileAsServiceAccount($skaniFolderId, $basename, $content, 'application/pdf');
+                    if (strlen($content) > 50 * 1024 * 1024) {
+                        Log::warning("DriveScansUploadJob: [{$basename}] too large (".round(strlen($content) / 1024 / 1024, 1).'MB) — skipping');
+                        $totalFailed++;
+
+                        continue;
+                    }
+
+                    // Upload via OAuth
+                    $drive->uploadFile($basename, $content, $skaniFolderId, 'application/pdf');
                     $totalUploaded++;
 
                     Log::info("DriveScansUploadJob: uploaded [{$basename}] to ACT {$actNumber}");
