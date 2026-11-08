@@ -219,5 +219,7 @@ class DriveScansUploadJob implements ShouldQueue
                 ($totalSkippedNoAct > 0 ? "🔍 ACT ვერ მოიძებნა: {$totalSkippedNoAct}\n" : '').
                 ($totalFailed > 0 ? "❌ შეცდომა: {$totalFailed}\n" : '')
         );
+
+        Cache::forget('upload_scans_running');
     }
 }
