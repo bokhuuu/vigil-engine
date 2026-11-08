@@ -9,6 +9,7 @@ use App\Services\GoogleDriveService;
 use App\Services\TelegramService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class DriveScansUploadJob implements ShouldQueue
@@ -36,6 +37,7 @@ class DriveScansUploadJob implements ShouldQueue
         if (empty($folderIndex)) {
             Log::warning('DriveScansUploadJob: folder_index is empty — aborting');
             $telegram->sendToGroup('⚠️ სკანების ატვირთვა: folder_index ცარიელია');
+            Cache::forget('upload_scans_running');
 
             return;
         }
@@ -71,6 +73,7 @@ class DriveScansUploadJob implements ShouldQueue
         if (empty($zips)) {
             Log::info('DriveScansUploadJob: no ZIP files found in staging — aborting');
             $telegram->sendToGroup('⚠️ სკანების ატვირთვა: სტეიჯინგში ZIP ფაილი არ არის');
+            Cache::forget('upload_scans_running');
 
             return;
         }
