@@ -8,6 +8,7 @@ use App\Exceptions\AirtableException;
 use App\Jobs\DriveDownloadJob;
 use App\Jobs\DrivePhotosDownloadJob;
 use App\Jobs\DriveRescanJob;
+use App\Jobs\DriveScansUploadJob;
 use App\Models\ActExcelEntry;
 use App\Services\ActRequirements;
 use App\Services\AirtableService;
@@ -575,5 +576,47 @@ class DashboardController
         }
 
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Dispatch a სკანები upload job (manager only).
+     * POST body: mode=skip|replace
+     */
+    public function uploadScans(Request $request): RedirectResponse
+    {
+        if ($request->attributes->get('vigil_role') !== 'manager') {
+            abort(403);
+        }
+
+        if (Cache::get('upload_scans_running')) {
+            return redirect()->route('dashboard')->with('error', 'სკანების ატვირთვა უკვე მიმდინარეობს');
+        }
+
+        $mode = $request->input('mode', 'skip');
+        if (! in_array($mode, ['skip', 'replace'], true)) {
+            $mode = 'skip';
+        }
+
+        Cache::put('upload_scans_running', true, now()->addMinutes(60));
+        DriveScansUploadJob::dispatch($mode);
+
+        return redirect()->route('dashboard')->with('success', '⏳ სკანების ატვირთვა დაიწყო');
+    }
+
+    /**
+     * JSON status endpoint for upload progress polling.
+     * GET /dashboard/upload/status?type=scans
+     */
+    public function uploadStatus(Request $request): JsonResponse
+    {
+        $type = $request->query('type', 'scans');
+
+        if ($type === 'scans') {
+            return response()->json([
+                'running' => (bool) Cache::get('upload_scans_running', false),
+            ]);
+        }
+
+        return response()->json(['running' => false]);
     }
 }

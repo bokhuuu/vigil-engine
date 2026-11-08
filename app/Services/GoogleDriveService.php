@@ -651,4 +651,32 @@ class GoogleDriveService
             }
         } while ($pageToken !== null);
     }
+
+    /**
+     * Trash a single file by ID (service account).
+     */
+    public function trashFile(string $fileId): void
+    {
+        $this->drive()->files->update($fileId, new DriveFile(['trashed' => true]));
+    }
+
+    /**
+     * Upload a file via service account (so service account owns it).
+     */
+    public function uploadFileAsServiceAccount(string $parentFolderId, string $filename, string $content, string $mimeType): string
+    {
+        $metadata = new DriveFile([
+            'name' => $filename,
+            'parents' => [$parentFolderId],
+        ]);
+
+        $file = $this->drive()->files->create($metadata, [
+            'data' => $content,
+            'mimeType' => $mimeType,
+            'uploadType' => 'multipart',
+            'fields' => 'id',
+        ]);
+
+        return $file->getId();
+    }
 }

@@ -41,6 +41,14 @@ return [
         'oauth_client' => env('GOOGLE_DRIVE_OAUTH_CLIENT'),
         'oauth_token' => env('GOOGLE_DRIVE_OAUTH_TOKEN'),
         'business_folder_id' => env('GOOGLE_DRIVE_BUSINESS_FOLDER_ID'),
+        'staging' => [
+            'root' => env('DRIVE_STAGING_ROOT_ID'),
+            'scans' => env('DRIVE_STAGING_SCANS_ID'),
+            'photos' => env('DRIVE_STAGING_PHOTOS_ID'),
+            'xarjtagricxva' => env('DRIVE_STAGING_XARJI_ID'),
+            'naxazebi' => env('DRIVE_STAGING_NAXAZEBI_ID'),
+            'shefaseba' => env('DRIVE_STAGING_SHEFASEBA_ID'),
+        ],
     ],
 
     'business' => [

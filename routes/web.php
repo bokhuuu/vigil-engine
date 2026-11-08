@@ -67,3 +67,11 @@ Route::post('/dashboard/acts/{recordId}/excel-entered', [ExcelEntryController::c
     ->where('recordId', 'rec[A-Za-z0-9]+')
     ->middleware(BasicAuthMiddleware::class)
     ->name('dashboard.excel-entered');
+
+Route::post('/dashboard/upload/scans', [DashboardController::class, 'uploadScans'])
+    ->middleware(BasicAuthMiddleware::class)
+    ->name('dashboard.upload.scans');
+
+Route::get('/dashboard/upload/status', [DashboardController::class, 'uploadStatus'])
+    ->middleware(BasicAuthMiddleware::class)
+    ->name('dashboard.upload.status');
