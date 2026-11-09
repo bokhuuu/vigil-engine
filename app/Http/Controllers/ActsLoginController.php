@@ -38,7 +38,7 @@ class ActsLoginController
 
     public function logout(Request $request): RedirectResponse
     {
-        $request->session()->forget('vigil_role');
+        $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return redirect()->route('acts.login');

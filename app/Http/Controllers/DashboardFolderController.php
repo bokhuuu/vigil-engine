@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Services\AirtableService;
 use App\Services\GoogleDriveService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -20,8 +21,12 @@ class DashboardFolderController
     /**
      * Create the Drive folder tree for one ACT right now (dashboard button).
      */
-    public function store(string $recordId): RedirectResponse
+    public function store(Request $request, string $recordId): RedirectResponse
     {
+        if ($request->attributes->get('vigil_role') !== 'manager') {
+            abort(403);
+        }
+
         $act = $this->airtable->getAct($recordId);
         $fields = $act['fields'] ?? [];
         $number = AirtableService::normalizeActNumber(

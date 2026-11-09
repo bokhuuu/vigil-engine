@@ -17,7 +17,7 @@ Route::redirect('/business', '/business/login');
 
 // Acts dashboard login / logout (no auth middleware)
 Route::get('/dashboard/login', [ActsLoginController::class, 'showLogin'])->name('acts.login');
-Route::post('/dashboard/login', [ActsLoginController::class, 'login']);
+Route::post('/dashboard/login', [ActsLoginController::class, 'login'])->middleware('throttle:10,1');
 Route::post('/dashboard/logout', [ActsLoginController::class, 'logout'])->name('acts.logout');
 
 Route::middleware(VerifyWebhookSecret::class)->group(function () {
