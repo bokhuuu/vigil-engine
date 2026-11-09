@@ -21,13 +21,13 @@ class ActsLoginController
 
     public function login(Request $request): RedirectResponse
     {
-        $user = $request->input('username', '');
-        $password = $request->input('password', '');
+        $user = (string) $request->input('username', '');
+        $password = (string) $request->input('password', '');
 
         $role = $this->resolveRole($user, $password);
 
         if ($role === null) {
-            return back()->withErrors(['credentials' => 'მომხმარებელი ან პაროლი არასწორია.']);
+            return redirect()->route('acts.login')->withErrors(['credentials' => 'მომხმარებელი ან პაროლი არასწორია.']);
         }
 
         $request->session()->regenerate();

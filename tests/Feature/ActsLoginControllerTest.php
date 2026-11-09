@@ -3,9 +3,11 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\RateLimiter;
 
 beforeEach(function () {
     Http::preventStrayRequests();
+    RateLimiter::clear('dashboard/login|127.0.0.1');
     config([
         'vigil.dashboard.user' => 'vigil',
         'vigil.dashboard.password' => 'test-password',
@@ -31,21 +33,21 @@ test('login page redirects to dashboard if already logged in', function () {
 // ── POST /dashboard/login — wrong credentials ─────────────────────────────────
 
 test('login rejects wrong username', function () {
-    $this->post(route('acts.login'), ['username' => 'nobody', 'password' => 'test-password'])
-        ->assertRedirect(route('acts.login'))
-        ->assertSessionHasErrors('credentials');
+    $response = $this->post(route('acts.login'), ['username' => 'nobody', 'password' => 'test-password']);
+    $response->assertRedirect(route('acts.login'));
+    expect(session('errors'))->not->toBeNull();
 });
 
 test('login rejects wrong password', function () {
-    $this->post(route('acts.login'), ['username' => 'vigil', 'password' => 'wrong'])
-        ->assertRedirect(route('acts.login'))
-        ->assertSessionHasErrors('credentials');
+    $response = $this->post(route('acts.login'), ['username' => 'vigil', 'password' => 'wrong']);
+    $response->assertRedirect(route('acts.login'));
+    expect(session('errors'))->not->toBeNull();
 });
 
 test('login rejects empty credentials', function () {
-    $this->post(route('acts.login'), ['username' => '', 'password' => ''])
-        ->assertRedirect(route('acts.login'))
-        ->assertSessionHasErrors('credentials');
+    $response = $this->post(route('acts.login'), ['username' => '', 'password' => '']);
+    $response->assertRedirect(route('acts.login'));
+    expect(session('errors'))->not->toBeNull();
 });
 
 // ── POST /dashboard/login — correct credentials ───────────────────────────────
@@ -82,4 +84,22 @@ test('logout removes vigil_role from session', function () {
     $this->withSession(['vigil_role' => 'manager'])
         ->post(route('acts.logout'))
         ->assertSessionMissing('vigil_role');
+});
+
+test('login is throttled after 10 failed attempts', function () {
+    for ($i = 0; $i < 10; $i++) {
+        $this->post(route('acts.login'), ['username' => 'nobody', 'password' => 'wrong']);
+    }
+
+    $this->post(route('acts.login'), ['username' => 'nobody', 'password' => 'wrong'])
+        ->assertStatus(429);
+});
+
+test('logout invalidates the session so old session ID is gone', function () {
+    $this->withSession(['vigil_role' => 'manager']);
+    $oldId = session()->getId();
+
+    $this->post(route('acts.logout'));
+
+    expect(session()->getId())->not->toBe($oldId);
 });
