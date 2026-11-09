@@ -134,3 +134,70 @@ it('does not tick checkbox in dry run mode', function (): void {
 
     expect($this->state->getSubfolderState('sub-1'))->toBe('empty');
 });
+
+it('flips empty sibling subfolder to full when change fires on another subfolder of same ACT', function (): void {
+    $this->state->addActFolder('act-folder-1', '15', 'recABC');
+    $this->state->addSubfolder('sub-scans', 'act-folder-1', 'სკანები');
+    $this->state->addSubfolder('sub-photos', 'act-folder-1', 'ფოტოები');
+    $this->state->setSubfolderState('sub-scans', 'empty');
+    $this->state->setSubfolderState('sub-photos', 'empty');
+
+    $events = Mockery::mock(DriveEventService::class);
+    $events->shouldReceive('fileAdded')->with('15', 'სკანები')->once();
+
+    $airtable = Mockery::mock(AirtableService::class);
+    $airtable->shouldReceive('getActByNumber')->with('15')->andReturn([
+        'id' => 'recABC',
+        'fields' => [],
+    ])->byDefault();
+
+    $drive = Mockery::mock(GoogleDriveService::class);
+    // The changed subfolder (სკანები) has files
+    $drive->shouldReceive('subfolderHasFiles')->with('sub-scans')->andReturn(true);
+    // The sibling (ფოტოები) also has files — sibling check should catch it
+    $drive->shouldReceive('subfolderHasFiles')->with('sub-photos')->andReturn(true);
+    $drive->shouldReceive('setFolderColorAsUser')->andReturn(null)->byDefault();
+    $drive->shouldReceive('getFileMetadata')->andReturn([
+        'mimeType' => 'application/vnd.google-apps.folder',
+        'parents' => ['act-folder-1'],
+    ])->byDefault();
+
+    $service = makeWatcherService($this->state, $airtable, $drive, events: $events);
+    $service->process(['sub-scans']);
+
+    expect($this->state->getSubfolderState('sub-scans'))->toBe('full');
+    expect($this->state->getSubfolderState('sub-photos'))->toBe('full');
+});
+
+it('leaves sibling subfolder empty when sibling check finds no files', function (): void {
+    $this->state->addActFolder('act-folder-1', '15', 'recABC');
+    $this->state->addSubfolder('sub-scans', 'act-folder-1', 'სკანები');
+    $this->state->addSubfolder('sub-photos', 'act-folder-1', 'ფოტოები');
+    $this->state->setSubfolderState('sub-scans', 'empty');
+    $this->state->setSubfolderState('sub-photos', 'empty');
+
+    $events = Mockery::mock(DriveEventService::class);
+    $events->shouldReceive('fileAdded')->with('15', 'სკანები')->once();
+
+    $airtable = Mockery::mock(AirtableService::class);
+    $airtable->shouldReceive('getActByNumber')->with('15')->andReturn([
+        'id' => 'recABC',
+        'fields' => [],
+    ])->byDefault();
+
+    $drive = Mockery::mock(GoogleDriveService::class);
+    $drive->shouldReceive('subfolderHasFiles')->with('sub-scans')->andReturn(true);
+    // Sibling still empty — sibling check finds nothing
+    $drive->shouldReceive('subfolderHasFiles')->with('sub-photos')->andReturn(false);
+    $drive->shouldReceive('setFolderColorAsUser')->andReturn(null)->byDefault();
+    $drive->shouldReceive('getFileMetadata')->andReturn([
+        'mimeType' => 'application/vnd.google-apps.folder',
+        'parents' => ['act-folder-1'],
+    ])->byDefault();
+
+    $service = makeWatcherService($this->state, $airtable, $drive, events: $events);
+    $service->process(['sub-scans']);
+
+    expect($this->state->getSubfolderState('sub-scans'))->toBe('full');
+    expect($this->state->getSubfolderState('sub-photos'))->toBe('empty');
+});

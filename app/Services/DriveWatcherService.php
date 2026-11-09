@@ -105,6 +105,34 @@ class DriveWatcherService
             $this->updateSubfolderColor($id, $hasFiles, $dryRun);
         }
 
+        // For every ACT touched by this batch, spot-check any sibling subfolders
+        // still marked empty — catches direct Drive uploads that the change feed
+        // fired on a sibling but not on the actual target subfolder (e.g. photos).
+        foreach (array_keys($actFoldersDirty) as $dirtyActFolderId) {
+            foreach ($this->state->getSubfolderIndex() as $siblingId => $sibling) {
+                if ($sibling['act_folder_id'] !== $dirtyActFolderId) {
+                    continue;
+                }
+
+                $siblingState = $this->state->getSubfolderState($siblingId);
+
+                if ($siblingState !== 'empty' && $siblingState !== null) {
+                    continue; // already full / grace / removed — skip
+                }
+
+                if (! $this->driveService->subfolderHasFiles($siblingId)) {
+                    continue;
+                }
+
+                Log::info("DriveWatcherService: sibling check found files in [{$sibling['name']}] — flipping to full");
+
+                if (! $dryRun) {
+                    $this->state->setSubfolderState($siblingId, 'full');
+                    $this->updateSubfolderColor($siblingId, true, $dryRun);
+                }
+            }
+        }
+
         // Check grace timers even when no new changes arrived for them
         $this->processGraceTimers($nowMs, $dryRun, $actFoldersDirty);
 
