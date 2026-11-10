@@ -597,7 +597,7 @@ class DashboardController
             return response()->json(['error' => 'სკანების ატვირთვა უკვე მიმდინარეობს'], 409);
         }
 
-        $request->validate(['zip' => 'required|file|mimes:zip|max:512000']);
+        $request->validate(['zip' => 'required|file|mimes:zip']);
 
         $path = $request->file('zip')->store('staging/scans', 'local');
         $localPath = storage_path('app/private/'.$path);
@@ -645,7 +645,7 @@ class DashboardController
             return response()->json(['error' => 'ფოტოების ატვირთვა უკვე მიმდინარეობს'], 409);
         }
 
-        $request->validate(['zip' => 'required|file|mimes:zip|max:512000']);
+        $request->validate(['zip' => 'required|file|mimes:zip']);
 
         $path = $request->file('zip')->store('staging/photos', 'local');
         $localPath = storage_path('app/private/'.$path);
