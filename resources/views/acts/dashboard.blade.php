@@ -756,6 +756,10 @@
 </head>
 
 <body class="is-loading">
+    <div id="upload-warning-banner"
+        style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;background:#d97706;color:#fff;text-align:center;padding:10px;font-size:13px;font-weight:600;">
+        ⚠️ ატვირთვა მიმდინარეობს — გვერდის განახლება შეაჩერებს პროცესს
+    </div>
     <div id="pre-spinner">
         <div id="pre-spinner-ring"></div>
     </div>
@@ -1929,6 +1933,7 @@
                 return;
             }
             window._uploadInProgress = true;
+            document.getElementById('upload-warning-banner').style.display = 'block';
             const btn = document.querySelector('[onclick="startScansUpload()"]');
             btn.disabled = true;
             btn.textContent = '⏳…';
@@ -1970,6 +1975,7 @@
                 return;
             }
             window._uploadInProgress = true;
+            document.getElementById('upload-warning-banner').style.display = 'block';
             const btn = document.querySelector('[onclick="startPhotosUpload()"]');
             if (btn) {
                 btn.disabled = true;
