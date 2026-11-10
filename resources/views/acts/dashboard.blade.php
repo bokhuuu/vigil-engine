@@ -960,13 +960,24 @@
 
         {{-- Excel --}}
         @if ($role === 'manager')
-            <div class="biznes-filters">
-                <a href="{{ request()->fullUrlWithQuery(['excel' => $activeExcel === 'entered' ? null : 'entered']) }}"
-                    class="biznes-btn {{ $activeExcel === 'entered' ? 'active' : '' }}">📊 Excel-შია</a>
-            </div>
-            <div class="biznes-filters">
-                <a href="{{ request()->fullUrlWithQuery(['excel' => $activeExcel === 'not_entered' ? null : 'not_entered']) }}"
-                    class="biznes-btn {{ $activeExcel === 'not_entered' ? 'active' : '' }}">📊 Excel-ში არ არის</a>
+            <div class="filter-group" id="fg-excel">
+                <div class="filter-toggle {{ $activeExcel ? 'has-active' : '' }}" onclick="toggleFilter('excel')">
+                    📊 Excel
+                    {{ $activeExcel === 'entered' ? '· შეტანილია' : ($activeExcel === 'not_entered' ? '· არ არის შეტანილი' : '') }}
+                    <span>▼</span>
+                </div>
+                <div class="filter-dropdown" id="fd-excel">
+                    <div class="filter-dropdown-label">Excel სტატუსი</div>
+                    <div class="filter-options">
+                        <a href="{{ request()->fullUrlWithQuery(['excel' => null]) }}"
+                            class="filter-opt {{ !$activeExcel ? 'active' : '' }}">ყველა</a>
+                        <a href="{{ request()->fullUrlWithQuery(['excel' => $activeExcel === 'entered' ? null : 'entered']) }}"
+                            class="filter-opt {{ $activeExcel === 'entered' ? 'active' : '' }}">📊 Excel-შია</a>
+                        <a href="{{ request()->fullUrlWithQuery(['excel' => $activeExcel === 'not_entered' ? null : 'not_entered']) }}"
+                            class="filter-opt {{ $activeExcel === 'not_entered' ? 'active' : '' }}">⏳ Excel-ში არ
+                            არის</a>
+                    </div>
+                </div>
             </div>
         @endif
 
