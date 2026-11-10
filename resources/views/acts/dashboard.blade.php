@@ -1978,7 +1978,6 @@
             const btn = document.querySelector('[onclick="startPhotosUpload()"]');
             if (btn) {
                 btn.disabled = true;
-                git commit - m "fix: show warning banner and block auto-reload during ZIP upload
                 btn.textContent = '⏳…';
             }
             const fd = new FormData();
