@@ -1677,34 +1677,34 @@
                         @endif
                     </div>
                 </div>
+                <div style="border:1px solid #e4e8f0;border-radius:8px;padding:14px 16px;margin-bottom:10px;">
+                    <div style="font-size:12px;font-weight:600;color:#1a1f36;margin-bottom:4px;">📸 ფოტოების ატვირთვა
+                    </div>
+                    <div style="font-size:11px;color:#8892a4;margin-bottom:6px;">ZIP ჩააგდე staging საქაღალდეში, შემდეგ
+                        გაუშვი.</div>
+                    <div style="margin-bottom:10px;">
+                        <a href="https://drive.google.com/drive/folders/{{ config('services.google_drive.staging.photos') }}"
+                            target="_blank" style="font-size:10px;color:#2563eb;text-decoration:none;">📁
+                            staging/photos →</a>
+                    </div>
+                    <div id="photos-upload-status">
+                        @if ($uploadPhotosRunning)
+                            <div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…</div>
+                        @else
+                            <button onclick="startPhotosUpload()"
+                                style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">
+                                📸 გაშვება
+                            </button>
+                            <form id="upload-photos-form" method="POST"
+                                action="{{ route('dashboard.upload.photos') }}" style="display:none;">
+                                @csrf
+                            </form>
+                        @endif
+                    </div>
+                </div>
             </div>
 
         </div>
-    </div>
-
-    <div style="border:1px solid #e4e8f0;border-radius:8px;padding:14px 16px;margin-bottom:10px;">
-        <div style="font-size:12px;font-weight:600;color:#1a1f36;margin-bottom:4px;">📸 ფოტოების ატვირთვა</div>
-        <div style="font-size:11px;color:#8892a4;margin-bottom:6px;">ZIP ჩააგდე staging საქაღალდეში, შემდეგ გაუშვი.
-        </div>
-        <div style="margin-bottom:10px;">
-            <a href="https://drive.google.com/drive/folders/{{ config('services.google_drive.staging.photos') }}"
-                target="_blank" style="font-size:10px;color:#2563eb;text-decoration:none;">📁 staging/photos →</a>
-        </div>
-        <div id="photos-upload-status">
-            @if ($uploadPhotosRunning)
-                <div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…</div>
-            @else
-                <button onclick="startPhotosUpload()"
-                    style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">
-                    📸 გაშვება
-                </button>
-                <form id="upload-photos-form" method="POST" action="{{ route('dashboard.upload.photos') }}"
-                    style="display:none;">
-                    @csrf
-                </form>
-            @endif
-        </div>
-    </div>
     </div>
 
     {{-- Excel entry confirm modal --}}
@@ -1724,7 +1724,10 @@
         </div>
     </div>
 
-    @php $uploadScansRoute = route('dashboard.upload.scans'); @endphp
+    @php
+        $uploadScansRoute = route('dashboard.upload.scans');
+        $uploadPhotosRoute = route('dashboard.upload.photos');
+    @endphp
 
     <script>
         let _excelBtn = null;
@@ -1960,6 +1963,42 @@
                     }
                 })
                 .catch(() => setTimeout(pollScansUploadStatus, 8000));
+        }
+
+        function startPhotosUpload() {
+            const btn = document.querySelector('[onclick="startPhotosUpload()"]');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '⏳…';
+            }
+            const form = document.getElementById('upload-photos-form');
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                },
+                body: new FormData(form),
+            }).then(() => pollPhotosUploadStatus());
+        }
+
+        function pollPhotosUploadStatus() {
+            fetch('/dashboard/upload/status?type=photos')
+                .then(r => r.json())
+                .then(data => {
+                    const box = document.getElementById('photos-upload-status');
+                    if (!box) return;
+                    if (data.running) {
+                        box.innerHTML = '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…</div>';
+                        setTimeout(pollPhotosUploadStatus, 5000);
+                    } else {
+                        box.innerHTML =
+                            '<div style="font-size:11px;color:#4ade80;margin-bottom:6px;">✅ ატვირთვა დასრულდა</div>' +
+                            '<button onclick="startPhotosUpload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📸 გაშვება</button>' +
+                            '<form id="upload-photos-form" method="POST" action="{{ $uploadPhotosRoute }}" style="display:none;"><input type="hidden" name="_token" value="{{ csrf_token() }}"></form>';
+                    }
+                })
+                .catch(() => setTimeout(pollPhotosUploadStatus, 8000));
         }
 
         document.getElementById('tools-modal')?.addEventListener('click', e => {
