@@ -1327,7 +1327,7 @@
         setInterval(_updateCountdown, 1000);
 
         setInterval(() => {
-            if (!_hasActiveFilters() && Date.now() >= _reloadAt) {
+            if (!_hasActiveFilters() && Date.now() >= _reloadAt && !window._uploadInProgress) {
                 window.location.reload();
             }
         }, 5000);
@@ -1922,21 +1922,21 @@
                 alert('აირჩიე ZIP ფაილი');
                 return;
             }
+            window._uploadInProgress = true;
             const btn = document.querySelector('[onclick="startScansUpload()"]');
-            if (btn) {
-                btn.disabled = true;
-                btn.textContent = '⏳…';
-            }
-            const fd = new FormData();
-            fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-            fd.append('zip', fileInput.files[0]);
-            fetch('{{ route('dashboard.upload.scans') }}', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                },
-                body: fd,
-            }).then(() => pollScansUploadStatus());
+            btn.disabled = true;
+            btn.textContent = '⏳…';
+        }
+        const fd = new FormData();
+        fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+        fd.append('zip', fileInput.files[0]);
+        fetch('{{ route('dashboard.upload.scans') }}', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+            },
+            body: fd,
+        }).then(() => pollScansUploadStatus());
         }
 
         function pollScansUploadStatus() {
@@ -1963,6 +1963,7 @@
                 alert('აირჩიე ZIP ფაილი');
                 return;
             }
+            window._uploadInProgress = true;
             const btn = document.querySelector('[onclick="startPhotosUpload()"]');
             if (btn) {
                 btn.disabled = true;
