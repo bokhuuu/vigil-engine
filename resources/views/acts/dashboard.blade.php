@@ -734,10 +734,31 @@
             color: #8892a4;
             letter-spacing: 0.05em;
         }
+
+        #pre-spinner {
+            position: fixed;
+            inset: 0;
+            background: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #pre-spinner-ring {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e4e8f0;
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
     </style>
 </head>
 
 <body class="is-loading">
+    <div id="pre-spinner">
+        <div id="pre-spinner-ring"></div>
+    </div>
     {{-- Page loader --}}
     <div id="page-loader">
         <div class="spinner-ring"></div>
@@ -1339,6 +1360,7 @@
     <script>
         // ── Page loader ─────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('pre-spinner')?.remove();
             document.body.classList.remove('is-loading');
         });
 
