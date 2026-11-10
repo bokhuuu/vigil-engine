@@ -86,6 +86,7 @@ class DriveScansUploadJob implements ShouldQueue
         $totalSkippedExists = 0;
         $totalSkippedNoAct = 0;
         $totalFailed = 0;
+        $uploadedSubfolderIds = [];
 
         foreach ($zips as $zipFile) {
             Log::info("DriveScansUploadJob: processing ZIP [{$zipFile['name']}]");
@@ -195,6 +196,7 @@ class DriveScansUploadJob implements ShouldQueue
                     // Upload via OAuth
                     $drive->uploadFile($skaniFolderId, $basename, $content, 'application/pdf');
                     $totalUploaded++;
+                    $uploadedSubfolderIds[$skaniFolderId] = true;
 
                     Log::info("DriveScansUploadJob: uploaded [{$basename}] to ACT {$actNumber}");
                 } catch (\Throwable $e) {
@@ -216,6 +218,15 @@ class DriveScansUploadJob implements ShouldQueue
                 }
             } else {
                 @unlink($tmpZip);
+            }
+        }
+
+        foreach (array_keys($uploadedSubfolderIds) as $uploadedFolderId) {
+            try {
+                $stateRepo->setSubfolderState($uploadedFolderId, 'full');
+                Log::info("DriveScansUploadJob: marked subfolder [{$uploadedFolderId}] as full in state");
+            } catch (\Throwable $e) {
+                Log::warning("DriveScansUploadJob: could not update state for [{$uploadedFolderId}] — ".$e->getMessage());
             }
         }
 

@@ -100,6 +100,7 @@ class DrivePhotosUploadJob implements ShouldQueue
         $totalSkippedExists = 0;
         $totalSkippedNoAct = 0;
         $totalFailed = 0;
+        $uploadedSubfolderIds = [];
 
         foreach ($zips as $zipFile) {
             Log::info("DrivePhotosUploadJob: processing ZIP [{$zipFile['name']}]");
@@ -213,6 +214,7 @@ class DrivePhotosUploadJob implements ShouldQueue
                     // Upload via OAuth
                     $drive->uploadFile($photosFolderId, $basename, $content, $mimeType);
                     $totalUploaded++;
+                    $uploadedSubfolderIds[$photosFolderId] = true;
 
                     Log::info("DrivePhotosUploadJob: uploaded [{$basename}] to ACT {$actNumber}");
                 } catch (\Throwable $e) {
@@ -234,6 +236,15 @@ class DrivePhotosUploadJob implements ShouldQueue
                 }
             } else {
                 @unlink($tmpZip);
+            }
+        }
+
+        foreach (array_keys($uploadedSubfolderIds) as $uploadedFolderId) {
+            try {
+                $stateRepo->setSubfolderState($uploadedFolderId, 'full');
+                Log::info("DrivePhotosUploadJob: marked subfolder [{$uploadedFolderId}] as full in state");
+            } catch (\Throwable $e) {
+                Log::warning("DrivePhotosUploadJob: could not update state for [{$uploadedFolderId}] — ".$e->getMessage());
             }
         }
 
