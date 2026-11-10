@@ -587,25 +587,25 @@ class DashboardController
      * Dispatch a სკანები upload job (manager only).
      * POST body: mode=skip|replace
      */
-    public function uploadScans(Request $request): RedirectResponse
+    public function uploadScans(Request $request): JsonResponse
     {
         if ($request->attributes->get('vigil_role') !== 'manager') {
             abort(403);
         }
 
         if (Cache::get('upload_scans_running')) {
-            return redirect()->route('dashboard')->with('error', 'სკანების ატვირთვა უკვე მიმდინარეობს');
+            return response()->json(['error' => 'სკანების ატვირთვა უკვე მიმდინარეობს'], 409);
         }
 
-        $mode = $request->input('mode', 'skip');
-        if (! in_array($mode, ['skip', 'replace'], true)) {
-            $mode = 'skip';
-        }
+        $request->validate(['zip' => 'required|file|mimes:zip|max:512000']);
+
+        $path = $request->file('zip')->store('staging/scans', 'local');
+        $localPath = storage_path('app/private/'.$path);
 
         Cache::put('upload_scans_running', true, now()->addMinutes(60));
-        DriveScansUploadJob::dispatch($mode);
+        DriveScansUploadJob::dispatch('skip', $localPath);
 
-        return redirect()->route('dashboard')->with('success', '⏳ სკანების ატვირთვა დაიწყო');
+        return response()->json(['started' => true]);
     }
 
     /**

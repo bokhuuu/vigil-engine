@@ -35,6 +35,10 @@ class DrivePhotosUploadJob implements ShouldQueue
         'bmp' => 'image/bmp',
     ];
 
+    public function __construct(
+        public readonly ?string $localZipPath = null,
+    ) {}
+
     public function handle(
         DriveWatcherStateRepository $stateRepo,
         GoogleDriveService $drive,
@@ -62,31 +66,34 @@ class DrivePhotosUploadJob implements ShouldQueue
             }
         }
 
-        // List files in staging/photos/
-        $stagingFiles = $drive->listFilesInFolder($stagingFolderId);
+        // Build ZIP list — either local upload or Drive staging
+        if ($this->localZipPath !== null) {
+            $zips = [['id' => null, 'name' => basename($this->localZipPath), 'localPath' => $this->localZipPath]];
+        } else {
+            $stagingFiles = $drive->listFilesInFolder($stagingFolderId);
 
-        $zips = array_values(array_filter(
-            $stagingFiles,
-            fn (array $f) => strtolower(pathinfo($f['name'], PATHINFO_EXTENSION)) === 'zip'
-        ));
+            $zips = array_values(array_filter(
+                $stagingFiles,
+                fn (array $f) => strtolower(pathinfo($f['name'], PATHINFO_EXTENSION)) === 'zip'
+            ));
 
-        $nonZips = array_values(array_filter(
-            $stagingFiles,
-            fn (array $f) => strtolower(pathinfo($f['name'], PATHINFO_EXTENSION)) !== 'zip'
-        ));
+            $nonZips = array_values(array_filter(
+                $stagingFiles,
+                fn (array $f) => strtolower(pathinfo($f['name'], PATHINFO_EXTENSION)) !== 'zip'
+            ));
 
-        // Alert about unexpected non-ZIP files
-        foreach ($nonZips as $f) {
-            Log::warning("DrivePhotosUploadJob: unexpected non-ZIP file in staging: {$f['name']}");
-            $telegram->sendToGroup("⚠️ სტეიჯინგში მოულოდნელი ფაილი (არ არის ZIP): {$f['name']}");
-        }
+            foreach ($nonZips as $f) {
+                Log::warning("DrivePhotosUploadJob: unexpected non-ZIP file in staging: {$f['name']}");
+                $telegram->sendToGroup("⚠️ სტეიჯინგში მოულოდნელი ფაილი (არ არის ZIP): {$f['name']}");
+            }
 
-        if (empty($zips)) {
-            Log::info('DrivePhotosUploadJob: no ZIP files found in staging — aborting');
-            $telegram->sendToGroup('⚠️ ფოტოების ატვირთვა: სტეიჯინგში ZIP ფაილი არ არის');
-            Cache::forget('upload_photos_running');
+            if (empty($zips)) {
+                Log::info('DrivePhotosUploadJob: no ZIP files found in staging — aborting');
+                $telegram->sendToGroup('⚠️ ფოტოების ატვირთვა: სტეიჯინგში ZIP ფაილი არ არის');
+                Cache::forget('upload_photos_running');
 
-            return;
+                return;
+            }
         }
 
         $totalUploaded = 0;
@@ -97,17 +104,23 @@ class DrivePhotosUploadJob implements ShouldQueue
         foreach ($zips as $zipFile) {
             Log::info("DrivePhotosUploadJob: processing ZIP [{$zipFile['name']}]");
 
-            // Download ZIP to temp file
-            $tmpZip = tempnam(sys_get_temp_dir(), 'vigil_photos_upload_');
+            // Use local path if uploaded directly, otherwise download from Drive
+            if (isset($zipFile['localPath'])) {
+                $tmpZip = $zipFile['localPath'];
+                $deleteTmp = false;
+            } else {
+                $tmpZip = tempnam(sys_get_temp_dir(), 'vigil_photos_upload_');
+                $deleteTmp = true;
 
-            try {
-                $drive->downloadFileTo($zipFile['id'], $tmpZip);
-            } catch (\Throwable $e) {
-                Log::error("DrivePhotosUploadJob: failed to download ZIP [{$zipFile['name']}] — ".$e->getMessage());
-                $telegram->sendToGroup("❌ ZIP გადმოწერა ვერ მოხდა: {$zipFile['name']}");
-                @unlink($tmpZip);
+                try {
+                    $drive->downloadFileTo($zipFile['id'], $tmpZip);
+                } catch (\Throwable $e) {
+                    Log::error("DrivePhotosUploadJob: failed to download ZIP [{$zipFile['name']}] — ".$e->getMessage());
+                    $telegram->sendToGroup("❌ ZIP გადმოწერა ვერ მოხდა: {$zipFile['name']}");
+                    @unlink($tmpZip);
 
-                continue;
+                    continue;
+                }
             }
 
             $zip = new \ZipArchive;
@@ -209,14 +222,18 @@ class DrivePhotosUploadJob implements ShouldQueue
             }
 
             $zip->close();
-            @unlink($tmpZip);
 
-            // Trash the processed ZIP from staging
-            try {
-                $drive->trashFile($zipFile['id']);
-                Log::info("DrivePhotosUploadJob: trashed staging ZIP [{$zipFile['name']}]");
-            } catch (\Throwable $e) {
-                Log::warning("DrivePhotosUploadJob: could not trash staging ZIP [{$zipFile['name']}] — ".$e->getMessage());
+            if ($deleteTmp) {
+                @unlink($tmpZip);
+
+                try {
+                    $drive->trashFile($zipFile['id']);
+                    Log::info("DrivePhotosUploadJob: trashed staging ZIP [{$zipFile['name']}]");
+                } catch (\Throwable $e) {
+                    Log::warning("DrivePhotosUploadJob: could not trash staging ZIP [{$zipFile['name']}] — ".$e->getMessage());
+                }
+            } else {
+                @unlink($tmpZip);
             }
         }
 

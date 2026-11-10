@@ -1654,12 +1654,10 @@
                 <div style="border:1px solid #e4e8f0;border-radius:8px;padding:14px 16px;margin-bottom:10px;">
                     <div style="font-size:12px;font-weight:600;color:#1a1f36;margin-bottom:4px;">📤 სკანების ატვირთვა
                     </div>
-                    <div style="font-size:11px;color:#8892a4;margin-bottom:6px;">ZIP ჩააგდე staging საქაღალდეში, შემდეგ
-                        გაუშვი.</div>
+                    <div style="font-size:11px;color:#8892a4;margin-bottom:6px;">ZIP ფაილი სკანებით (max 500 MB)</div>
                     <div style="margin-bottom:10px;">
-                        <a href="https://drive.google.com/drive/folders/{{ config('services.google_drive.staging.scans') }}"
-                            target="_blank" style="font-size:10px;color:#2563eb;text-decoration:none;">📁
-                            staging/scans →</a>
+                        <input type="file" id="scans-zip-input" accept=".zip"
+                            style="font-size:11px;width:100%;margin-bottom:0;">
                     </div>
                     <div id="scans-upload-status">
                         @if ($uploadScansRunning)
@@ -1669,23 +1667,16 @@
                                 style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">
                                 📤 გაშვება
                             </button>
-                            <form id="upload-scans-form" method="POST"
-                                action="{{ route('dashboard.upload.scans') }}" style="display:none;">
-                                @csrf
-                                <input type="hidden" name="mode" id="scans-upload-mode-hidden" value="skip">
-                            </form>
                         @endif
                     </div>
                 </div>
                 <div style="border:1px solid #e4e8f0;border-radius:8px;padding:14px 16px;margin-bottom:10px;">
                     <div style="font-size:12px;font-weight:600;color:#1a1f36;margin-bottom:4px;">📸 ფოტოების ატვირთვა
                     </div>
-                    <div style="font-size:11px;color:#8892a4;margin-bottom:6px;">ZIP ჩააგდე staging საქაღალდეში, შემდეგ
-                        გაუშვი.</div>
+                    <div style="font-size:11px;color:#8892a4;margin-bottom:6px;">ZIP ფაილი ფოტოებით (max 500 MB)</div>
                     <div style="margin-bottom:10px;">
-                        <a href="https://drive.google.com/drive/folders/{{ config('services.google_drive.staging.photos') }}"
-                            target="_blank" style="font-size:10px;color:#2563eb;text-decoration:none;">📁
-                            staging/photos →</a>
+                        <input type="file" id="photos-zip-input" accept=".zip"
+                            style="font-size:11px;width:100%;margin-bottom:0;">
                     </div>
                     <div id="photos-upload-status">
                         @if ($uploadPhotosRunning)
@@ -1695,10 +1686,6 @@
                                 style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">
                                 📸 გაშვება
                             </button>
-                            <form id="upload-photos-form" method="POST"
-                                action="{{ route('dashboard.upload.photos') }}" style="display:none;">
-                                @csrf
-                            </form>
                         @endif
                     </div>
                 </div>
@@ -1930,19 +1917,25 @@
         }
 
         function startScansUpload() {
+            const fileInput = document.getElementById('scans-zip-input');
+            if (!fileInput || !fileInput.files.length) {
+                alert('აირჩიე ZIP ფაილი');
+                return;
+            }
             const btn = document.querySelector('[onclick="startScansUpload()"]');
             if (btn) {
                 btn.disabled = true;
                 btn.textContent = '⏳…';
             }
-            const form = document.getElementById('upload-scans-form');
-            fetch(form.action, {
+            const fd = new FormData();
+            fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+            fd.append('zip', fileInput.files[0]);
+            fetch('{{ route('dashboard.upload.scans') }}', {
                 method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                     'Accept': 'application/json',
                 },
-                body: new FormData(form),
+                body: fd,
             }).then(() => pollScansUploadStatus());
         }
 
@@ -1958,27 +1951,32 @@
                     } else {
                         box.innerHTML =
                             '<div style="font-size:11px;color:#4ade80;margin-bottom:6px;">✅ ატვირთვა დასრულდა</div>' +
-                            '<button onclick="startScansUpload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📤 გაშვება</button>' +
-                            '<form id="upload-scans-form" method="POST" action="{{ $uploadScansRoute }}" style="display:none;"><input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="mode" id="scans-upload-mode-hidden" value="skip"></form>';
+                            '<button onclick="startScansUpload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📤 გაშვება</button>';
                     }
                 })
                 .catch(() => setTimeout(pollScansUploadStatus, 8000));
         }
 
         function startPhotosUpload() {
+            const fileInput = document.getElementById('photos-zip-input');
+            if (!fileInput || !fileInput.files.length) {
+                alert('აირჩიე ZIP ფაილი');
+                return;
+            }
             const btn = document.querySelector('[onclick="startPhotosUpload()"]');
             if (btn) {
                 btn.disabled = true;
                 btn.textContent = '⏳…';
             }
-            const form = document.getElementById('upload-photos-form');
-            fetch(form.action, {
+            const fd = new FormData();
+            fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+            fd.append('zip', fileInput.files[0]);
+            fetch('{{ route('dashboard.upload.photos') }}', {
                 method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                     'Accept': 'application/json',
                 },
-                body: new FormData(form),
+                body: fd,
             }).then(() => pollPhotosUploadStatus());
         }
 
@@ -1994,8 +1992,7 @@
                     } else {
                         box.innerHTML =
                             '<div style="font-size:11px;color:#4ade80;margin-bottom:6px;">✅ ატვირთვა დასრულდა</div>' +
-                            '<button onclick="startPhotosUpload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📸 გაშვება</button>' +
-                            '<form id="upload-photos-form" method="POST" action="{{ $uploadPhotosRoute }}" style="display:none;"><input type="hidden" name="_token" value="{{ csrf_token() }}"></form>';
+                            '<button onclick="startPhotosUpload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📸 გაშვება</button>';
                     }
                 })
                 .catch(() => setTimeout(pollPhotosUploadStatus, 8000));
