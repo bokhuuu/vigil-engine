@@ -1682,6 +1682,31 @@
         </div>
     </div>
 
+    <div style="border:1px solid #e4e8f0;border-radius:8px;padding:14px 16px;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:600;color:#1a1f36;margin-bottom:4px;">📸 ფოტოების ატვირთვა</div>
+        <div style="font-size:11px;color:#8892a4;margin-bottom:6px;">ZIP ჩააგდე staging საქაღალდეში, შემდეგ გაუშვი.
+        </div>
+        <div style="margin-bottom:10px;">
+            <a href="https://drive.google.com/drive/folders/{{ config('services.google_drive.staging.photos') }}"
+                target="_blank" style="font-size:10px;color:#2563eb;text-decoration:none;">📁 staging/photos →</a>
+        </div>
+        <div id="photos-upload-status">
+            @if ($uploadPhotosRunning)
+                <div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…</div>
+            @else
+                <button onclick="startPhotosUpload()"
+                    style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">
+                    📸 გაშვება
+                </button>
+                <form id="upload-photos-form" method="POST" action="{{ route('dashboard.upload.photos') }}"
+                    style="display:none;">
+                    @csrf
+                </form>
+            @endif
+        </div>
+    </div>
+    </div>
+
     {{-- Excel entry confirm modal --}}
     <div id="excel-modal"
         style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">

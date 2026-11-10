@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\AirtableException;
 use App\Jobs\DriveDownloadJob;
 use App\Jobs\DrivePhotosDownloadJob;
+use App\Jobs\DrivePhotosUploadJob;
 use App\Jobs\DriveRescanJob;
 use App\Jobs\DriveScansUploadJob;
 use App\Models\ActExcelEntry;
@@ -315,6 +316,7 @@ class DashboardController
         $scanSlug = $request->query('scan_range', Cache::get('download_scan_last_slug', 'all'));
         $downloadScanRunning = (bool) Cache::get("download_scan_running:{$scanSlug}", false);
         $uploadScansRunning = (bool) Cache::get('upload_scans_running');
+        $uploadPhotosRunning = (bool) Cache::get('upload_photos_running');
         $downloadScanReady = Cache::has("download_scan_ready_path:{$scanSlug}");
         $downloadScanProgress = Cache::get("download_scan_progress:{$scanSlug}");
 
@@ -350,6 +352,7 @@ class DashboardController
             'downloadProgress' => $downloadProgress,
             'downloadScanRunning' => $downloadScanRunning,
             'uploadScansRunning' => $uploadScansRunning,
+            'uploadPhotosRunning' => $uploadPhotosRunning,
             'downloadScanReady' => $downloadScanReady,
             'downloadScanProgress' => $downloadScanProgress,
             'scanSlug' => $scanSlug,
@@ -619,6 +622,32 @@ class DashboardController
             ]);
         }
 
+        if ($type === 'photos') {
+            return response()->json([
+                'running' => (bool) Cache::get('upload_photos_running', false),
+            ]);
+        }
+
         return response()->json(['running' => false]);
+    }
+
+    /**
+     * Dispatch a ფოტოები upload job (manager only).
+     * POST /dashboard/upload/photos
+     */
+    public function uploadPhotos(Request $request): RedirectResponse
+    {
+        if ($request->attributes->get('vigil_role') !== 'manager') {
+            abort(403);
+        }
+
+        if (Cache::get('upload_photos_running')) {
+            return redirect()->route('dashboard')->with('error', 'ფოტოების ატვირთვა უკვე მიმდინარეობს');
+        }
+
+        Cache::put('upload_photos_running', true, now()->addHours(2));
+        DrivePhotosUploadJob::dispatch();
+
+        return redirect()->route('dashboard')->with('success', '⏳ ფოტოების ატვირთვა დაიწყო');
     }
 }
