@@ -1364,6 +1364,12 @@
             document.body.classList.remove('is-loading');
         });
 
+        window.addEventListener('beforeunload', function(e) {
+            if (window._uploadInProgress) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
         // ── Rescan modal ────────────────────────────────────────────
         function openRescanModal() {
             document.getElementById('rescan-modal').style.display = 'flex';
