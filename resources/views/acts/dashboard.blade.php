@@ -1937,7 +1937,6 @@
             const btn = document.querySelector('[onclick="startScansUpload()"]');
             btn.disabled = true;
             btn.textContent = '⏳…';
-        }
         const fd = new FormData();
         fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
         fd.append('zip', fileInput.files[0]);
@@ -1948,8 +1947,8 @@
             },
             body: fd,
         }).then(() => pollScansUploadStatus());
-        }
 
+        }
         function pollScansUploadStatus() {
             fetch('/dashboard/upload/status')
                 .then(r => r.json())
@@ -1979,6 +1978,7 @@
             const btn = document.querySelector('[onclick="startPhotosUpload()"]');
             if (btn) {
                 btn.disabled = true;
+                git commit - m "fix: show warning banner and block auto-reload during ZIP upload
                 btn.textContent = '⏳…';
             }
             const fd = new FormData();
