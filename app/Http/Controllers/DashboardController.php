@@ -635,19 +635,24 @@ class DashboardController
      * Dispatch a ფოტოები upload job (manager only).
      * POST /dashboard/upload/photos
      */
-    public function uploadPhotos(Request $request): RedirectResponse
+    public function uploadPhotos(Request $request): JsonResponse
     {
         if ($request->attributes->get('vigil_role') !== 'manager') {
             abort(403);
         }
 
         if (Cache::get('upload_photos_running')) {
-            return redirect()->route('dashboard')->with('error', 'ფოტოების ატვირთვა უკვე მიმდინარეობს');
+            return response()->json(['error' => 'ფოტოების ატვირთვა უკვე მიმდინარეობს'], 409);
         }
 
-        Cache::put('upload_photos_running', true, now()->addHours(2));
-        DrivePhotosUploadJob::dispatch();
+        $request->validate(['zip' => 'required|file|mimes:zip|max:512000']);
 
-        return redirect()->route('dashboard')->with('success', '⏳ ფოტოების ატვირთვა დაიწყო');
+        $path = $request->file('zip')->store('staging/photos', 'local');
+        $localPath = storage_path('app/private/'.$path);
+
+        Cache::put('upload_photos_running', true, now()->addHours(2));
+        DrivePhotosUploadJob::dispatch($localPath);
+
+        return response()->json(['started' => true]);
     }
 }
