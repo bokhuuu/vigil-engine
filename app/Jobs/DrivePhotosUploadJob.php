@@ -155,9 +155,16 @@ class DrivePhotosUploadJob implements ShouldQueue
 
                 // Extract ACT number from the TOP-LEVEL folder name only.
                 // e.g. "აქტი619-1/606-თან/photo.jpg" → top segment "აქტი619-1" → ACT "619"
-                // We ignore subfolder names entirely — only the parent folder determines the ACT.
                 $segments = explode('/', $filename);
                 $topFolder = $segments[0];
+
+                // Build the relative path inside ფოტოები, preserving subfolders.
+                // e.g. "აქტი619-1/606-თან/photo.jpg" → relativeDir = "606-თან"
+                // e.g. "აქტი619-1/photo.jpg"         → relativeDir = "" (upload directly to ფოტოები)
+                $innerSegments = array_slice($segments, 1); // remove top folder
+                $relativeDir = count($innerSegments) > 1
+                    ? implode('/', array_slice($innerSegments, 0, -1)) // all segments except filename
+                    : '';
 
                 // Strip anything in parentheses, then grab only the first digit sequence (no dash suffix)
                 $cleanedTop = preg_replace('/\([^)]*\)/', '', $topFolder) ?? $topFolder;
@@ -185,12 +192,21 @@ class DrivePhotosUploadJob implements ShouldQueue
                     $subfolders = $drive->listChildFolders($actFolderId);
                     $photosFolderId = $subfolders['ფოტოები'] ?? $drive->findOrCreateFolder('ფოტოები', $actFolderId);
 
-                    // Skip mode: check if a file with the same name already exists
-                    $existing = $drive->listFilesInFolder($photosFolderId);
+                    // Resolve the exact target folder (preserving subfolder structure from ZIP)
+                    // e.g. relativeDir = "606-თან" → find/create ფოტოები/606-თან
+                    // e.g. relativeDir = ""         → upload directly to ფოტოები
+                    if ($relativeDir !== '') {
+                        $targetFolderId = $drive->ensureSubfolderPathFromId($photosFolderId, $relativeDir);
+                    } else {
+                        $targetFolderId = $photosFolderId;
+                    }
+
+                    // Skip mode: check if a file with the same name already exists in the target folder
+                    $existing = $drive->listFilesInFolder($targetFolderId);
                     $existingNames = array_column($existing, 'name');
 
                     if (in_array($basename, $existingNames, true)) {
-                        Log::info("DrivePhotosUploadJob: [{$basename}] already exists in ACT {$actNumber} ფოტოები — skipping");
+                        Log::info("DrivePhotosUploadJob: [{$basename}] already exists in ACT {$actNumber}/{$relativeDir} — skipping");
                         $totalSkippedExists++;
 
                         continue;
@@ -215,12 +231,12 @@ class DrivePhotosUploadJob implements ShouldQueue
 
                     $mimeType = self::MIME_MAP[$ext] ?? 'application/octet-stream';
 
-                    // Upload via OAuth
-                    $drive->uploadFile($photosFolderId, $basename, $content, $mimeType);
+                    // Upload via OAuth into the correct (sub)folder
+                    $drive->uploadFile($targetFolderId, $basename, $content, $mimeType);
                     $totalUploaded++;
-                    $uploadedSubfolderIds[$photosFolderId] = true;
+                    $uploadedSubfolderIds[$photosFolderId] = true; // always track root ფოტოები
 
-                    Log::info("DrivePhotosUploadJob: uploaded [{$basename}] to ACT {$actNumber}");
+                    Log::info("DrivePhotosUploadJob: uploaded [{$basename}] to ACT {$actNumber}/{$relativeDir}");
                 } catch (\Throwable $e) {
                     Log::warning("DrivePhotosUploadJob: failed [{$basename}] ACT {$actNumber} — ".$e->getMessage());
                     $totalFailed++;

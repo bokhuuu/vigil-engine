@@ -389,6 +389,44 @@ class GoogleDriveService
     }
 
     /**
+     * Walk a slash-separated subfolder path starting from a folder ID,
+     * creating any missing folders along the way. Returns the final folder ID.
+     * Uses OAuth user account (same as uploadFile).
+     */
+    public function ensureSubfolderPathFromId(string $parentId, string $subfolderPath): string
+    {
+        foreach (explode('/', $subfolderPath) as $segment) {
+            if ($segment === '') {
+                continue;
+            }
+
+            $escaped = str_replace(['\\', "'"], ['\\\\', "\\'"], $segment);
+
+            $response = $this->getUserDrive()->files->listFiles([
+                'q' => "name = '{$escaped}' and '{$parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
+                'fields' => 'files(id)',
+                'pageSize' => 1,
+            ]);
+
+            $existing = ($response->getFiles()[0] ?? null)?->getId();
+
+            if ($existing !== null) {
+                $parentId = $existing;
+            } else {
+                $folder = $this->getUserDrive()->files->create(new DriveFile([
+                    'name' => $segment,
+                    'mimeType' => 'application/vnd.google-apps.folder',
+                    'parents' => [$parentId],
+                ]), ['fields' => 'id']);
+
+                $parentId = $folder->getId();
+            }
+        }
+
+        return $parentId;
+    }
+
+    /**
      * Upload a file to a Drive folder and return its file ID.
      */
     public function uploadFile(string $parentFolderId, string $filename, string $content, string $mimeType): string
