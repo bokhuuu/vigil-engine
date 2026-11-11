@@ -1932,8 +1932,8 @@
                 alert('აირჩიე ZIP ფაილი');
                 return;
             }
-            if (fileInput.files[0].size > 2 * 1024 * 1024 * 1024) {
-                alert('ფაილი 2GB-ზე მეტია. მაქსიმალური ზომა: 2GB.');
+            if (fileInput.files[0].size > 5 * 1024 * 1024 * 1024) {
+                alert('ფაილი 5GB-ზე მეტია. მაქსიმალური ზომა: 5GB.');
                 return;
             }
             window._uploadInProgress = true;
@@ -1980,8 +1980,8 @@
                 alert('აირჩიე ZIP ფაილი');
                 return;
             }
-            if (fileInput.files[0].size > 2 * 1024 * 1024 * 1024) {
-                alert('ფაილი 2GB-ზე მეტია. მაქსიმალური ზომა: 2GB.');
+            if (fileInput.files[0].size > 5 * 1024 * 1024 * 1024) {
+                alert('ფაილი 5GB-ზე მეტია. მაქსიმალური ზომა: 5GB.');
                 return;
             }
             window._uploadInProgress = true;
