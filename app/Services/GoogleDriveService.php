@@ -284,7 +284,7 @@ class GoogleDriveService
      */
     protected function trashFolder(string $folderId): void
     {
-        $this->drive()->files->update($folderId, new DriveFile(['trashed' => true]));
+        $this->getUserDrive()->files->update($folderId, new DriveFile(['trashed' => true]));
     }
 
     /**
@@ -627,7 +627,7 @@ class GoogleDriveService
 
     public function trashFolderChildren(string $folderId): void
     {
-        $drive = $this->drive();
+        $drive = $this->getUserDrive();
         $pageToken = null;
 
         do {
@@ -657,7 +657,7 @@ class GoogleDriveService
      */
     public function trashFile(string $fileId): void
     {
-        $this->drive()->files->update($fileId, new DriveFile(['trashed' => true]));
+        $this->getUserDrive()->files->update($fileId, new DriveFile(['trashed' => true]));
     }
 
     /**
