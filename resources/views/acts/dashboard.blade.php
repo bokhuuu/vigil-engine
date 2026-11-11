@@ -1932,6 +1932,10 @@
                 alert('აირჩიე ZIP ფაილი');
                 return;
             }
+            if (fileInput.files[0].size > 2 * 1024 * 1024 * 1024) {
+                alert('ფაილი 2GB-ზე მეტია. მაქსიმალური ზომა: 2GB.');
+                return;
+            }
             window._uploadInProgress = true;
             document.getElementById('upload-warning-banner').style.display = 'block';
             const btn = document.querySelector('[onclick="startScansUpload()"]');
@@ -1974,6 +1978,10 @@
             const fileInput = document.getElementById('photos-zip-input');
             if (!fileInput || !fileInput.files.length) {
                 alert('აირჩიე ZIP ფაილი');
+                return;
+            }
+            if (fileInput.files[0].size > 2 * 1024 * 1024 * 1024) {
+                alert('ფაილი 2GB-ზე მეტია. მაქსიმალური ზომა: 2GB.');
                 return;
             }
             window._uploadInProgress = true;
