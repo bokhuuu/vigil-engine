@@ -1461,11 +1461,11 @@
             ];
 
             if (!folder) {
-                alert('აირჩიე საქაღალდე');
+                showToast('⚠️ აირჩიე საქაღალდე');
                 return;
             }
             if (!files.length) {
-                alert('აირჩიე ფაილ(ებ)ი');
+                showToast('⚠️ აირჩიე ფაილ(ებ)ი');
                 return;
             }
 
@@ -1770,7 +1770,7 @@
             } catch (err) {
                 btn.disabled = false;
                 btn.textContent = '📊 შეტანა';
-                alert('შეცდომა — სცადეთ თავიდან');
+                showToast('❌ შეცდომა — სცადეთ თავიდან');
             }
         }
 
@@ -1929,11 +1929,11 @@
         function startScansUpload() {
             const fileInput = document.getElementById('scans-zip-input');
             if (!fileInput || !fileInput.files.length) {
-                alert('აირჩიე ZIP ფაილი');
+                showToast('⚠️ აირჩიე ZIP ფაილი');
                 return;
             }
             if (fileInput.files[0].size > 5 * 1024 * 1024 * 1024) {
-                alert('ფაილი 5GB-ზე მეტია. მაქსიმალური ზომა: 5GB.');
+                showToast('⚠️ ფაილი 5GB-ზე მეტია. მაქსიმალური ზომა: 5GB.');
                 return;
             }
             window._uploadInProgress = true;
@@ -1977,11 +1977,11 @@
         function startPhotosUpload() {
             const fileInput = document.getElementById('photos-zip-input');
             if (!fileInput || !fileInput.files.length) {
-                alert('აირჩიე ZIP ფაილი');
+                showToast('⚠️ აირჩიე ZIP ფაილი');
                 return;
             }
             if (fileInput.files[0].size > 5 * 1024 * 1024 * 1024) {
-                alert('ფაილი 5GB-ზე მეტია. მაქსიმალური ზომა: 5GB.');
+                showToast('⚠️ ფაილი 5GB-ზე მეტია. მაქსიმალური ზომა: 5GB.');
                 return;
             }
             window._uploadInProgress = true;
@@ -2028,6 +2028,18 @@
                 document.getElementById('tools-modal').style.display = 'none';
             }
         });
+
+        function showToast(message) {
+            const existing = document.getElementById('vigil-toast');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.id = 'vigil-toast';
+            toast.textContent = message;
+            toast.style.cssText =
+                'position:fixed;top:0;left:0;right:0;z-index:999999;background:#d97706;color:#fff;text-align:center;padding:10px;font-size:13px;font-weight:600;animation:slideDown .2s ease;';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
     </script>
 
 </body>
