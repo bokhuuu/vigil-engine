@@ -1937,18 +1937,19 @@
             const btn = document.querySelector('[onclick="startScansUpload()"]');
             btn.disabled = true;
             btn.textContent = '⏳…';
-        const fd = new FormData();
-        fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-        fd.append('zip', fileInput.files[0]);
-        fetch('{{ route('dashboard.upload.scans') }}', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-            },
-            body: fd,
-        }).then(() => pollScansUploadStatus());
+            const fd = new FormData();
+            fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+            fd.append('zip', fileInput.files[0]);
+            fetch('{{ route('dashboard.upload.scans') }}', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                },
+                body: fd,
+            }).then(() => pollScansUploadStatus());
 
         }
+
         function pollScansUploadStatus() {
             fetch('/dashboard/upload/status')
                 .then(r => r.json())
@@ -1962,6 +1963,8 @@
                         box.innerHTML =
                             '<div style="font-size:11px;color:#4ade80;margin-bottom:6px;">✅ ატვირთვა დასრულდა</div>' +
                             '<button onclick="startScansUpload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📤 გაშვება</button>';
+                        window._uploadInProgress = false;
+                        document.getElementById('upload-warning-banner').style.display = 'none';
                     }
                 })
                 .catch(() => setTimeout(pollScansUploadStatus, 8000));
@@ -2005,6 +2008,8 @@
                         box.innerHTML =
                             '<div style="font-size:11px;color:#4ade80;margin-bottom:6px;">✅ ატვირთვა დასრულდა</div>' +
                             '<button onclick="startPhotosUpload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📸 გაშვება</button>';
+                        window._uploadInProgress = false;
+                        document.getElementById('upload-warning-banner').style.display = 'none';
                     }
                 })
                 .catch(() => setTimeout(pollPhotosUploadStatus, 8000));
