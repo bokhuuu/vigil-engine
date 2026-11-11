@@ -109,3 +109,5 @@ jobs:
             cd /var/www/vigil-engine && php artisan config:cache
             cd /var/www/vigil-engine && php artisan route:cache
             cd /var/www/vigil-engine && php artisan horizon:terminate
+            docker builder prune -f
+            journalctl --vacuum-size=500M
