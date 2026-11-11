@@ -1936,6 +1936,10 @@
                 showToast('⚠️ ფაილი 5GB-ზე მეტია. მაქსიმალური ზომა: 5GB.');
                 return;
             }
+            if (!fileInput.files[0].name.toLowerCase().endsWith('.zip')) {
+                showToast('⚠️ მხოლოდ ZIP ფაილია დაშვებული');
+                return;
+            }
             window._uploadInProgress = true;
             document.getElementById('upload-warning-banner').style.display = 'block';
             const btn = document.querySelector('[onclick="startScansUpload()"]');
@@ -1950,7 +1954,25 @@
                     'Accept': 'application/json',
                 },
                 body: fd,
-            }).then(() => pollScansUploadStatus());
+            }).then(async res => {
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    const msg = data?.message || (data?.errors?.zip?.[0]) || 'სერვერის შეცდომა';
+                    showToast('❌ ' + msg);
+                    btn.disabled = false;
+                    btn.textContent = '📤 გაშვება';
+                    window._uploadInProgress = false;
+                    document.getElementById('upload-warning-banner').style.display = 'none';
+                    return;
+                }
+                pollScansUploadStatus();
+            }).catch(() => {
+                showToast('❌ ატვირთვა ვერ მოხერხდა');
+                btn.disabled = false;
+                btn.textContent = '📤 გაშვება';
+                window._uploadInProgress = false;
+                document.getElementById('upload-warning-banner').style.display = 'none';
+            });
 
         }
 
@@ -1984,6 +2006,10 @@
                 showToast('⚠️ ფაილი 5GB-ზე მეტია. მაქსიმალური ზომა: 5GB.');
                 return;
             }
+            if (!fileInput.files[0].name.toLowerCase().endsWith('.zip')) {
+                showToast('⚠️ მხოლოდ ZIP ფაილია დაშვებული');
+                return;
+            }
             window._uploadInProgress = true;
             document.getElementById('upload-warning-banner').style.display = 'block';
             const btn = document.querySelector('[onclick="startPhotosUpload()"]');
@@ -2000,7 +2026,29 @@
                     'Accept': 'application/json',
                 },
                 body: fd,
-            }).then(() => pollPhotosUploadStatus());
+            }).then(async res => {
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    const msg = data?.message || (data?.errors?.zip?.[0]) || 'სერვერის შეცდომა';
+                    showToast('❌ ' + msg);
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = '📸 გაშვება';
+                    }
+                    window._uploadInProgress = false;
+                    document.getElementById('upload-warning-banner').style.display = 'none';
+                    return;
+                }
+                pollPhotosUploadStatus();
+            }).catch(() => {
+                showToast('❌ ატვირთვა ვერ მოხერხდა');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = '📸 გაშვება';
+                }
+                window._uploadInProgress = false;
+                document.getElementById('upload-warning-banner').style.display = 'none';
+            });
         }
 
         function pollPhotosUploadStatus() {
