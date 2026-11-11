@@ -153,13 +153,17 @@ class DrivePhotosUploadJob implements ShouldQueue
 
                 $basename = basename($filename);
 
-                // Extract ACT number from filename.
-                // Step 1: strip anything in parentheses (e.g. copy markers like "(2)")
-                // Step 2: grab first digit sequence, optionally with a dash (e.g. 505 or 505-1)
-                $cleaned = preg_replace('/\([^)]*\)/', '', $filename) ?? $filename;
+                // Extract ACT number from the TOP-LEVEL folder name only.
+                // e.g. "აქტი619-1/606-თან/photo.jpg" → top segment "აქტი619-1" → ACT "619"
+                // We ignore subfolder names entirely — only the parent folder determines the ACT.
+                $segments = explode('/', $filename);
+                $topFolder = $segments[0];
 
-                if (! preg_match('/(\d+(?:-\d+)*)/', $cleaned, $matches)) {
-                    Log::warning("DrivePhotosUploadJob: cannot extract ACT number from [{$basename}]");
+                // Strip anything in parentheses, then grab only the first digit sequence (no dash suffix)
+                $cleanedTop = preg_replace('/\([^)]*\)/', '', $topFolder) ?? $topFolder;
+
+                if (! preg_match('/(\d+)/', $cleanedTop, $matches)) {
+                    Log::warning("DrivePhotosUploadJob: cannot extract ACT number from top folder [{$topFolder}]");
                     $totalSkippedNoAct++;
 
                     continue;
@@ -168,7 +172,7 @@ class DrivePhotosUploadJob implements ShouldQueue
                 $actNumber = $matches[1];
 
                 if (! isset($actMap[$actNumber])) {
-                    Log::warning("DrivePhotosUploadJob: ACT {$actNumber} not found in folder_index — skipping");
+                    Log::warning("DrivePhotosUploadJob: ACT {$actNumber} not found in folder_index — skipping [{$topFolder}]");
                     $totalSkippedNoAct++;
 
                     continue;
