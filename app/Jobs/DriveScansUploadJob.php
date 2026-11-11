@@ -137,7 +137,7 @@ class DriveScansUploadJob implements ShouldQueue
                 $basename = basename($filename);
 
                 // Extract ACT number from filename: სკანი_848.pdf or სკანი_619-1.pdf
-                if (! preg_match('/(\d+(?:-\d+)?)\.[Pp][Dd][Ff]$/u', $basename, $matches)) {
+                if (! preg_match('/(\d+(?:-\d+)*)\.[Pp][Dd][Ff]$/u', $basename, $matches)) {
                     Log::warning("DriveScansUploadJob: cannot extract ACT number from [{$basename}]");
                     $totalSkippedNoAct++;
 

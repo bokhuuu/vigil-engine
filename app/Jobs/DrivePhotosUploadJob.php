@@ -158,7 +158,7 @@ class DrivePhotosUploadJob implements ShouldQueue
                 // Step 2: grab first digit sequence, optionally with a dash (e.g. 505 or 505-1)
                 $cleaned = preg_replace('/\([^)]*\)/', '', $filename) ?? $filename;
 
-                if (! preg_match('/(\d+(?:-\d+)?)/', $cleaned, $matches)) {
+                if (! preg_match('/(\d+(?:-\d+)*)/', $cleaned, $matches)) {
                     Log::warning("DrivePhotosUploadJob: cannot extract ACT number from [{$basename}]");
                     $totalSkippedNoAct++;
 
