@@ -100,6 +100,7 @@ class DrivePhotosUploadJob implements ShouldQueue
             $totalSkippedNoAct = 0;
             $totalFailed = 0;
             $uploadedSubfolderIds = [];
+            $existingNamesCache = [];
 
             foreach ($zips as $zipFile) {
                 Log::info("DrivePhotosUploadJob: processing ZIP [{$zipFile['name']}]");
@@ -153,7 +154,7 @@ class DrivePhotosUploadJob implements ShouldQueue
                     $basename = basename($filename);
 
                     // Extract ACT number from the TOP-LEVEL folder name only.
-                    // e.g. "აქტი619-1/606-თან/photo.jpg" → top segment "აქტი619-1" → ACT "619"
+                    // e.g. "აქტი619-1/606-თან/photo.jpg" → top segment "აქტი619-1" → ACT "619-1"
                     $segments = explode('/', $filename);
                     $topFolder = $segments[0];
 
@@ -173,7 +174,7 @@ class DrivePhotosUploadJob implements ShouldQueue
                     // Strip anything in parentheses, then grab only the first digit sequence (no dash suffix)
                     $cleanedTop = preg_replace('/\([^)]*\)/', '', $topFolder) ?? $topFolder;
 
-                    if (! preg_match('/(\d+)/', $cleanedTop, $matches)) {
+                    if (! preg_match('/(\d+(?:-\d+)?)/', $cleanedTop, $matches)) {
                         Log::warning("DrivePhotosUploadJob: cannot extract ACT number from top folder [{$topFolder}]");
                         $totalSkippedNoAct++;
 
@@ -206,8 +207,14 @@ class DrivePhotosUploadJob implements ShouldQueue
                         }
 
                         // Skip mode: check if a file with the same name already exists in the target folder
-                        $existing = $drive->listFilesInFolder($targetFolderId);
-                        $existingNames = array_column($existing, 'name');
+                        // Cache per folder — one API call per folder, not per file
+                        if (! isset($existingNamesCache[$targetFolderId])) {
+                            $existingNamesCache[$targetFolderId] = array_column(
+                                $drive->listFilesInFolder($targetFolderId),
+                                'name'
+                            );
+                        }
+                        $existingNames = $existingNamesCache[$targetFolderId];
 
                         if (in_array($basename, $existingNames, true)) {
                             Log::info("DrivePhotosUploadJob: [{$basename}] already exists in ACT {$actNumber}/{$relativeDir} — skipping");
@@ -238,6 +245,7 @@ class DrivePhotosUploadJob implements ShouldQueue
                         // Upload via OAuth into the correct (sub)folder
                         $drive->uploadFile($targetFolderId, $basename, $content, $mimeType);
                         $totalUploaded++;
+                        $existingNamesCache[$targetFolderId][] = $basename; // keep cache fresh
                         $uploadedSubfolderIds[$photosFolderId] = true; // always track root ფოტოები
 
                         Log::info("DrivePhotosUploadJob: uploaded [{$basename}] to ACT {$actNumber}/{$relativeDir}");
