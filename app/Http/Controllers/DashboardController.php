@@ -597,6 +597,11 @@ class DashboardController
             return response()->json(['error' => 'სკანების ატვირთვა უკვე მიმდინარეობს'], 409);
         }
 
+        $freeBytes = disk_free_space(storage_path());
+        if ($freeBytes !== false && $freeBytes < 10 * 1024 * 1024 * 1024) {
+            return response()->json(['error' => 'სერვერზე არასაკმარისი სივრცეა (საჭიროა მინ. 10GB)'], 507);
+        }
+
         $request->validate(['zip' => 'required|file|mimes:zip']);
 
         $path = $request->file('zip')->store('staging/scans', 'local');
@@ -643,6 +648,11 @@ class DashboardController
 
         if (Cache::get('upload_photos_running')) {
             return response()->json(['error' => 'ფოტოების ატვირთვა უკვე მიმდინარეობს'], 409);
+        }
+
+        $freeBytes = disk_free_space(storage_path());
+        if ($freeBytes !== false && $freeBytes < 10 * 1024 * 1024 * 1024) {
+            return response()->json(['error' => 'სერვერზე არასაკმარისი სივრცეა (საჭიროა მინ. 10GB)'], 507);
         }
 
         $request->validate(['zip' => 'required|file|mimes:zip']);

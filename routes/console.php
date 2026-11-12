@@ -32,6 +32,9 @@ Schedule::command('vigil:drive-watch --seed')->hourly();
 Schedule::command('vigil:drive-rescan')
     ->dailyAt('23:00');
 
+// Disk alert — daily at 09:00 Georgia (05:00 UTC), all days
+Schedule::command('vigil:disk-alert')->dailyAt('05:00');
+
 // Weekly backup - Sunday 11:00 Georgia
 Schedule::command('vigil:backup')->weeklyOn(config('vigil.schedule.backup_day'), config('vigil.schedule.backup_time'));
 

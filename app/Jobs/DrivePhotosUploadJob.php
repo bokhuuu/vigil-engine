@@ -16,7 +16,7 @@ class DrivePhotosUploadJob implements ShouldQueue
 {
     use Queueable;
 
-    public int $timeout = 3600;
+    public int $timeout = 7200;
 
     public int $tries = 1;
 
@@ -161,6 +161,11 @@ class DrivePhotosUploadJob implements ShouldQueue
                     // e.g. "აქტი619-1/606-თან/photo.jpg" → relativeDir = "606-თან"
                     // e.g. "აქტი619-1/photo.jpg"         → relativeDir = "" (upload directly to ფოტოები)
                     $innerSegments = array_slice($segments, 1); // remove top folder
+                    // Filter out 'ფოტოები' — ZIP may include it as a subfolder name but Drive already creates it as root
+                    $innerSegments = array_values(array_filter(
+                        $innerSegments,
+                        fn (string $s) => $s !== 'ფოტოები'
+                    ));
                     $relativeDir = count($innerSegments) > 1
                         ? implode('/', array_slice($innerSegments, 0, -1)) // all segments except filename
                         : '';
