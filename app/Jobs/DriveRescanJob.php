@@ -27,5 +27,7 @@ class DriveRescanJob implements ShouldQueue
         Log::info("DriveRescanJob: done — checked: {$result['checked']}, updated: {$result['updated']}");
 
         Cache::forget('rescan_running');
+
+        Cache::forget('drive_states_map');
     }
 }

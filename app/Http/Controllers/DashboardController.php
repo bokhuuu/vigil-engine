@@ -133,7 +133,7 @@ class DashboardController
     {
         $cacheMinutes = (int) config('vigil.dashboard.cache_minutes', 5);
         $snapshot = $this->loadSnapshot($cacheMinutes * 60);
-        $driveStates = $this->loadDriveStates();
+        $driveStates = Cache::remember('drive_states_map', 60, fn () => $this->loadDriveStates());
 
         $data = $snapshot['acts'];
         $fetchedAt = Carbon::createFromTimestamp($snapshot['fetched_at'], config('app.timezone'));
