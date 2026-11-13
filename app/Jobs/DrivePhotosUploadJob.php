@@ -209,10 +209,16 @@ class DrivePhotosUploadJob implements ShouldQueue
                         // Skip mode: check if a file with the same name already exists in the target folder
                         // Cache per folder — one API call per folder, not per file
                         if (! isset($existingNamesCache[$targetFolderId])) {
-                            $existingNamesCache[$targetFolderId] = array_column(
-                                $drive->listFilesInFolder($targetFolderId),
-                                'name'
-                            );
+                            $subfolderState = $stateRepo->getSubfolderState($targetFolderId);
+                            if ($subfolderState === 'empty' || $subfolderState === null) {
+                                // Folder is known empty — skip the API call
+                                $existingNamesCache[$targetFolderId] = [];
+                            } else {
+                                $existingNamesCache[$targetFolderId] = array_column(
+                                    $drive->listFilesInFolder($targetFolderId),
+                                    'name'
+                                );
+                            }
                         }
                         $existingNames = $existingNamesCache[$targetFolderId];
 

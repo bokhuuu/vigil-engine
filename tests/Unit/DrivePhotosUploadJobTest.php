@@ -100,6 +100,8 @@ test('upload photos: extracts ACT number and uploads to ფოტოები su
     $stateRepo->allows('getFolderIndex')->andReturn(
         makePhotosUploadFolderIndex(['folder505' => '505'])
     );
+    $stateRepo->allows('getSubfolderState')->withAnyArgs()->andReturn(null);
+    $stateRepo->allows('setSubfolderState')->withAnyArgs()->andReturn(null);
 
     $drive = Mockery::mock(GoogleDriveService::class);
     $drive->allows('listFilesInFolder')->andReturnUsing(
@@ -145,6 +147,8 @@ test('upload photos: strips parenthesised copy markers before extracting ACT num
     $stateRepo->allows('getFolderIndex')->andReturn(
         makePhotosUploadFolderIndex(['folder505' => '505'])
     );
+    $stateRepo->allows('getSubfolderState')->withAnyArgs()->andReturn(null);
+    $stateRepo->allows('setSubfolderState')->withAnyArgs()->andReturn(null);
 
     $drive = Mockery::mock(GoogleDriveService::class);
     $drive->allows('listFilesInFolder')->andReturnUsing(
@@ -187,6 +191,10 @@ test('upload photos: skip mode skips file that already exists', function () {
     $stateRepo->allows('getFolderIndex')->andReturn(
         makePhotosUploadFolderIndex(['folder505' => '505'])
     );
+    // 'full' → job calls listFilesInFolder → finds existing file → skips upload
+    // (null/'empty' would short-circuit to [] cache and wrongly allow re-upload)
+    $stateRepo->allows('getSubfolderState')->withAnyArgs()->andReturn('full');
+    $stateRepo->allows('setSubfolderState')->withAnyArgs()->andReturn(null);
 
     $drive = Mockery::mock(GoogleDriveService::class);
     $drive->allows('listFilesInFolder')->andReturnUsing(
@@ -269,6 +277,8 @@ test('upload photos: skips non-image entries in ZIP silently', function () {
     $stateRepo->allows('getFolderIndex')->andReturn(
         makePhotosUploadFolderIndex(['folder505' => '505'])
     );
+    $stateRepo->allows('getSubfolderState')->withAnyArgs()->andReturn(null);
+    $stateRepo->allows('setSubfolderState')->withAnyArgs()->andReturn(null);
 
     $drive = Mockery::mock(GoogleDriveService::class);
     $drive->allows('listFilesInFolder')->andReturnUsing(
