@@ -6,6 +6,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Vigil · აქტები</title>
+    <style>
+        #npb {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            width: 0;
+            background: #2563eb;
+            z-index: 999999;
+            pointer-events: none;
+            transition: width .2s ease;
+        }
+    </style>
+    <script>
+        (function() {
+            var b = document.createElement('div');
+            b.id = 'npb';
+            document.addEventListener('DOMContentLoaded', function() {
+                document.body.prepend(b);
+            });
+
+            function go() {
+                b.style.transition = 'none';
+                b.style.width = '0%';
+                requestAnimationFrame(function() {
+                    b.style.transition = 'width 10s cubic-bezier(0.1,0.02,0,1)';
+                    b.style.width = '85%';
+                });
+            }
+            document.addEventListener('click', function(e) {
+                var a = e.target.closest('a[href]');
+                if (!a) return;
+                var h = a.getAttribute('href');
+                if (!h || h === '#' || a.target === '_blank') return;
+                go();
+            });
+            document.addEventListener('submit', function() {
+                go();
+            });
+            window.addEventListener('pageshow', function() {
+                b.style.transition = 'none';
+                b.style.width = '0';
+            });
+        })();
+    </script>
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563eb'><path d='M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z'/></svg>">
     <link rel="shortcut icon"
