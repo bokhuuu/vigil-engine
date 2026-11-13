@@ -16,18 +16,13 @@
             background: #2563eb;
             z-index: 999999;
             pointer-events: none;
-            transition: width .2s ease;
         }
     </style>
     <script>
         (function() {
-            var b = document.createElement('div');
-            b.id = 'npb';
-            document.addEventListener('DOMContentLoaded', function() {
-                document.body.prepend(b);
-            });
-
             function go() {
+                var b = document.getElementById('npb');
+                if (!b) return;
                 b.style.transition = 'none';
                 b.style.width = '0%';
                 requestAnimationFrame(function() {
@@ -35,6 +30,7 @@
                     b.style.width = '85%';
                 });
             }
+            go();
             document.addEventListener('click', function(e) {
                 var a = e.target.closest('a[href]');
                 if (!a) return;
@@ -46,8 +42,11 @@
                 go();
             });
             window.addEventListener('pageshow', function() {
-                b.style.transition = 'none';
-                b.style.width = '0';
+                var b = document.getElementById('npb');
+                if (b) {
+                    b.style.transition = 'none';
+                    b.style.width = '0';
+                }
             });
         })();
     </script>
@@ -801,6 +800,7 @@
 </head>
 
 <body class="is-loading">
+    <div id="npb"></div>
     <div id="upload-warning-banner"
         style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;background:#d97706;color:#fff;text-align:center;padding:10px;font-size:13px;font-weight:600;">
         ⚠️ ატვირთვა მიმდინარეობს — გვერდის განახლება შეაჩერებს პროცესს
