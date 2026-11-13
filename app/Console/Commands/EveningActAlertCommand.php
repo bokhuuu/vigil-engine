@@ -176,19 +176,6 @@ class EveningActAlertCommand extends Command
                     }
                 }
             }
-
-            if (! empty($recipients)) {
-                foreach ($recipients as $recipient) {
-                    $sendChunked($message, fn ($chunk) => $telegram->send($recipient, $chunk));
-                }
-                // Forward copy to Zura for monitoring
-                $sendChunked($message, fn ($chunk) => $telegram->sendToMe($chunk));
-                $this->info("Sent to {$displayName} (".count($recipients).' recipients)');
-            } else {
-                $telegram->sendToMe("⚠️ {$displayName} — Telegram არ აქვს.");
-                $sendChunked($message, fn ($chunk) => $telegram->sendToMe($chunk));
-                $this->warn("No Telegram for {$displayName} — forwarded to Zura");
-            }
         }
 
         // Group chat — counts by team
@@ -242,7 +229,6 @@ class EveningActAlertCommand extends Command
             $groupMessage .= "👥 {$team}: {$cnt}\n";
         }
         $groupMessage .= "\n🔗 <a href=\"{$sectorsLink}\">სექტორების სტატუსი</a>\n\n";
-        $groupMessage .= '📩 თითოეულ გუნდს გაეგზავნა დეტალური სია პირადად.';
 
         $sendChunked($groupMessage, fn ($chunk) => $telegram->sendToGroup($chunk));
 
