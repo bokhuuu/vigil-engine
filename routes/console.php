@@ -35,6 +35,9 @@ Schedule::command('vigil:drive-rescan')
 // Disk alert — daily at 09:00 Georgia (05:00 UTC), all days
 Schedule::command('vigil:disk-alert')->dailyAt('05:00');
 
+// Horizon health check — every 5 minutes, all days
+Schedule::command('vigil:horizon-check')->everyFiveMinutes();
+
 // Weekly backup - Sunday 11:00 Georgia
 Schedule::command('vigil:backup')->weeklyOn(config('vigil.schedule.backup_day'), config('vigil.schedule.backup_time'));
 
