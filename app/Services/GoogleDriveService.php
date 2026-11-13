@@ -46,9 +46,18 @@ class GoogleDriveService
             $client->setAccessToken($token);
 
             if ($client->isAccessTokenExpired()) {
-                $newToken = $client->fetchAccessTokenWithRefreshToken(
-                    $client->getRefreshToken()
-                );
+                $refreshToken = $client->getRefreshToken();
+                if ($refreshToken === null) {
+                    throw new \RuntimeException(
+                        'Google OAuth token is expired and has no refresh token — re-authentication required'
+                    );
+                }
+                $newToken = $client->fetchAccessTokenWithRefreshToken($refreshToken);
+                if (isset($newToken['error'])) {
+                    throw new \RuntimeException(
+                        'Google OAuth token refresh failed: '.($newToken['error_description'] ?? $newToken['error'])
+                    );
+                }
                 file_put_contents($tokenFile, json_encode($newToken, JSON_PRETTY_PRINT));
                 $client->setAccessToken($newToken);
             }
