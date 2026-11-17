@@ -78,6 +78,10 @@ Route::post('/dashboard/upload/scans', [DashboardController::class, 'uploadScans
     ->middleware(ActsAuthMiddleware::class)
     ->name('dashboard.upload.scans');
 
+Route::post('/dashboard/upload-drawings', [DashboardController::class, 'uploadDrawings'])
+    ->middleware(ActsAuthMiddleware::class)
+    ->name('dashboard.upload-drawings');
+
 Route::get('/dashboard/upload/status', [DashboardController::class, 'uploadStatus'])
     ->middleware(ActsAuthMiddleware::class)
     ->name('dashboard.upload.status');

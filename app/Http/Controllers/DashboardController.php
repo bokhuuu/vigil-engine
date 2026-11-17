@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\AirtableException;
 use App\Jobs\DriveDownloadJob;
+use App\Jobs\DriveDrawingsUploadJob;
 use App\Jobs\DrivePhotosDownloadJob;
 use App\Jobs\DrivePhotosUploadJob;
 use App\Jobs\DriveRescanJob;
@@ -614,6 +615,25 @@ class DashboardController
         return response()->json(['started' => true]);
     }
 
+    public function uploadDrawings(Request $request): JsonResponse
+    {
+        if (Cache::get('upload_drawings_running')) {
+            return response()->json(['error' => 'ატვირთვა უკვე მიმდინარეობს'], 409);
+        }
+
+        $request->validate(['zip' => 'required|file|mimes:zip|max:5242880']);
+
+        $localPath = $request->file('zip')->store('uploads/drawings', 'local');
+        $localPath = storage_path('app/private/'.$localPath);
+
+        $mode = $request->input('mode', 'skip') === 'replace' ? 'replace' : 'skip';
+
+        Cache::put('upload_drawings_running', true, 7200);
+        DriveDrawingsUploadJob::dispatch($mode, $localPath);
+
+        return response()->json(['message' => 'ნახაზების ატვირთვა დაიწყო']);
+    }
+
     /**
      * JSON status endpoint for upload progress polling.
      * GET /dashboard/upload/status?type=scans
@@ -632,6 +652,10 @@ class DashboardController
             return response()->json([
                 'running' => (bool) Cache::get('upload_photos_running', false),
             ]);
+        }
+
+        if ($type === 'drawings') {
+            return response()->json(['running' => (bool) Cache::get('upload_drawings_running')]);
         }
 
         return response()->json(['running' => false]);

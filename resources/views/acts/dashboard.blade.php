@@ -1751,7 +1751,34 @@
                         @endif
                     </div>
                 </div>
-            </div>
+                <div style="border:1px solid #e4e8f0;border-radius:8px;padding:14px 16px;margin-bottom:10px;">
+                    <div style="font-size:12px;font-weight:600;color:#1a1f36;margin-bottom:4px;">📐 ნახაზების ატვირთვა
+                    </div>
+                    <div style="font-size:11px;color:#8892a4;margin-bottom:6px;">ZIP სტრუქტურა:
+                        ACT_NUMBER/[subfolder/]file.dwg</div>
+                    <div style="margin-bottom:10px;">
+                        <input type="file" id="drawings-zip-input" accept=".zip"
+                            style="font-size:11px;width:100%;margin-bottom:0;">
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <label
+                            style="font-size:11px;color:#8892a4;display:flex;align-items:center;gap:6px;cursor:pointer;">
+                            <input type="checkbox" id="drawings-replace-mode">
+                            🔄 არსებული ჩაანაცვლე (replace)
+                        </label>
+                    </div>
+                    <div id="drawings-upload-status">
+                        @if (Cache::has('upload_drawings_running'))
+                            <div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…</div>
+                        @else
+                            <button onclick="startDrawingsUpload()"
+                                style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">
+                                📐 გაშვება
+                            </button>
+                        @endif
+                    </div>
+                </div>
+                <div style="border:1px solid #e4e8f0;border-radius:8px;padding:14px 16px;margin-bottom:10px;">
 
         </div>
     </div>
@@ -2122,6 +2149,77 @@
                     }
                 })
                 .catch(() => setTimeout(pollPhotosUploadStatus, 8000));
+        }
+
+        function startDrawingsUpload() {
+            const fileInput = document.getElementById('drawings-zip-input');
+            if (!fileInput || !fileInput.files.length) {
+                showToast('⚠️ აირჩიე ZIP ფაილი');
+                return;
+            }
+            if (!fileInput.files[0].name.toLowerCase().endsWith('.zip')) {
+                showToast('⚠️ მხოლოდ ZIP ფაილია დაშვებული');
+                return;
+            }
+            window._uploadInProgress = true;
+            document.getElementById('upload-warning-banner').style.display = 'block';
+            const btn = document.querySelector('[onclick="startDrawingsUpload()"]');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '⏳…';
+            }
+            const fd = new FormData();
+            fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+            fd.append('zip', fileInput.files[0]);
+            fd.append('mode', document.getElementById('drawings-replace-mode')?.checked ? 'replace' : 'skip');
+            fetch('/dashboard/upload-drawings', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json'
+                },
+                body: fd,
+            }).then(async res => {
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    showToast('❌ ' + (data?.message || 'სერვერის შეცდომა'));
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = '📐 გაშვება';
+                    }
+                    window._uploadInProgress = false;
+                    document.getElementById('upload-warning-banner').style.display = 'none';
+                    return;
+                }
+                pollDrawingsUploadStatus();
+            }).catch(() => {
+                showToast('❌ ატვირთვა ვერ მოხერხდა');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = '📐 გაშვება';
+                }
+                window._uploadInProgress = false;
+                document.getElementById('upload-warning-banner').style.display = 'none';
+            });
+        }
+
+        function pollDrawingsUploadStatus() {
+            fetch('/dashboard/upload/status?type=drawings')
+                .then(r => r.json())
+                .then(data => {
+                    const box = document.getElementById('drawings-upload-status');
+                    if (!box) return;
+                    if (data.running) {
+                        box.innerHTML = '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…</div>';
+                        setTimeout(pollDrawingsUploadStatus, 5000);
+                    } else {
+                        box.innerHTML =
+                            '<div style="font-size:11px;color:#4ade80;margin-bottom:6px;">✅ ატვირთვა დასრულდა</div>' +
+                            '<button onclick="startDrawingsUpload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📐 გაშვება</button>';
+                        window._uploadInProgress = false;
+                        document.getElementById('upload-warning-banner').style.display = 'none';
+                    }
+                })
+                .catch(() => setTimeout(pollDrawingsUploadStatus, 8000));
         }
 
         document.getElementById('tools-modal')?.addEventListener('click', e => {
