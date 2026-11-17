@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\AirtableSnapshotJob;
 use Illuminate\Support\Facades\Schedule;
 
 // Morning run - Georgia, Monday to Friday
@@ -54,3 +55,6 @@ Schedule::command('business:sync-drive-states')->everyFifteenMinutes()->withoutO
 Schedule::command('vigil:create-drive-folders', [
     '--limit' => config('vigil.drive.create_limit_per_run'),
 ])->everyFifteenMinutes()->withoutOverlapping(30);
+
+// Airtable snapshot — keep dashboard cache warm
+Schedule::job(new AirtableSnapshotJob)->everyThirtyMinutes()->withoutOverlapping(5);
