@@ -608,7 +608,8 @@ class DashboardController
         $localPath = storage_path('app/private/'.$path);
 
         Cache::put('upload_scans_running', true, now()->addMinutes(60));
-        DriveScansUploadJob::dispatch('skip', $localPath);
+        $mode = $request->input('mode', 'skip') === 'replace' ? 'replace' : 'skip';
+        DriveScansUploadJob::dispatch($mode, $localPath);
 
         return response()->json(['started' => true]);
     }

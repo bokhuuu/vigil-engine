@@ -1714,6 +1714,13 @@
                         <input type="file" id="scans-zip-input" accept=".zip"
                             style="font-size:11px;width:100%;margin-bottom:0;">
                     </div>
+                    <div style="margin-bottom:10px;">
+                        <label
+                            style="font-size:11px;color:#8892a4;display:flex;align-items:center;gap:6px;cursor:pointer;">
+                            <input type="checkbox" id="scans-replace-mode">
+                            🔄 არსებული ჩაანაცვლე (replace)
+                        </label>
+                    </div>
                     <div id="scans-upload-status">
                         @if ($uploadScansRunning)
                             <div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…</div>
@@ -1993,6 +2000,7 @@
             const fd = new FormData();
             fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
             fd.append('zip', fileInput.files[0]);
+            fd.append('mode', document.getElementById('scans-replace-mode')?.checked ? 'replace' : 'skip');
             fetch('{{ route('dashboard.upload.scans') }}', {
                 method: 'POST',
                 headers: {
