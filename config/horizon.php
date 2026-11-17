@@ -69,7 +69,7 @@ return [
 
     'prefix' => env(
         'HORIZON_PREFIX',
-        Str::slug(env('APP_NAME', 'laravel'), '_').'_horizon:'
+        Str::slug(env('APP_NAME', 'laravel'), '_') . '_horizon:'
     ),
 
     /*
@@ -207,7 +207,7 @@ return [
             'maxJobs' => 0,
             'memory' => 512,
             'tries' => 1,
-            'timeout' => 3600,
+            'timeout' => 7200,
             'nice' => 0,
         ],
     ],
