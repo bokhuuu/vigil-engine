@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-uses(TestCase::class);
-
 use App\Jobs\AirtableSnapshotJob;
 use App\Services\AirtableService;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
+
+uses(TestCase::class);
 
 it('stores snapshot and last_good in cache', function () {
     $acts = [['id' => 'rec1', 'fields' => ['🔖 აქტის ნომერი' => '1']]];
