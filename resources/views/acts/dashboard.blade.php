@@ -704,6 +704,12 @@
                 left: auto;
                 right: 0;
             }
+
+            #fg-missing .filter-dropdown,
+            #fg-excel .filter-dropdown {
+                left: auto;
+                right: 0;
+            }
         }
 
         /* Column tints */
