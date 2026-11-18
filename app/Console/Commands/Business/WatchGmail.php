@@ -61,7 +61,7 @@ class WatchGmail extends Command
                     continue;
                 }
 
-                if ($isColliers) {
+                if ($isColliers && ! preg_match('/^fwd?\s*:/iu', $subject)) {
                     $this->gmail->applyLabel($msg->getId(), $labelId);
                     $this->gmail->markAsRead($msg->getId());
 
