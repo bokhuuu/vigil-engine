@@ -2019,6 +2019,19 @@
                     btnU.style.color = isDownload ? '#8892a4' : '#7c9df7';
                 }
 
+                function setOtherUploadButtonsDisabled(activeType, disabled) {
+                    const map = {
+                        scans: '[onclick="startScansUpload()"]',
+                        photos: '[onclick="startPhotosUpload()"]',
+                        drawings: '[onclick="startDrawingsUpload()"]',
+                    };
+                    Object.entries(map).forEach(([type, sel]) => {
+                        if (type === activeType) return;
+                        const b = document.querySelector(sel);
+                        if (b) b.disabled = disabled;
+                    });
+                }
+
                 function startScansUpload() {
                     const fileInput = document.getElementById('scans-zip-input');
                     if (!fileInput || !fileInput.files.length) {
@@ -2078,11 +2091,13 @@
                             if (!box) return;
                             if (data.running) {
                                 box.innerHTML = '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…</div>';
+                                setOtherUploadButtonsDisabled('scans', true);
                                 setTimeout(pollScansUploadStatus, 5000);
                             } else {
                                 box.innerHTML =
                                     '<div style="font-size:11px;color:#4ade80;margin-bottom:6px;">✅ ატვირთვა დასრულდა</div>' +
                                     '<button onclick="startScansUpload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📤 გაშვება</button>';
+                                setOtherUploadButtonsDisabled('scans', false);
                                 window._uploadInProgress = false;
                                 document.getElementById('upload-warning-banner').style.display = 'none';
                             }
@@ -2153,11 +2168,13 @@
                             if (!box) return;
                             if (data.running) {
                                 box.innerHTML = '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…</div>';
+                                setOtherUploadButtonsDisabled('photos', true);
                                 setTimeout(pollPhotosUploadStatus, 5000);
                             } else {
                                 box.innerHTML =
                                     '<div style="font-size:11px;color:#4ade80;margin-bottom:6px;">✅ ატვირთვა დასრულდა</div>' +
                                     '<button onclick="startPhotosUpload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📸 გაშვება</button>';
+                                setOtherUploadButtonsDisabled('photos', false);
                                 window._uploadInProgress = false;
                                 document.getElementById('upload-warning-banner').style.display = 'none';
                             }
@@ -2224,11 +2241,13 @@
                             if (!box) return;
                             if (data.running) {
                                 box.innerHTML = '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…</div>';
+                                setOtherUploadButtonsDisabled('drawings', true);
                                 setTimeout(pollDrawingsUploadStatus, 5000);
                             } else {
                                 box.innerHTML =
                                     '<div style="font-size:11px;color:#4ade80;margin-bottom:6px;">✅ ატვირთვა დასრულდა</div>' +
                                     '<button onclick="startDrawingsUpload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📐 გაშვება</button>';
+                                setOtherUploadButtonsDisabled('drawings', false);
                                 window._uploadInProgress = false;
                                 document.getElementById('upload-warning-banner').style.display = 'none';
                             }
