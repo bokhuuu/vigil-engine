@@ -98,6 +98,7 @@ class DrivePhotosUploadJob implements ShouldQueue
             $totalUploaded = 0;
             $totalSkippedExists = 0;
             $totalSkippedNoAct = 0;
+            $skippedNoActNumbers = [];
             $totalFailed = 0;
             $uploadedSubfolderIds = [];
             $existingNamesCache = [];
@@ -177,6 +178,7 @@ class DrivePhotosUploadJob implements ShouldQueue
                     if (! preg_match('/(\d+(?:-\d+)?)/', $cleanedTop, $matches)) {
                         Log::warning("DrivePhotosUploadJob: cannot extract ACT number from top folder [{$topFolder}]");
                         $totalSkippedNoAct++;
+                        $skippedNoActNumbers[] = $actNumber ?? $topFolder;
 
                         continue;
                     }
@@ -186,6 +188,7 @@ class DrivePhotosUploadJob implements ShouldQueue
                     if (! isset($actMap[$actNumber])) {
                         Log::warning("DrivePhotosUploadJob: ACT {$actNumber} not found in folder_index — skipping [{$topFolder}]");
                         $totalSkippedNoAct++;
+                        $skippedNoActNumbers[] = $actNumber ?? $topFolder;
 
                         continue;
                     }
@@ -295,7 +298,7 @@ class DrivePhotosUploadJob implements ShouldQueue
                 "📸 ფოტოების ატვირთვა დასრულდა [⏭️ skip-if-exists]\n\n".
                     "✅ ატვირთულია: {$totalUploaded}\n".
                     ($totalSkippedExists > 0 ? "⏭️ უკვე არსებობს: {$totalSkippedExists}\n" : '').
-                    ($totalSkippedNoAct > 0 ? "🔍 ACT ვერ მოიძებნა: {$totalSkippedNoAct}\n" : '').
+                    ($totalSkippedNoAct > 0 ? "🔍 ACT ვერ მოიძებნა: {$totalSkippedNoAct}".(count($skippedNoActNumbers) ? ' ('.implode(', ', array_unique($skippedNoActNumbers)).')' : '')."\n" : '').
                     ($totalFailed > 0 ? "❌ შეცდომა: {$totalFailed}\n" : '')
             );
         } catch (\Throwable $e) {

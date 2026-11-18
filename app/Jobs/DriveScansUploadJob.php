@@ -84,6 +84,7 @@ class DriveScansUploadJob implements ShouldQueue
             $totalUploaded = 0;
             $totalSkippedExists = 0;
             $totalSkippedNoAct = 0;
+            $skippedNoActNumbers = [];
             $totalFailed = 0;
             $uploadedSubfolderIds = [];
 
@@ -136,6 +137,7 @@ class DriveScansUploadJob implements ShouldQueue
                     if (! preg_match('/(\d+(?:-\d+)*)\.[Pp][Dd][Ff]$/u', $basename, $matches)) {
                         Log::warning("DriveScansUploadJob: cannot extract ACT number from [{$basename}]");
                         $totalSkippedNoAct++;
+                        $skippedNoActNumbers[] = $actNumber ?? $filename;
 
                         continue;
                     }
@@ -145,6 +147,7 @@ class DriveScansUploadJob implements ShouldQueue
                     if (! isset($actMap[$actNumber])) {
                         Log::warning("DriveScansUploadJob: ACT {$actNumber} not found in folder_index — skipping");
                         $totalSkippedNoAct++;
+                        $skippedNoActNumbers[] = $actNumber;
 
                         continue;
                     }
@@ -232,7 +235,7 @@ class DriveScansUploadJob implements ShouldQueue
                 "📤 სკანების ატვირთვა დასრულდა [{$modeLabel}]\n\n".
                     "✅ ატვირთულია: {$totalUploaded}\n".
                     ($totalSkippedExists > 0 ? "⏭️ უკვე არსებობს: {$totalSkippedExists}\n" : '').
-                    ($totalSkippedNoAct > 0 ? "🔍 ACT ვერ მოიძებნა: {$totalSkippedNoAct}\n" : '').
+                    ($totalSkippedNoAct > 0 ? "🔍 ACT ვერ მოიძებნა: {$totalSkippedNoAct}".(count($skippedNoActNumbers) ? ' ('.implode(', ', array_unique($skippedNoActNumbers)).')' : '')."\n" : '').
                     ($totalFailed > 0 ? "❌ შეცდომა: {$totalFailed}\n" : '')
             );
         } catch (\Throwable $e) {
