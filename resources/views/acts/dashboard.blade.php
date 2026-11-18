@@ -1754,8 +1754,6 @@
                 <div style="border:1px solid #e4e8f0;border-radius:8px;padding:14px 16px;margin-bottom:10px;">
                     <div style="font-size:12px;font-weight:600;color:#1a1f36;margin-bottom:4px;">📐 ნახაზების ატვირთვა
                     </div>
-                    <div style="font-size:11px;color:#8892a4;margin-bottom:6px;">ZIP სტრუქტურა:
-                        ACT_NUMBER/[subfolder/]file.dwg</div>
                     <div style="margin-bottom:10px;">
                         <input type="file" id="drawings-zip-input" accept=".zip"
                             style="font-size:11px;width:100%;margin-bottom:0;">
