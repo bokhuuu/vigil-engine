@@ -196,6 +196,9 @@ class DashboardController
                     && collect($f['_required'])->every(fn ($field) => $f['_drive_doc'][$field] ?? false)
                     && ($f['_scan'] ?? null) === 'full'
             ))
+            ->when($activeStatus === 'complete', fn ($col) => $col->filter(
+                fn ($f) => ($f['🚦სტატუსი'] ?? '') === '✅ დასრულებული'
+            ))
             ->when($activeMissing, function ($col) use ($activeMissing) {
                 $fieldMap = [
                     'scan' => '_scan',

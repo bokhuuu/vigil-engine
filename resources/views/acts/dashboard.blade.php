@@ -287,6 +287,7 @@
             position: absolute;
             top: calc(100% + 4px);
             left: 0;
+            right: auto;
             background: #fff;
             border: 1px solid #e4e8f0;
             border-radius: 8px;
@@ -698,6 +699,11 @@
             .table-wrap {
                 margin: 0 16px 40px;
             }
+
+            .filter-dropdown {
+                left: auto;
+                right: 0;
+            }
         }
 
         /* Column tints */
@@ -920,7 +926,7 @@
         <div class="filter-group" id="fg-status">
             <div class="filter-toggle {{ $activeStatus ? 'has-active' : '' }}" onclick="toggleFilter('status')">
                 სტატუსი
-                {{ $activeStatus ? '· ' . ($activeStatus === 'incomplete_docs' ? 'დასრულდა' : ($activeStatus === 'closed' ? 'დაიხურა' : 'მიმდინარე')) : '' }}
+                {{ $activeStatus? '· ' .match ($activeStatus) {'incomplete_docs' => 'დასრულდა','closed' => 'დაიხურა','complete' => 'ორივე',default => 'მიმდინარე'}: '' }}
                 <span>▼</span>
             </div>
             <div class="filter-dropdown" id="fd-status">
@@ -934,6 +940,9 @@
                         class="filter-opt {{ $activeStatus === 'incomplete_docs' ? 'active' : '' }}">⚠️ დასრულდა</a>
                     <a href="{{ request()->fullUrlWithQuery(['status' => 'closed']) }}"
                         class="filter-opt {{ $activeStatus === 'closed' ? 'active' : '' }}">✅ დაიხურა</a>
+                    <a href="{{ request()->fullUrlWithQuery(['status' => $activeStatus === 'complete' ? null : 'complete']) }}"
+                        class="filter-opt {{ $activeStatus === 'complete' ? 'active' : '' }}">📋 დასრულდა +
+                        დაიხურა</a>
                 </div>
             </div>
         </div>
@@ -1778,466 +1787,467 @@
                 </div>
                 <div style="border:1px solid #e4e8f0;border-radius:8px;padding:14px 16px;margin-bottom:10px;">
 
-        </div>
-    </div>
-
-    {{-- Excel entry confirm modal --}}
-    <div id="excel-modal"
-        style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
-        <div
-            style="background:#fff;border-radius:10px;padding:28px 32px;max-width:380px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.25);">
-            <h3 style="margin:0 0 12px;font-size:1rem;color:#1a1f36;">📊 Excel-ში შეტანა</h3>
-            <p id="excel-modal-text" style="font-size:13px;color:#4b5563;margin:0 0 20px;line-height:1.6;"></p>
-            <div style="display:flex;gap:10px;justify-content:flex-end;">
-                <button onclick="closeExcelModal()"
-                    style="padding:8px 18px;border-radius:6px;border:1px solid #e4e8f0;background:#fff;color:#4b5563;font-size:13px;cursor:pointer;">გაუქმება</button>
-                <button id="excel-modal-confirm"
-                    style="padding:8px 18px;border-radius:6px;border:none;background:#6d28d9;color:#fff;font-size:13px;font-weight:600;cursor:pointer;"
-                    onclick="submitExcelEntry()">დადასტურება</button>
+                </div>
             </div>
-        </div>
-    </div>
 
-    @php
-        $uploadScansRoute = route('dashboard.upload.scans');
-        $uploadPhotosRoute = route('dashboard.upload.photos');
-    @endphp
+            {{-- Excel entry confirm modal --}}
+            <div id="excel-modal"
+                style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
+                <div
+                    style="background:#fff;border-radius:10px;padding:28px 32px;max-width:380px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.25);">
+                    <h3 style="margin:0 0 12px;font-size:1rem;color:#1a1f36;">📊 Excel-ში შეტანა</h3>
+                    <p id="excel-modal-text" style="font-size:13px;color:#4b5563;margin:0 0 20px;line-height:1.6;">
+                    </p>
+                    <div style="display:flex;gap:10px;justify-content:flex-end;">
+                        <button onclick="closeExcelModal()"
+                            style="padding:8px 18px;border-radius:6px;border:1px solid #e4e8f0;background:#fff;color:#4b5563;font-size:13px;cursor:pointer;">გაუქმება</button>
+                        <button id="excel-modal-confirm"
+                            style="padding:8px 18px;border-radius:6px;border:none;background:#6d28d9;color:#fff;font-size:13px;font-weight:600;cursor:pointer;"
+                            onclick="submitExcelEntry()">დადასტურება</button>
+                    </div>
+                </div>
+            </div>
 
-    <script>
-        let _excelBtn = null;
+            @php
+                $uploadScansRoute = route('dashboard.upload.scans');
+                $uploadPhotosRoute = route('dashboard.upload.photos');
+            @endphp
 
-        function openExcelModal(btn) {
-            _excelBtn = btn;
-            const actNumber = btn.dataset.actNumber;
-            document.getElementById('excel-modal-text').textContent =
-                'ACT ' + actNumber + ' — დარწმუნებული ხარ, რომ Excel-ში შეტანილია?';
-            document.getElementById('excel-modal').style.display = 'flex';
-        }
+            <script>
+                let _excelBtn = null;
 
-        function closeExcelModal() {
-            document.getElementById('excel-modal').style.display = 'none';
-            _excelBtn = null;
-        }
+                function openExcelModal(btn) {
+                    _excelBtn = btn;
+                    const actNumber = btn.dataset.actNumber;
+                    document.getElementById('excel-modal-text').textContent =
+                        'ACT ' + actNumber + ' — დარწმუნებული ხარ, რომ Excel-ში შეტანილია?';
+                    document.getElementById('excel-modal').style.display = 'flex';
+                }
 
-        async function submitExcelEntry() {
-            if (!_excelBtn) return;
+                function closeExcelModal() {
+                    document.getElementById('excel-modal').style.display = 'none';
+                    _excelBtn = null;
+                }
 
-            const btn = _excelBtn;
-            const recordId = btn.dataset.recordId;
-            closeExcelModal();
+                async function submitExcelEntry() {
+                    if (!_excelBtn) return;
 
-            btn.disabled = true;
-            btn.textContent = '⏳';
+                    const btn = _excelBtn;
+                    const recordId = btn.dataset.recordId;
+                    closeExcelModal();
 
-            try {
-                const res = await fetch('/dashboard/acts/' + recordId + '/excel-entered', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ??
-                            '{{ csrf_token() }}'
-                    },
+                    btn.disabled = true;
+                    btn.textContent = '⏳';
+
+                    try {
+                        const res = await fetch('/dashboard/acts/' + recordId + '/excel-entered', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ??
+                                    '{{ csrf_token() }}'
+                            },
+                        });
+
+                        if (!res.ok) throw new Error('server error');
+
+                        // Swap button to ✅ checkmark
+                        const td = btn.closest('td');
+                        td.innerHTML = '<span class="doc-check" title="Excel-ში შეტანილია">✅</span>';
+
+                    } catch (err) {
+                        btn.disabled = false;
+                        btn.textContent = '📊 შეტანა';
+                        showToast('❌ შეცდომა — სცადეთ თავიდან');
+                    }
+                }
+
+                document.getElementById('excel-modal').addEventListener('click', e => {
+                    if (e.target === document.getElementById('excel-modal')) closeExcelModal();
                 });
 
-                if (!res.ok) throw new Error('server error');
+                // ── Scan download ────────────────────────────────────────────────
+                function startScanDownload() {
+                    const raw = document.getElementById('scan-range-input').value.trim();
+                    const slug = raw === '' ? 'all' : raw;
+                    document.getElementById('scan-range-hidden').value = slug;
+                    const btn = document.querySelector('[onclick="startScanDownload()"]');
+                    if (btn) btn.disabled = true;
+                    const form = document.getElementById('download-scan-form');
+                    fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json'
+                        },
+                        body: new FormData(form),
+                    }).then(() => pollScanStatus(slug));
+                }
 
-                // Swap button to ✅ checkmark
-                const td = btn.closest('td');
-                td.innerHTML = '<span class="doc-check" title="Excel-ში შეტანილია">✅</span>';
+                function pollScanStatus(slug) {
+                    fetch('/dashboard/download/status?type=scans&range=' + encodeURIComponent(slug))
+                        .then(r => r.json())
+                        .then(data => {
+                            const box = document.getElementById('scan-status');
+                            if (!box) return;
+                            if (data.running) {
+                                box.innerHTML =
+                                    '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს… <span style="font-family:\'IBM Plex Mono\',monospace;color:#4b5563;">' +
+                                    (data.progress ? data.progress.done + ' / ' + data.progress.total + ' ACT' : '') +
+                                    '</span></div>';
+                                setTimeout(() => pollScanStatus(slug), 5000);
+                            } else if (data.ready) {
+                                box.innerHTML =
+                                    '<div style="display:flex;gap:8px;align-items:center;"><a href="/dashboard/download/file?range=' +
+                                    encodeURIComponent(slug) +
+                                    '" style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">⬇️ ZIP გადმოწერა</a>' +
+                                    '<button onclick="resetScanDownload(event)" style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid #6b778c;background:transparent;color:#8892a4;cursor:pointer;">↺ ახალი</button></div>';
+                            } else {
+                                setTimeout(() => pollScanStatus(slug), 5000);
+                            }
+                        })
+                        .catch(() => setTimeout(() => pollScanStatus(slug), 8000));
+                }
 
-            } catch (err) {
-                btn.disabled = false;
-                btn.textContent = '📊 შეტანა';
-                showToast('❌ შეცდომა — სცადეთ თავიდან');
-            }
-        }
+                // ── Photos download ──────────────────────────────────────────────
+                function startPhotosDownload() {
+                    const raw = document.getElementById('photos-range-input').value.trim();
+                    const errBox = document.getElementById('photos-range-error');
+                    if (!raw) {
+                        if (errBox) errBox.style.display = 'block';
+                        return;
+                    }
+                    const parts = raw.split('-');
+                    const from = parseInt(parts[0]);
+                    const to = parseInt(parts[1]);
+                    if (parts.length !== 2 || isNaN(from) || isNaN(to) || from < 1 || to <= from || (to - from) > 99) {
+                        if (errBox) {
+                            errBox.textContent = 'range უნდა იყოს მაქსიმუმ 100 ACT, from < to (მაგ. 1-100)';
+                            errBox.style.display = 'block';
+                        }
+                        return;
+                    }
+                    if (errBox) errBox.style.display = 'none';
+                    const btn = document.querySelector('[onclick="startPhotosDownload()"]');
+                    if (btn) btn.disabled = true;
+                    document.getElementById('photos-range-hidden').value = raw;
+                    const form = document.getElementById('download-photos-form');
+                    fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json'
+                        },
+                        body: new FormData(form),
+                    }).then(() => pollPhotosStatus(raw));
+                }
 
-        document.getElementById('excel-modal').addEventListener('click', e => {
-            if (e.target === document.getElementById('excel-modal')) closeExcelModal();
-        });
+                function pollPhotosStatus(slug) {
+                    fetch('/dashboard/download/status?type=photos&range=' + encodeURIComponent(slug))
+                        .then(r => r.json())
+                        .then(data => {
+                            const box = document.getElementById('photos-status');
+                            if (!box) return;
+                            if (data.running) {
+                                box.innerHTML =
+                                    '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს… <span style="font-family:\'IBM Plex Mono\',monospace;color:#4b5563;">' +
+                                    (data.progress ? data.progress.done + ' / ' + data.progress.total + ' ACT' : '') +
+                                    '</span></div>';
+                                setTimeout(() => pollPhotosStatus(slug), 5000);
+                            } else if (data.ready) {
+                                box.innerHTML =
+                                    '<div style="display:flex;gap:8px;align-items:center;"><a href="/dashboard/download/photos/file?range=' +
+                                    encodeURIComponent(slug) +
+                                    '" style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">⬇️ ZIP გადმოწერა</a>' +
+                                    '<button onclick="resetPhotosDownload(event)" style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid #6b778c;background:transparent;color:#8892a4;cursor:pointer;">↺ ახალი</button></div>';
+                            } else {
+                                setTimeout(() => pollPhotosStatus(slug), 5000);
+                            }
+                        })
+                        .catch(() => setTimeout(() => pollPhotosStatus(slug), 8000));
+                }
 
-        // ── Scan download ────────────────────────────────────────────────
-        function startScanDownload() {
-            const raw = document.getElementById('scan-range-input').value.trim();
-            const slug = raw === '' ? 'all' : raw;
-            document.getElementById('scan-range-hidden').value = slug;
-            const btn = document.querySelector('[onclick="startScanDownload()"]');
-            if (btn) btn.disabled = true;
-            const form = document.getElementById('download-scan-form');
-            fetch(form.action, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json'
-                },
-                body: new FormData(form),
-            }).then(() => pollScanStatus(slug));
-        }
-
-        function pollScanStatus(slug) {
-            fetch('/dashboard/download/status?type=scans&range=' + encodeURIComponent(slug))
-                .then(r => r.json())
-                .then(data => {
+                function resetScanDownload(e) {
+                    e?.stopPropagation();
+                    const slug = document.getElementById('scan-range-input')?.value.trim() || 'all';
+                    fetch('/dashboard/download/cancel?type=scans&range=' + encodeURIComponent(slug), {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    });
                     const box = document.getElementById('scan-status');
                     if (!box) return;
-                    if (data.running) {
-                        box.innerHTML =
-                            '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს… <span style="font-family:\'IBM Plex Mono\',monospace;color:#4b5563;">' +
-                            (data.progress ? data.progress.done + ' / ' + data.progress.total + ' ACT' : '') +
-                            '</span></div>';
-                        setTimeout(() => pollScanStatus(slug), 5000);
-                    } else if (data.ready) {
-                        box.innerHTML =
-                            '<div style="display:flex;gap:8px;align-items:center;"><a href="/dashboard/download/file?range=' +
-                            encodeURIComponent(slug) +
-                            '" style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">⬇️ ZIP გადმოწერა</a>' +
-                            '<button onclick="resetScanDownload(event)" style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid #6b778c;background:transparent;color:#8892a4;cursor:pointer;">↺ ახალი</button></div>';
-                    } else {
-                        setTimeout(() => pollScanStatus(slug), 5000);
-                    }
-                })
-                .catch(() => setTimeout(() => pollScanStatus(slug), 8000));
-        }
-
-        // ── Photos download ──────────────────────────────────────────────
-        function startPhotosDownload() {
-            const raw = document.getElementById('photos-range-input').value.trim();
-            const errBox = document.getElementById('photos-range-error');
-            if (!raw) {
-                if (errBox) errBox.style.display = 'block';
-                return;
-            }
-            const parts = raw.split('-');
-            const from = parseInt(parts[0]);
-            const to = parseInt(parts[1]);
-            if (parts.length !== 2 || isNaN(from) || isNaN(to) || from < 1 || to <= from || (to - from) > 99) {
-                if (errBox) {
-                    errBox.textContent = 'range უნდა იყოს მაქსიმუმ 100 ACT, from < to (მაგ. 1-100)';
-                    errBox.style.display = 'block';
+                    box.innerHTML =
+                        '<button onclick="startScanDownload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📦 დაწყება</button>' +
+                        '<form id="download-scan-form" method="POST" action="/dashboard/download" style="display:none;"><input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="range" id="scan-range-hidden" value="all"></form>';
                 }
-                return;
-            }
-            if (errBox) errBox.style.display = 'none';
-            const btn = document.querySelector('[onclick="startPhotosDownload()"]');
-            if (btn) btn.disabled = true;
-            document.getElementById('photos-range-hidden').value = raw;
-            const form = document.getElementById('download-photos-form');
-            fetch(form.action, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json'
-                },
-                body: new FormData(form),
-            }).then(() => pollPhotosStatus(raw));
-        }
 
-        function pollPhotosStatus(slug) {
-            fetch('/dashboard/download/status?type=photos&range=' + encodeURIComponent(slug))
-                .then(r => r.json())
-                .then(data => {
+                function resetPhotosDownload(e) {
+                    e?.stopPropagation();
+                    const slug = document.getElementById('photos-range-input')?.value.trim() || '';
+                    if (slug) {
+                        fetch('/dashboard/download/cancel?type=photos&range=' + encodeURIComponent(slug), {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            }
+                        });
+                    }
                     const box = document.getElementById('photos-status');
                     if (!box) return;
-                    if (data.running) {
-                        box.innerHTML =
-                            '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს… <span style="font-family:\'IBM Plex Mono\',monospace;color:#4b5563;">' +
-                            (data.progress ? data.progress.done + ' / ' + data.progress.total + ' ACT' : '') +
-                            '</span></div>';
-                        setTimeout(() => pollPhotosStatus(slug), 5000);
-                    } else if (data.ready) {
-                        box.innerHTML =
-                            '<div style="display:flex;gap:8px;align-items:center;"><a href="/dashboard/download/photos/file?range=' +
-                            encodeURIComponent(slug) +
-                            '" style="display:inline-block;font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d7c4f;background:#2d4438;color:#6fcf97;text-decoration:none;">⬇️ ZIP გადმოწერა</a>' +
-                            '<button onclick="resetPhotosDownload(event)" style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid #6b778c;background:transparent;color:#8892a4;cursor:pointer;">↺ ახალი</button></div>';
-                    } else {
-                        setTimeout(() => pollPhotosStatus(slug), 5000);
-                    }
-                })
-                .catch(() => setTimeout(() => pollPhotosStatus(slug), 8000));
-        }
-
-        function resetScanDownload(e) {
-            e?.stopPropagation();
-            const slug = document.getElementById('scan-range-input')?.value.trim() || 'all';
-            fetch('/dashboard/download/cancel?type=scans&range=' + encodeURIComponent(slug), {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    box.innerHTML =
+                        '<button onclick="startPhotosDownload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📸 დაწყება</button>' +
+                        '<div id="photos-range-error" style="display:none;font-size:11px;color:#f87171;margin-top:4px;">range სავალდებულოა (მაგ. 1-100)</div>' +
+                        '<form id="download-photos-form" method="POST" action="/dashboard/download/photos" style="display:none;"><input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="range" id="photos-range-hidden" value=""></form>';
                 }
-            });
-            const box = document.getElementById('scan-status');
-            if (!box) return;
-            box.innerHTML =
-                '<button onclick="startScanDownload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📦 დაწყება</button>' +
-                '<form id="download-scan-form" method="POST" action="/dashboard/download" style="display:none;"><input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="range" id="scan-range-hidden" value="all"></form>';
-        }
 
-        function resetPhotosDownload(e) {
-            e?.stopPropagation();
-            const slug = document.getElementById('photos-range-input')?.value.trim() || '';
-            if (slug) {
-                fetch('/dashboard/download/cancel?type=photos&range=' + encodeURIComponent(slug), {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                function switchTab(tab) {
+                    const isDownload = tab === 'download';
+                    document.getElementById('tab-download').style.display = isDownload ? '' : 'none';
+                    document.getElementById('tab-upload').style.display = isDownload ? 'none' : '';
+                    const btnD = document.getElementById('tab-btn-download');
+                    const btnU = document.getElementById('tab-btn-upload');
+                    btnD.style.background = isDownload ? '#1a1f36' : '#f8f9fc';
+                    btnD.style.color = isDownload ? '#7c9df7' : '#8892a4';
+                    btnU.style.background = isDownload ? '#f8f9fc' : '#1a1f36';
+                    btnU.style.color = isDownload ? '#8892a4' : '#7c9df7';
+                }
+
+                function startScansUpload() {
+                    const fileInput = document.getElementById('scans-zip-input');
+                    if (!fileInput || !fileInput.files.length) {
+                        showToast('⚠️ აირჩიე ZIP ფაილი');
+                        return;
+                    }
+                    if (fileInput.files[0].size > 5 * 1024 * 1024 * 1024) {
+                        showToast('⚠️ ფაილი 5GB-ზე მეტია. მაქსიმალური ზომა: 5GB.');
+                        return;
+                    }
+                    if (!fileInput.files[0].name.toLowerCase().endsWith('.zip')) {
+                        showToast('⚠️ მხოლოდ ZIP ფაილია დაშვებული');
+                        return;
+                    }
+                    window._uploadInProgress = true;
+                    document.getElementById('upload-warning-banner').style.display = 'block';
+                    const btn = document.querySelector('[onclick="startScansUpload()"]');
+                    btn.disabled = true;
+                    btn.textContent = '⏳…';
+                    const fd = new FormData();
+                    fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+                    fd.append('zip', fileInput.files[0]);
+                    fd.append('mode', document.getElementById('scans-replace-mode')?.checked ? 'replace' : 'skip');
+                    fetch('{{ route('dashboard.upload.scans') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                        body: fd,
+                    }).then(async res => {
+                        if (!res.ok) {
+                            const data = await res.json().catch(() => ({}));
+                            const msg = data?.message || (data?.errors?.zip?.[0]) || 'სერვერის შეცდომა';
+                            showToast('❌ ' + msg);
+                            btn.disabled = false;
+                            btn.textContent = '📤 გაშვება';
+                            window._uploadInProgress = false;
+                            document.getElementById('upload-warning-banner').style.display = 'none';
+                            return;
+                        }
+                        pollScansUploadStatus();
+                    }).catch(() => {
+                        showToast('❌ ატვირთვა ვერ მოხერხდა');
+                        btn.disabled = false;
+                        btn.textContent = '📤 გაშვება';
+                        window._uploadInProgress = false;
+                        document.getElementById('upload-warning-banner').style.display = 'none';
+                    });
+
+                }
+
+                function pollScansUploadStatus() {
+                    fetch('/dashboard/upload/status')
+                        .then(r => r.json())
+                        .then(data => {
+                            const box = document.getElementById('scans-upload-status');
+                            if (!box) return;
+                            if (data.running) {
+                                box.innerHTML = '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…</div>';
+                                setTimeout(pollScansUploadStatus, 5000);
+                            } else {
+                                box.innerHTML =
+                                    '<div style="font-size:11px;color:#4ade80;margin-bottom:6px;">✅ ატვირთვა დასრულდა</div>' +
+                                    '<button onclick="startScansUpload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📤 გაშვება</button>';
+                                window._uploadInProgress = false;
+                                document.getElementById('upload-warning-banner').style.display = 'none';
+                            }
+                        })
+                        .catch(() => setTimeout(pollScansUploadStatus, 8000));
+                }
+
+                function startPhotosUpload() {
+                    const fileInput = document.getElementById('photos-zip-input');
+                    if (!fileInput || !fileInput.files.length) {
+                        showToast('⚠️ აირჩიე ZIP ფაილი');
+                        return;
+                    }
+                    if (fileInput.files[0].size > 5 * 1024 * 1024 * 1024) {
+                        showToast('⚠️ ფაილი 5GB-ზე მეტია. მაქსიმალური ზომა: 5GB.');
+                        return;
+                    }
+                    if (!fileInput.files[0].name.toLowerCase().endsWith('.zip')) {
+                        showToast('⚠️ მხოლოდ ZIP ფაილია დაშვებული');
+                        return;
+                    }
+                    window._uploadInProgress = true;
+                    document.getElementById('upload-warning-banner').style.display = 'block';
+                    const btn = document.querySelector('[onclick="startPhotosUpload()"]');
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.textContent = '⏳…';
+                    }
+                    const fd = new FormData();
+                    fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+                    fd.append('zip', fileInput.files[0]);
+                    fetch('{{ route('dashboard.upload.photos') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                        body: fd,
+                    }).then(async res => {
+                        if (!res.ok) {
+                            const data = await res.json().catch(() => ({}));
+                            const msg = data?.message || (data?.errors?.zip?.[0]) || 'სერვერის შეცდომა';
+                            showToast('❌ ' + msg);
+                            if (btn) {
+                                btn.disabled = false;
+                                btn.textContent = '📸 გაშვება';
+                            }
+                            window._uploadInProgress = false;
+                            document.getElementById('upload-warning-banner').style.display = 'none';
+                            return;
+                        }
+                        pollPhotosUploadStatus();
+                    }).catch(() => {
+                        showToast('❌ ატვირთვა ვერ მოხერხდა');
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.textContent = '📸 გაშვება';
+                        }
+                        window._uploadInProgress = false;
+                        document.getElementById('upload-warning-banner').style.display = 'none';
+                    });
+                }
+
+                function pollPhotosUploadStatus() {
+                    fetch('/dashboard/upload/status?type=photos')
+                        .then(r => r.json())
+                        .then(data => {
+                            const box = document.getElementById('photos-upload-status');
+                            if (!box) return;
+                            if (data.running) {
+                                box.innerHTML = '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…</div>';
+                                setTimeout(pollPhotosUploadStatus, 5000);
+                            } else {
+                                box.innerHTML =
+                                    '<div style="font-size:11px;color:#4ade80;margin-bottom:6px;">✅ ატვირთვა დასრულდა</div>' +
+                                    '<button onclick="startPhotosUpload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📸 გაშვება</button>';
+                                window._uploadInProgress = false;
+                                document.getElementById('upload-warning-banner').style.display = 'none';
+                            }
+                        })
+                        .catch(() => setTimeout(pollPhotosUploadStatus, 8000));
+                }
+
+                function startDrawingsUpload() {
+                    const fileInput = document.getElementById('drawings-zip-input');
+                    if (!fileInput || !fileInput.files.length) {
+                        showToast('⚠️ აირჩიე ZIP ფაილი');
+                        return;
+                    }
+                    if (!fileInput.files[0].name.toLowerCase().endsWith('.zip')) {
+                        showToast('⚠️ მხოლოდ ZIP ფაილია დაშვებული');
+                        return;
+                    }
+                    window._uploadInProgress = true;
+                    document.getElementById('upload-warning-banner').style.display = 'block';
+                    const btn = document.querySelector('[onclick="startDrawingsUpload()"]');
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.textContent = '⏳…';
+                    }
+                    const fd = new FormData();
+                    fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+                    fd.append('zip', fileInput.files[0]);
+                    fd.append('mode', document.getElementById('drawings-replace-mode')?.checked ? 'replace' : 'skip');
+                    fetch('/dashboard/upload-drawings', {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json'
+                        },
+                        body: fd,
+                    }).then(async res => {
+                        if (!res.ok) {
+                            const data = await res.json().catch(() => ({}));
+                            showToast('❌ ' + (data?.message || 'სერვერის შეცდომა'));
+                            if (btn) {
+                                btn.disabled = false;
+                                btn.textContent = '📐 გაშვება';
+                            }
+                            window._uploadInProgress = false;
+                            document.getElementById('upload-warning-banner').style.display = 'none';
+                            return;
+                        }
+                        pollDrawingsUploadStatus();
+                    }).catch(() => {
+                        showToast('❌ ატვირთვა ვერ მოხერხდა');
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.textContent = '📐 გაშვება';
+                        }
+                        window._uploadInProgress = false;
+                        document.getElementById('upload-warning-banner').style.display = 'none';
+                    });
+                }
+
+                function pollDrawingsUploadStatus() {
+                    fetch('/dashboard/upload/status?type=drawings')
+                        .then(r => r.json())
+                        .then(data => {
+                            const box = document.getElementById('drawings-upload-status');
+                            if (!box) return;
+                            if (data.running) {
+                                box.innerHTML = '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…</div>';
+                                setTimeout(pollDrawingsUploadStatus, 5000);
+                            } else {
+                                box.innerHTML =
+                                    '<div style="font-size:11px;color:#4ade80;margin-bottom:6px;">✅ ატვირთვა დასრულდა</div>' +
+                                    '<button onclick="startDrawingsUpload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📐 გაშვება</button>';
+                                window._uploadInProgress = false;
+                                document.getElementById('upload-warning-banner').style.display = 'none';
+                            }
+                        })
+                        .catch(() => setTimeout(pollDrawingsUploadStatus, 8000));
+                }
+
+                document.getElementById('tools-modal')?.addEventListener('click', e => {
+                    if (!e.target.closest('#tools-modal > div')) {
+                        document.getElementById('tools-modal').style.display = 'none';
                     }
                 });
-            }
-            const box = document.getElementById('photos-status');
-            if (!box) return;
-            box.innerHTML =
-                '<button onclick="startPhotosDownload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📸 დაწყება</button>' +
-                '<div id="photos-range-error" style="display:none;font-size:11px;color:#f87171;margin-top:4px;">range სავალდებულოა (მაგ. 1-100)</div>' +
-                '<form id="download-photos-form" method="POST" action="/dashboard/download/photos" style="display:none;"><input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="range" id="photos-range-hidden" value=""></form>';
-        }
 
-        function switchTab(tab) {
-            const isDownload = tab === 'download';
-            document.getElementById('tab-download').style.display = isDownload ? '' : 'none';
-            document.getElementById('tab-upload').style.display = isDownload ? 'none' : '';
-            const btnD = document.getElementById('tab-btn-download');
-            const btnU = document.getElementById('tab-btn-upload');
-            btnD.style.background = isDownload ? '#1a1f36' : '#f8f9fc';
-            btnD.style.color = isDownload ? '#7c9df7' : '#8892a4';
-            btnU.style.background = isDownload ? '#f8f9fc' : '#1a1f36';
-            btnU.style.color = isDownload ? '#8892a4' : '#7c9df7';
-        }
-
-        function startScansUpload() {
-            const fileInput = document.getElementById('scans-zip-input');
-            if (!fileInput || !fileInput.files.length) {
-                showToast('⚠️ აირჩიე ZIP ფაილი');
-                return;
-            }
-            if (fileInput.files[0].size > 5 * 1024 * 1024 * 1024) {
-                showToast('⚠️ ფაილი 5GB-ზე მეტია. მაქსიმალური ზომა: 5GB.');
-                return;
-            }
-            if (!fileInput.files[0].name.toLowerCase().endsWith('.zip')) {
-                showToast('⚠️ მხოლოდ ZIP ფაილია დაშვებული');
-                return;
-            }
-            window._uploadInProgress = true;
-            document.getElementById('upload-warning-banner').style.display = 'block';
-            const btn = document.querySelector('[onclick="startScansUpload()"]');
-            btn.disabled = true;
-            btn.textContent = '⏳…';
-            const fd = new FormData();
-            fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-            fd.append('zip', fileInput.files[0]);
-            fd.append('mode', document.getElementById('scans-replace-mode')?.checked ? 'replace' : 'skip');
-            fetch('{{ route('dashboard.upload.scans') }}', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                },
-                body: fd,
-            }).then(async res => {
-                if (!res.ok) {
-                    const data = await res.json().catch(() => ({}));
-                    const msg = data?.message || (data?.errors?.zip?.[0]) || 'სერვერის შეცდომა';
-                    showToast('❌ ' + msg);
-                    btn.disabled = false;
-                    btn.textContent = '📤 გაშვება';
-                    window._uploadInProgress = false;
-                    document.getElementById('upload-warning-banner').style.display = 'none';
-                    return;
+                function showToast(message) {
+                    const existing = document.getElementById('vigil-toast');
+                    if (existing) existing.remove();
+                    const toast = document.createElement('div');
+                    toast.id = 'vigil-toast';
+                    toast.textContent = message;
+                    toast.style.cssText =
+                        'position:fixed;top:0;left:0;right:0;z-index:999999;background:#d97706;color:#fff;text-align:center;padding:10px;font-size:13px;font-weight:600;animation:slideDown .2s ease;';
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 4000);
                 }
-                pollScansUploadStatus();
-            }).catch(() => {
-                showToast('❌ ატვირთვა ვერ მოხერხდა');
-                btn.disabled = false;
-                btn.textContent = '📤 გაშვება';
-                window._uploadInProgress = false;
-                document.getElementById('upload-warning-banner').style.display = 'none';
-            });
-
-        }
-
-        function pollScansUploadStatus() {
-            fetch('/dashboard/upload/status')
-                .then(r => r.json())
-                .then(data => {
-                    const box = document.getElementById('scans-upload-status');
-                    if (!box) return;
-                    if (data.running) {
-                        box.innerHTML = '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…</div>';
-                        setTimeout(pollScansUploadStatus, 5000);
-                    } else {
-                        box.innerHTML =
-                            '<div style="font-size:11px;color:#4ade80;margin-bottom:6px;">✅ ატვირთვა დასრულდა</div>' +
-                            '<button onclick="startScansUpload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📤 გაშვება</button>';
-                        window._uploadInProgress = false;
-                        document.getElementById('upload-warning-banner').style.display = 'none';
-                    }
-                })
-                .catch(() => setTimeout(pollScansUploadStatus, 8000));
-        }
-
-        function startPhotosUpload() {
-            const fileInput = document.getElementById('photos-zip-input');
-            if (!fileInput || !fileInput.files.length) {
-                showToast('⚠️ აირჩიე ZIP ფაილი');
-                return;
-            }
-            if (fileInput.files[0].size > 5 * 1024 * 1024 * 1024) {
-                showToast('⚠️ ფაილი 5GB-ზე მეტია. მაქსიმალური ზომა: 5GB.');
-                return;
-            }
-            if (!fileInput.files[0].name.toLowerCase().endsWith('.zip')) {
-                showToast('⚠️ მხოლოდ ZIP ფაილია დაშვებული');
-                return;
-            }
-            window._uploadInProgress = true;
-            document.getElementById('upload-warning-banner').style.display = 'block';
-            const btn = document.querySelector('[onclick="startPhotosUpload()"]');
-            if (btn) {
-                btn.disabled = true;
-                btn.textContent = '⏳…';
-            }
-            const fd = new FormData();
-            fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-            fd.append('zip', fileInput.files[0]);
-            fetch('{{ route('dashboard.upload.photos') }}', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                },
-                body: fd,
-            }).then(async res => {
-                if (!res.ok) {
-                    const data = await res.json().catch(() => ({}));
-                    const msg = data?.message || (data?.errors?.zip?.[0]) || 'სერვერის შეცდომა';
-                    showToast('❌ ' + msg);
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.textContent = '📸 გაშვება';
-                    }
-                    window._uploadInProgress = false;
-                    document.getElementById('upload-warning-banner').style.display = 'none';
-                    return;
-                }
-                pollPhotosUploadStatus();
-            }).catch(() => {
-                showToast('❌ ატვირთვა ვერ მოხერხდა');
-                if (btn) {
-                    btn.disabled = false;
-                    btn.textContent = '📸 გაშვება';
-                }
-                window._uploadInProgress = false;
-                document.getElementById('upload-warning-banner').style.display = 'none';
-            });
-        }
-
-        function pollPhotosUploadStatus() {
-            fetch('/dashboard/upload/status?type=photos')
-                .then(r => r.json())
-                .then(data => {
-                    const box = document.getElementById('photos-upload-status');
-                    if (!box) return;
-                    if (data.running) {
-                        box.innerHTML = '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…</div>';
-                        setTimeout(pollPhotosUploadStatus, 5000);
-                    } else {
-                        box.innerHTML =
-                            '<div style="font-size:11px;color:#4ade80;margin-bottom:6px;">✅ ატვირთვა დასრულდა</div>' +
-                            '<button onclick="startPhotosUpload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📸 გაშვება</button>';
-                        window._uploadInProgress = false;
-                        document.getElementById('upload-warning-banner').style.display = 'none';
-                    }
-                })
-                .catch(() => setTimeout(pollPhotosUploadStatus, 8000));
-        }
-
-        function startDrawingsUpload() {
-            const fileInput = document.getElementById('drawings-zip-input');
-            if (!fileInput || !fileInput.files.length) {
-                showToast('⚠️ აირჩიე ZIP ფაილი');
-                return;
-            }
-            if (!fileInput.files[0].name.toLowerCase().endsWith('.zip')) {
-                showToast('⚠️ მხოლოდ ZIP ფაილია დაშვებული');
-                return;
-            }
-            window._uploadInProgress = true;
-            document.getElementById('upload-warning-banner').style.display = 'block';
-            const btn = document.querySelector('[onclick="startDrawingsUpload()"]');
-            if (btn) {
-                btn.disabled = true;
-                btn.textContent = '⏳…';
-            }
-            const fd = new FormData();
-            fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-            fd.append('zip', fileInput.files[0]);
-            fd.append('mode', document.getElementById('drawings-replace-mode')?.checked ? 'replace' : 'skip');
-            fetch('/dashboard/upload-drawings', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json'
-                },
-                body: fd,
-            }).then(async res => {
-                if (!res.ok) {
-                    const data = await res.json().catch(() => ({}));
-                    showToast('❌ ' + (data?.message || 'სერვერის შეცდომა'));
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.textContent = '📐 გაშვება';
-                    }
-                    window._uploadInProgress = false;
-                    document.getElementById('upload-warning-banner').style.display = 'none';
-                    return;
-                }
-                pollDrawingsUploadStatus();
-            }).catch(() => {
-                showToast('❌ ატვირთვა ვერ მოხერხდა');
-                if (btn) {
-                    btn.disabled = false;
-                    btn.textContent = '📐 გაშვება';
-                }
-                window._uploadInProgress = false;
-                document.getElementById('upload-warning-banner').style.display = 'none';
-            });
-        }
-
-        function pollDrawingsUploadStatus() {
-            fetch('/dashboard/upload/status?type=drawings')
-                .then(r => r.json())
-                .then(data => {
-                    const box = document.getElementById('drawings-upload-status');
-                    if (!box) return;
-                    if (data.running) {
-                        box.innerHTML = '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…</div>';
-                        setTimeout(pollDrawingsUploadStatus, 5000);
-                    } else {
-                        box.innerHTML =
-                            '<div style="font-size:11px;color:#4ade80;margin-bottom:6px;">✅ ატვირთვა დასრულდა</div>' +
-                            '<button onclick="startDrawingsUpload()" style="font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;cursor:pointer;">📐 გაშვება</button>';
-                        window._uploadInProgress = false;
-                        document.getElementById('upload-warning-banner').style.display = 'none';
-                    }
-                })
-                .catch(() => setTimeout(pollDrawingsUploadStatus, 8000));
-        }
-
-        document.getElementById('tools-modal')?.addEventListener('click', e => {
-            if (!e.target.closest('#tools-modal > div')) {
-                document.getElementById('tools-modal').style.display = 'none';
-            }
-        });
-
-        function showToast(message) {
-            const existing = document.getElementById('vigil-toast');
-            if (existing) existing.remove();
-            const toast = document.createElement('div');
-            toast.id = 'vigil-toast';
-            toast.textContent = message;
-            toast.style.cssText =
-                'position:fixed;top:0;left:0;right:0;z-index:999999;background:#d97706;color:#fff;text-align:center;padding:10px;font-size:13px;font-weight:600;animation:slideDown .2s ease;';
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 4000);
-        }
-    </script>
+            </script>
 
 </body>
 
