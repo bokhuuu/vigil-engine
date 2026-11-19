@@ -30,15 +30,14 @@ class DriveScansUploadJob implements ShouldQueue
         GoogleDriveService $drive,
         TelegramService $telegram,
     ): void {
-        if (Cache::has('upload_scans_running')) {
-            Log::warning('DriveScansUploadJob: already running, aborting duplicate');
-
-            return;
-        }
-
-        Cache::put('upload_scans_running', true, 3600);
-
         try {
+            if (Cache::has('upload_scans_running')) {
+                Log::warning('DriveScansUploadJob: already running, aborting duplicate');
+
+                return;
+            }
+
+            Cache::put('upload_scans_running', true, 3600);
             Log::info("DriveScansUploadJob: starting [mode={$this->mode}]");
 
             $stagingFolderId = config('services.google_drive.staging.scans');

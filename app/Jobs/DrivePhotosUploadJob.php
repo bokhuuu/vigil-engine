@@ -44,15 +44,15 @@ class DrivePhotosUploadJob implements ShouldQueue
         GoogleDriveService $drive,
         TelegramService $telegram,
     ): void {
-        if (Cache::has('upload_photos_running')) {
-            Log::warning('DrivePhotosUploadJob: already running, aborting duplicate');
-
-            return;
-        }
-
-        Cache::put('upload_photos_running', true, 7200);
-
         try {
+            if (Cache::has('upload_photos_running')) {
+                Log::warning('DrivePhotosUploadJob: already running, aborting duplicate');
+
+                return;
+            }
+
+            Cache::put('upload_photos_running', true, 7200);
+
             Log::info('DrivePhotosUploadJob: starting');
 
             $stagingFolderId = config('services.google_drive.staging.photos');
