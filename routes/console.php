@@ -48,6 +48,9 @@ Schedule::command('storage:cleanup')->hourly();
 // Business module — Gmail watcher
 Schedule::command('business:watch-gmail')->everyMinute()->withoutOverlapping(2)->runInBackground();
 
+// Business module — Gmail watcher health check
+Schedule::command('business:gmail-check')->everyFiveMinutes();
+
 // Business module — Drive subfolder state sync
 Schedule::command('business:sync-drive-states')->everyFifteenMinutes()->withoutOverlapping(10);
 

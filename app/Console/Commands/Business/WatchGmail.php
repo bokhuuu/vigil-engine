@@ -10,6 +10,7 @@ use App\Services\GmailService;
 use App\Services\GoogleDriveService;
 use App\Services\TelegramService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class WatchGmail extends Command
@@ -35,6 +36,7 @@ class WatchGmail extends Command
 
             if (empty($messages)) {
                 $this->info('No unread messages.');
+                Cache::put('business_gmail_last_run', now(), 300);
 
                 return;
             }
@@ -155,6 +157,7 @@ class WatchGmail extends Command
                     Log::error('WatchGmail: Telegram failed', ['error' => $e->getMessage()]);
                 }
             }
+            Cache::put('business_gmail_last_run', now(), 300);
         } catch (\InvalidArgumentException $e) {
             Log::error('business:watch-gmail OAuth token invalid: '.$e->getMessage());
             $this->telegram->sendToMe(
