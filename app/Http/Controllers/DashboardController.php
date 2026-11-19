@@ -620,6 +620,10 @@ class DashboardController
 
     public function uploadDrawings(Request $request): JsonResponse
     {
+        if ($request->attributes->get('vigil_role') !== 'manager') {
+            abort(403);
+        }
+
         if (Cache::get('upload_drawings_running')) {
             return response()->json(['error' => 'ატვირთვა უკვე მიმდინარეობს'], 409);
         }

@@ -1428,6 +1428,17 @@
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('pre-spinner')?.remove();
             document.body.classList.remove('is-loading');
+
+            // Check if any upload is already running on another device
+            @if ($uploadScansRunning)
+                pollScansUploadStatus();
+            @endif
+            @if ($uploadPhotosRunning)
+                pollPhotosUploadStatus();
+            @endif
+            @if (Cache::has('upload_drawings_running'))
+                pollDrawingsUploadStatus();
+            @endif
         });
 
         window.addEventListener('beforeunload', function(e) {
