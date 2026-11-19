@@ -597,10 +597,6 @@ class DashboardController
             abort(403);
         }
 
-        if (Cache::get('upload_scans_running')) {
-            return response()->json(['error' => 'სკანების ატვირთვა უკვე მიმდინარეობს'], 409);
-        }
-
         $freeBytes = disk_free_space(storage_path());
         if ($freeBytes !== false && $freeBytes < 10 * 1024 * 1024 * 1024) {
             return response()->json(['error' => 'სერვერზე არასაკმარისი სივრცეა (საჭიროა მინ. 10GB)'], 507);
@@ -612,7 +608,7 @@ class DashboardController
         $localPath = storage_path('app/private/'.$path);
 
         $mode = $request->input('mode', 'skip') === 'replace' ? 'replace' : 'skip';
-        Cache::put('upload_scans_running', true, now()->addMinutes(60));
+
         DriveScansUploadJob::dispatch($mode, $localPath);
 
         return response()->json(['started' => true]);
@@ -624,10 +620,6 @@ class DashboardController
             abort(403);
         }
 
-        if (Cache::get('upload_drawings_running')) {
-            return response()->json(['error' => 'ატვირთვა უკვე მიმდინარეობს'], 409);
-        }
-
         $request->validate(['zip' => 'required|file|mimes:zip|max:5242880']);
 
         $localPath = $request->file('zip')->store('uploads/drawings', 'local');
@@ -635,7 +627,6 @@ class DashboardController
 
         $mode = $request->input('mode', 'skip') === 'replace' ? 'replace' : 'skip';
 
-        Cache::put('upload_drawings_running', true, 7200);
         DriveDrawingsUploadJob::dispatch($mode, $localPath);
 
         return response()->json(['message' => 'ნახაზების ატვირთვა დაიწყო']);
@@ -678,10 +669,6 @@ class DashboardController
             abort(403);
         }
 
-        if (Cache::get('upload_photos_running')) {
-            return response()->json(['error' => 'ფოტოების ატვირთვა უკვე მიმდინარეობს'], 409);
-        }
-
         $freeBytes = disk_free_space(storage_path());
         if ($freeBytes !== false && $freeBytes < 10 * 1024 * 1024 * 1024) {
             return response()->json(['error' => 'სერვერზე არასაკმარისი სივრცეა (საჭიროა მინ. 10GB)'], 507);
@@ -692,7 +679,6 @@ class DashboardController
         $path = $request->file('zip')->store('staging/photos', 'local');
         $localPath = storage_path('app/private/'.$path);
 
-        Cache::put('upload_photos_running', true, now()->addHours(2));
         DrivePhotosUploadJob::dispatch($localPath);
 
         return response()->json(['started' => true]);
