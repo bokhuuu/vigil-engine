@@ -58,6 +58,12 @@ class BusinessMoveControllerTest extends BusinessTestCase
     public function test_move_calls_drive_service_and_returns_ok(): void
     {
         $mock = \Mockery::mock(BusinessDriveService::class);
+        $mock->shouldReceive('listIncomingFiles')
+            ->once()
+            ->with(\Mockery::type(Business::class))
+            ->andReturn([
+                ['id' => 'file-abc', 'name' => 'test.pdf', 'mimeType' => 'application/pdf', 'round' => '1'],
+            ]);
         $mock->shouldReceive('moveFileToSubfolder')
             ->once()
             ->with(\Mockery::type(Business::class), 'file-abc', 'ფინანსური ანგარიშგება');

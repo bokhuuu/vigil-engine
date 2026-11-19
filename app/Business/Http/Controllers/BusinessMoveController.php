@@ -32,10 +32,18 @@ class BusinessMoveController extends Controller
 
     public function move(Request $request, Business $business): JsonResponse
     {
+        $allowedSubfolders = config('vigil.business.drive_subfolders');
+
         $validated = $request->validate([
             'file_id' => ['required', 'string'],
-            'subfolder_name' => ['required', 'string'],
+            'subfolder_name' => ['required', 'string', 'in:'.implode(',', $allowedSubfolders)],
         ]);
+
+        $ownedFileIds = array_column($this->driveService->listIncomingFiles($business), 'id');
+
+        if (! in_array($validated['file_id'], $ownedFileIds, true)) {
+            return response()->json(['error' => 'File not found in incoming files'], 403);
+        }
 
         $this->driveService->moveFileToSubfolder(
             $business,
