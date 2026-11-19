@@ -316,6 +316,62 @@ class DriveWatcherService
         return ['checked' => $checked, 'updated' => $updated];
     }
 
+    /**
+     * Targeted rescan — re-check only the subfolders belonging to the given ACT folder IDs.
+     * Called after a bulk upload so the dashboard flips to ✅ without a full Drive walk.
+     */
+    public function rescanActs(array $actFolderIds, bool $dryRun = false): array
+    {
+        if (empty($actFolderIds)) {
+            return ['checked' => 0, 'updated' => 0];
+        }
+
+        $lookup = array_flip($actFolderIds);
+        $nowMs = (int) (microtime(true) * 1000);
+        $checked = 0;
+        $updated = 0;
+        $actFoldersDirty = [];
+
+        foreach ($this->state->getSubfolderIndex() as $subfolderId => $subfolder) {
+            if (! isset($lookup[$subfolder['act_folder_id']])) {
+                continue;
+            }
+
+            $actInfo = $this->state->getActByFolderId($subfolder['act_folder_id']);
+            if ($actInfo === null) {
+                continue;
+            }
+
+            $prevState = $this->state->getSubfolderState($subfolderId);
+            $hasFiles = $this->driveService->subfolderHasFiles($subfolderId);
+            $checked++;
+
+            $newState = $this->reconcileSubfolder(
+                $actInfo['act_number'],
+                $subfolder['name'],
+                $subfolderId,
+                $hasFiles,
+                $prevState,
+                $nowMs,
+                $dryRun,
+            );
+
+            if ($newState !== $prevState) {
+                if (! $dryRun) {
+                    $this->state->setSubfolderState($subfolderId, $newState);
+                }
+                $actFoldersDirty[$subfolder['act_folder_id']] = true;
+                $updated++;
+            }
+        }
+
+        foreach (array_keys($actFoldersDirty) as $actFolderId) {
+            $this->updateRootFolderColor($actFolderId, $dryRun);
+        }
+
+        return ['checked' => $checked, 'updated' => $updated];
+    }
+
     // ----------------------------------------------------------------
     // Private helpers
     // ----------------------------------------------------------------

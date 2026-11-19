@@ -94,6 +94,7 @@ class DriveScansUploadJob implements ShouldQueue
             $skippedNoActNumbers = [];
             $totalFailed = 0;
             $uploadedSubfolderIds = [];
+            $touchedActFolderIds = [];
 
             foreach ($zips as $zipFile) {
                 Log::info("DriveScansUploadJob: processing ZIP [{$zipFile['name']}]");
@@ -194,10 +195,10 @@ class DriveScansUploadJob implements ShouldQueue
 
                             continue;
                         }
-
                         $drive->uploadFile($skaniFolderId, $basename, $content, 'application/pdf');
                         $totalUploaded++;
                         $uploadedSubfolderIds[$skaniFolderId] = true;
+                        $touchedActFolderIds[$actFolderId] = true;
 
                         Log::info("DriveScansUploadJob: uploaded [{$basename}] to ACT {$actNumber}");
                     } catch (\Throwable $e) {
@@ -229,6 +230,11 @@ class DriveScansUploadJob implements ShouldQueue
                 } catch (\Throwable $e) {
                     Log::warning("DriveScansUploadJob: could not update state for [{$uploadedFolderId}] — ".$e->getMessage());
                 }
+            }
+
+            if (! empty($touchedActFolderIds)) {
+                DriveTargetedRescanJob::dispatch(array_keys($touchedActFolderIds));
+                Log::info('DriveScansUploadJob: dispatched targeted rescan for '.count($touchedActFolderIds).' ACT(s)');
             }
 
             Log::info(

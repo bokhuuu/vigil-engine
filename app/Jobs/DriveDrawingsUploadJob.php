@@ -78,6 +78,7 @@ class DriveDrawingsUploadJob implements ShouldQueue
             $totalReplaced = 0;
             $totalFailed = 0;
             $uploadedDrawingsFolderIds = [];
+            $touchedActFolderIds = [];
             $existingNamesCache = [];
 
             foreach ($zips as $zipFile) {
@@ -230,6 +231,7 @@ class DriveDrawingsUploadJob implements ShouldQueue
 
                         $existingNamesCache[$targetFolderId][] = $basename; // keep cache fresh
                         $uploadedDrawingsFolderIds[$drawingsFolderId] = true; // track root შიდა ნახაზები
+                        $touchedActFolderIds[$actFolderId] = true;
 
                         Log::info("DriveDrawingsUploadJob: uploaded [{$basename}] to ACT {$actNumber}/{$relativeDir}");
                     } catch (\Throwable $e) {
@@ -254,6 +256,11 @@ class DriveDrawingsUploadJob implements ShouldQueue
             }
 
             $modeLabel = $this->mode === 'replace' ? '🔄 replace' : '⏭️ skip-if-exists';
+
+            if (! empty($touchedActFolderIds)) {
+                DriveTargetedRescanJob::dispatch(array_keys($touchedActFolderIds));
+                Log::info('DriveDrawingsUploadJob: dispatched targeted rescan for '.count($touchedActFolderIds).' ACT(s)');
+            }
 
             Log::info(
                 "DriveDrawingsUploadJob: done — uploaded: {$totalUploaded}, replaced: {$totalReplaced}, ".

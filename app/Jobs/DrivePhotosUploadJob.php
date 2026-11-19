@@ -109,6 +109,7 @@ class DrivePhotosUploadJob implements ShouldQueue
             $skippedNoActNumbers = [];
             $totalFailed = 0;
             $uploadedSubfolderIds = [];
+            $touchedActFolderIds = [];
             $existingNamesCache = [];
 
             foreach ($zips as $zipFile) {
@@ -264,6 +265,7 @@ class DrivePhotosUploadJob implements ShouldQueue
                         $totalUploaded++;
                         $existingNamesCache[$targetFolderId][] = $basename; // keep cache fresh
                         $uploadedSubfolderIds[$photosFolderId] = true; // always track root ფოტოები
+                        $touchedActFolderIds[$actFolderId] = true;
 
                         Log::info("DrivePhotosUploadJob: uploaded [{$basename}] to ACT {$actNumber}/{$relativeDir}");
                     } catch (\Throwable $e) {
@@ -295,6 +297,11 @@ class DrivePhotosUploadJob implements ShouldQueue
                 } catch (\Throwable $e) {
                     Log::warning("DrivePhotosUploadJob: could not update state for [{$uploadedFolderId}] — ".$e->getMessage());
                 }
+            }
+
+            if (! empty($touchedActFolderIds)) {
+                DriveTargetedRescanJob::dispatch(array_keys($touchedActFolderIds));
+                Log::info('DrivePhotosUploadJob: dispatched targeted rescan for '.count($touchedActFolderIds).' ACT(s)');
             }
 
             Log::info(
