@@ -148,8 +148,8 @@ class WatchGmail extends Command
                 try {
                     $this->telegram->sendToMe(
                         "📥 ახალი ელ-ფოსტა\n\n".
-                            "<b>{$business->name}</b>\n".
-                            "საქაღალდე: {$roundFolder}\n".
+                            '<b>'.e($business->name).'</b>'."\n".
+                            'საქაღალდე: '.e($roundFolder)."\n".
                             'ფაილები: '.($count + 1)."\n".
                             'From: '.str_replace(['<', '>'], ['', ''], $from)
                     );

@@ -43,13 +43,13 @@ class DeadlineWarningCommand extends Command
 
             if ($daysLeft < 0) {
                 $airtable->markDeadlineOverdue($record['id']);
-                $warning = "❌ ვადა გავიდა\n📋 <a href=\"{$url}\">{$title}</a>";
+                $warning = "❌ ვადა გავიდა\n📋 <a href=\"{$url}\">".e($title).'</a>';
             } elseif ($daysLeft === 0) {
-                $warning = "🚨 დღეს ვადა\n📋 <a href=\"{$url}\">{$title}</a>";
+                $warning = "🚨 დღეს ვადა\n📋 <a href=\"{$url}\">".e($title).'</a>';
             } elseif ($daysLeft === 1) {
-                $warning = "🔴 ხვალ ვადა\n📋 <a href=\"{$url}\">{$title}</a>";
+                $warning = "🔴 ხვალ ვადა\n📋 <a href=\"{$url}\">".e($title).'</a>';
             } elseif ($daysLeft === 2) {
-                $warning = "⚠️ 2 დღე რჩება\n📋 <a href=\"{$url}\">{$title}</a>";
+                $warning = "⚠️ 2 დღე რჩება\n📋 <a href=\"{$url}\">".e($title).'</a>';
             }
 
             if ($warning) {
@@ -89,13 +89,13 @@ class DeadlineWarningCommand extends Command
             $url = $airtable->recordUrl(config('vigil.airtable.tables.correspondence'), $record['id']);
 
             if ($daysLeft < 0) {
-                $corrWarnings[] = "❌ ვადა გავიდა\n📋 <a href=\"{$url}\">{$subject}</a>";
+                $corrWarnings[] = "❌ ვადა გავიდა\n📋 <a href=\"{$url}\">".e($subject).'</a>';
             } elseif ($daysLeft === 0) {
-                $corrWarnings[] = "🚨 დღეს ვადა\n📋 <a href=\"{$url}\">{$subject}</a>";
+                $corrWarnings[] = "🚨 დღეს ვადა\n📋 <a href=\"{$url}\">".e($subject).'</a>';
             } elseif ($daysLeft === 1) {
-                $corrWarnings[] = "🔴 ხვალ ვადა\n📋 <a href=\"{$url}\">{$subject}</a>";
+                $corrWarnings[] = "🔴 ხვალ ვადა\n📋 <a href=\"{$url}\">".e($subject).'</a>';
             } elseif ($daysLeft === 2) {
-                $corrWarnings[] = "⚠️ 2 დღე რჩება\n📋 <a href=\"{$url}\">{$subject}</a>";
+                $corrWarnings[] = "⚠️ 2 დღე რჩება\n📋 <a href=\"{$url}\">".e($subject).'</a>';
             }
         }
 

@@ -37,11 +37,10 @@ class CheckCorrespondenceOverdue extends Command
             $corr->update(['status' => 'overdue']);
 
             $message = "🔴 ვადაგადაცილებული მიმოწერა\n\n"
-                ."<b>{$corr->business->name}</b>\n"
-                ."მიმოწერა-{$corr->round}\n"
-                ."ვადა: {$corr->deadline_at->format('d.m.Y')}\n"
-                ."კოდი: {$corr->business->registration_code}";
-
+                .'<b>'.e($corr->business->name).'</b>'."\n"
+                .'მიმოწერა-'.$corr->round."\n"
+                .'ვადა: '.$corr->deadline_at->format('d.m.Y')."\n"
+                .'კოდი: '.e($corr->business->registration_code);
             $this->telegram->sendToMe($message);
         }
 

@@ -92,7 +92,7 @@ class SendUpdateReminders extends Command
                 $telegram->sendToMe($message);
                 $this->info("Sent update reminder to {$teamName}");
             } else {
-                $telegram->sendToMe("⚠️ {$teamName} — Telegram არ აქვს (განახლებების შეხსენება)");
+                $telegram->sendToMe('⚠️ '.e($teamName).' — Telegram არ აქვს (განახლებების შეხსენება)');
                 $this->warn("No Telegram for {$teamName}");
             }
 
