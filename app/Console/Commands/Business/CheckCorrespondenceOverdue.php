@@ -21,6 +21,12 @@ class CheckCorrespondenceOverdue extends Command
 
     public function handle(): void
     {
+        if (! config('vigil.telegram.notifications_enabled')) {
+            $this->info('Notifications disabled — skipping.');
+
+            return;
+        }
+
         $overdue = Correspondence::on('business')
             ->where('status', 'active')
             ->where('deadline_at', '<', now()->toDateString())

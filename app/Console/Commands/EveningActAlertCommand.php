@@ -17,6 +17,12 @@ class EveningActAlertCommand extends Command
 
     public function handle(): void
     {
+        if (! config('vigil.telegram.notifications_enabled')) {
+            $this->info('Notifications disabled — skipping.');
+
+            return;
+        }
+
         $airtable = new AirtableService(new AirtableClient);
         $telegram = new TelegramService;
 

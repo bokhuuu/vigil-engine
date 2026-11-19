@@ -29,6 +29,12 @@ class WatchGmail extends Command
 
     public function handle(): void
     {
+        if (! config('vigil.telegram.notifications_enabled')) {
+            $this->info('Notifications disabled — skipping.');
+
+            return;
+        }
+
         try {
             $labelId = $this->gmail->getOrCreateLabel('ბიზნეს მოდული');
             $matcher = new BusinessEmailMatcher;

@@ -16,7 +16,7 @@ class ManagerNotifier
      */
     public function notify(string $message): void
     {
-        if (config('vigil.telegram.notifications_enabled') !== 'true') {
+        if (! config('vigil.telegram.notifications_enabled')) {
             return;
         }
 
