@@ -705,6 +705,7 @@
                 right: auto;
             }
 
+            #fg-missing .filter-dropdown,
             #fg-has .filter-dropdown,
             #fg-excel .filter-dropdown {
                 left: auto;
