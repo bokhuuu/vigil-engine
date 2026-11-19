@@ -611,7 +611,6 @@ class DashboardController
         $path = $request->file('zip')->store('staging/scans', 'local');
         $localPath = storage_path('app/private/'.$path);
 
-        Cache::put('upload_scans_running', true, now()->addMinutes(60));
         $mode = $request->input('mode', 'skip') === 'replace' ? 'replace' : 'skip';
         DriveScansUploadJob::dispatch($mode, $localPath);
 
@@ -635,7 +634,6 @@ class DashboardController
 
         $mode = $request->input('mode', 'skip') === 'replace' ? 'replace' : 'skip';
 
-        Cache::put('upload_drawings_running', true, 7200);
         DriveDrawingsUploadJob::dispatch($mode, $localPath);
 
         return response()->json(['message' => 'ნახაზების ატვირთვა დაიწყო']);
@@ -692,7 +690,6 @@ class DashboardController
         $path = $request->file('zip')->store('staging/photos', 'local');
         $localPath = storage_path('app/private/'.$path);
 
-        Cache::put('upload_photos_running', true, now()->addHours(2));
         DrivePhotosUploadJob::dispatch($localPath);
 
         return response()->json(['started' => true]);
