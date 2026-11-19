@@ -21,13 +21,13 @@ class DriveRescanJob implements ShouldQueue
     public function handle(DriveWatcherService $watcher): void
     {
         Log::info('DriveRescanJob: starting full rescan');
-
-        $result = $watcher->rescan();
-
-        Log::info("DriveRescanJob: done — checked: {$result['checked']}, updated: {$result['updated']}");
-
-        Cache::forget('rescan_running');
-
-        Cache::forget('drive_states_map');
+        Cache::put('rescan_running', true, 7200);
+        try {
+            $result = $watcher->rescan();
+            Log::info("DriveRescanJob: done — checked: {$result['checked']}, updated: {$result['updated']}");
+        } finally {
+            Cache::forget('rescan_running');
+            Cache::forget('drive_states_map');
+        }
     }
 }

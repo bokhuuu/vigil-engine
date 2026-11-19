@@ -841,7 +841,8 @@
             </div>
             <a href="{{ $statsUrl }}" target="_blank" class="stats-link">Airtable სტატისტიკა →</a>
             @if ($role === 'manager')
-                <button id="rescan-btn" @if (!$rescanRunning) onclick="openRescanModal()" @endif
+                <button id="rescan-btn" @if ($rescanRunning) data-rescan-running="1" @endif
+                    @if (!$rescanRunning) onclick="openRescanModal()" @endif
                     style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#7c9df7;white-space:nowrap;{{ $rescanRunning ? 'cursor:not-allowed;opacity:0.6;' : 'cursor:pointer;' }}"
                     title="ყველა Drive საქაღალდის სრული გადამოწმება" @if ($rescanRunning) disabled @endif>
                     {{ $rescanRunning ? '⏳ მიმდინარეობს…' : '🔄 გადამოწმება' }}</button>
@@ -2030,6 +2031,14 @@
                         const b = document.querySelector(sel);
                         if (b) b.disabled = disabled;
                     });
+                    const rescanBtn = document.getElementById('rescan-btn');
+                    if (rescanBtn && !rescanBtn.dataset.rescanRunning) {
+                        rescanBtn.disabled = disabled;
+                        rescanBtn.style.opacity = disabled ? '0.6' : '';
+                        rescanBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';
+                        if (disabled) rescanBtn.title = '⏳ გთხოვთ დაელოდოთ — ატვირთვა მიმდინარეობს';
+                        else rescanBtn.title = 'ყველა Drive საქაღალდის სრული გადამოწმება';
+                    }
                 }
 
                 function startScansUpload() {

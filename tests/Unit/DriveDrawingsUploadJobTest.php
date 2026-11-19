@@ -34,6 +34,8 @@ it('skips file that already exists in skip mode', function () {
     $telegram = Mockery::mock(TelegramService::class);
     $telegram->shouldReceive('sendToGroup')->once();
 
+    Cache::shouldReceive('has')->once()->with('upload_drawings_running')->andReturn(false);
+    Cache::shouldReceive('put')->once()->with('upload_drawings_running', true, 7200);
     Cache::shouldReceive('forget')->once()->with('upload_drawings_running');
 
     // Build a minimal ZIP with one file: 123/plan.dwg
@@ -76,6 +78,8 @@ it('uploads new file in skip mode', function () {
         fn (string $msg) => str_contains($msg, '✅ ატვირთულია: 1')
     ));
 
+    Cache::shouldReceive('has')->once()->with('upload_drawings_running')->andReturn(false);
+    Cache::shouldReceive('put')->once()->with('upload_drawings_running', true, 7200);
     Cache::shouldReceive('forget')->once()->with('upload_drawings_running');
 
     $tmpZip = tempnam(sys_get_temp_dir(), 'test_drawings_');
@@ -119,6 +123,8 @@ it('creates შიდა ნახაზები folder if it does not exist', 
     $telegram = Mockery::mock(TelegramService::class);
     $telegram->shouldReceive('sendToGroup')->once();
 
+    Cache::shouldReceive('has')->once()->with('upload_drawings_running')->andReturn(false);
+    Cache::shouldReceive('put')->once()->with('upload_drawings_running', true, 7200);
     Cache::shouldReceive('forget')->once()->with('upload_drawings_running');
 
     $tmpZip = tempnam(sys_get_temp_dir(), 'test_drawings_');
@@ -162,6 +168,8 @@ it('preserves nested subfolder structure', function () {
     $telegram = Mockery::mock(TelegramService::class);
     $telegram->shouldReceive('sendToGroup')->once();
 
+    Cache::shouldReceive('has')->once()->with('upload_drawings_running')->andReturn(false);
+    Cache::shouldReceive('put')->once()->with('upload_drawings_running', true, 7200);
     Cache::shouldReceive('forget')->once()->with('upload_drawings_running');
 
     $tmpZip = tempnam(sys_get_temp_dir(), 'test_drawings_');
@@ -188,6 +196,8 @@ it('aborts when folder_index is empty', function () {
         fn (string $msg) => str_contains($msg, 'folder_index ცარიელია')
     ));
 
+    Cache::shouldReceive('has')->once()->with('upload_drawings_running')->andReturn(false);
+    Cache::shouldReceive('put')->once()->with('upload_drawings_running', true, 7200);
     Cache::shouldReceive('forget')->once()->with('upload_drawings_running');
 
     $tmpZip = tempnam(sys_get_temp_dir(), 'test_drawings_');

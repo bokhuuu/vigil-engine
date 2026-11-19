@@ -32,6 +32,14 @@ class DriveDrawingsUploadJob implements ShouldQueue
         GoogleDriveService $drive,
         TelegramService $telegram,
     ): void {
+        if (Cache::has('upload_drawings_running')) {
+            Log::warning('DriveDrawingsUploadJob: already running, aborting duplicate');
+
+            return;
+        }
+
+        Cache::put('upload_drawings_running', true, 7200);
+
         try {
             Log::info("DriveDrawingsUploadJob: starting [mode={$this->mode}]");
 
