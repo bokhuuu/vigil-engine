@@ -301,7 +301,8 @@ class DrivePhotosUploadJob implements ShouldQueue
 
             if (! empty($touchedActFolderIds)) {
                 DriveTargetedRescanJob::dispatch(array_keys($touchedActFolderIds));
-                Log::info('DrivePhotosUploadJob: dispatched targeted rescan for '.count($touchedActFolderIds).' ACT(s)');
+                DriveRescanJob::dispatch();
+                Log::info('DrivePhotosUploadJob: dispatched targeted + full rescan for '.count($touchedActFolderIds).' ACT(s)');
             }
 
             Log::info(
