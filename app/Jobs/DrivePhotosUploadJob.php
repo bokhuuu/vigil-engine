@@ -108,6 +108,7 @@ class DrivePhotosUploadJob implements ShouldQueue
             $totalSkippedNoAct = 0;
             $skippedNoActNumbers = [];
             $totalFailed = 0;
+            $failedFiles = [];
             $uploadedSubfolderIds = [];
             $touchedActFolderIds = [];
             $existingNamesCache = [];
@@ -271,6 +272,7 @@ class DrivePhotosUploadJob implements ShouldQueue
                     } catch (\Throwable $e) {
                         Log::warning("DrivePhotosUploadJob: failed [{$basename}] ACT {$actNumber} — ".$e->getMessage());
                         $totalFailed++;
+                        $failedFiles[] = $basename;
                     }
                 }
 
@@ -315,7 +317,7 @@ class DrivePhotosUploadJob implements ShouldQueue
                     "✅ ატვირთულია: {$totalUploaded}\n".
                     ($totalSkippedExists > 0 ? "⏭️ უკვე არსებობს: {$totalSkippedExists}\n" : '').
                     ($totalSkippedNoAct > 0 ? "🔍 ACT ვერ მოიძებნა: {$totalSkippedNoAct}".(count($skippedNoActNumbers) ? ' ('.implode(', ', array_unique($skippedNoActNumbers)).')' : '')."\n" : '').
-                    ($totalFailed > 0 ? "❌ შეცდომა: {$totalFailed}\n" : '')
+                    ($totalFailed > 0 ? "❌ შეცდომა: {$totalFailed}".(count($failedFiles) ? ' ('.implode(', ', array_unique($failedFiles)).')' : '')."\n" : '')
             );
         } catch (\Throwable $e) {
             Log::error('DrivePhotosUploadJob: unexpected failure — '.$e->getMessage(), [
