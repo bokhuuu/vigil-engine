@@ -133,7 +133,7 @@ class WatchGmailTest extends BusinessTestCase
         $gmail->shouldReceive('getMessageBody')->once()->andReturn('მოგესალმებით');
         $gmail->shouldReceive('applyLabel')->once();
         $gmail->shouldReceive('markAsRead')->once();
-        $gmail->shouldReceive('getAttachments')->never();
+        $gmail->shouldReceive('getAttachments')->once()->andReturn([]);
 
         $telegram = \Mockery::mock(TelegramService::class);
         $telegram->shouldReceive('sendToMe')->never();

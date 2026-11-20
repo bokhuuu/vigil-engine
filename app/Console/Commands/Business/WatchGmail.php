@@ -69,28 +69,33 @@ class WatchGmail extends Command
                     continue;
                 }
 
+                $attachments = $this->gmail->getAttachments($message);
                 if ($isColliers && ! preg_match('/^fwd?\s*:/iu', $subject)) {
-                    $this->gmail->applyLabel($msg->getId(), $labelId);
-                    $this->gmail->markAsRead($msg->getId());
+                    $hasQuotedOriginal = (bool) preg_match('/^From:\s*.+@(?!colliers\.ge)/im', $body);
 
-                    BusinessEmail::create([
-                        'business_id' => $business->id,
-                        'email_from' => $from,
-                        'email_subject' => $subject,
-                        'matched_by' => $matchedBy,
-                        'processed_at' => now(),
-                    ]);
+                    if (! $hasQuotedOriginal) {
+                        $this->gmail->applyLabel($msg->getId(), $labelId);
+                        $this->gmail->markAsRead($msg->getId());
 
-                    $nextRound = ($business->correspondence()->max('round') ?? 0) + 1;
-                    $business->correspondence()->create([
-                        'round' => $nextRound,
-                        'sent_at' => now(),
-                        'deadline_at' => now()->addDays(10),
-                        'status' => 'pending',
-                        'notes' => $subject,
-                    ]);
+                        BusinessEmail::create([
+                            'business_id' => $business->id,
+                            'email_from' => $from,
+                            'email_subject' => $subject,
+                            'matched_by' => $matchedBy,
+                            'processed_at' => now(),
+                        ]);
 
-                    continue;
+                        $nextRound = ($business->correspondence()->max('round') ?? 0) + 1;
+                        $business->correspondence()->create([
+                            'round' => $nextRound,
+                            'sent_at' => now(),
+                            'deadline_at' => now()->addDays(10),
+                            'status' => 'pending',
+                            'notes' => $subject,
+                        ]);
+
+                        continue;
+                    }
                 }
 
                 // Apply business label
@@ -114,7 +119,6 @@ class WatchGmail extends Command
                     'notes' => $subject,
                 ]);
 
-                $attachments = $this->gmail->getAttachments($message);
                 $count = count($attachments);
                 $roundFolder = 'მიმოწერა/'.$openCorr->round;
                 $incomingFolder = $roundFolder.'/შემომავალი ფაილები';
