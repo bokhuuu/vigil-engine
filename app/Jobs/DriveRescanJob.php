@@ -16,7 +16,10 @@ class DriveRescanJob implements ShouldQueue
 
     public int $timeout = 7200;
 
-    public int $tries = 1;
+    public function retryUntil(): \DateTimeInterface
+    {
+        return now()->addHours(2);
+    }
 
     public function handle(DriveWatcherService $watcher): void
     {

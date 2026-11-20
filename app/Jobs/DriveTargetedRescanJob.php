@@ -15,7 +15,10 @@ class DriveTargetedRescanJob implements ShouldQueue
 
     public int $timeout = 300;
 
-    public int $tries = 1;
+    public function retryUntil(): \DateTimeInterface
+    {
+        return now()->addMinutes(30);
+    }
 
     /**
      * @param  string[]  $actFolderIds  Drive folder IDs of the ACTs that were uploaded to.

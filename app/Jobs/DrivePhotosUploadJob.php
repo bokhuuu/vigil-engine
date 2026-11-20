@@ -18,7 +18,10 @@ class DrivePhotosUploadJob implements ShouldQueue
 
     public int $timeout = 7200;
 
-    public int $tries = 1;
+    public function retryUntil(): \DateTimeInterface
+    {
+        return now()->addHours(2);
+    }
 
     private const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'heic', 'heif', 'webp', 'gif', 'tiff', 'tif', 'bmp'];
 
