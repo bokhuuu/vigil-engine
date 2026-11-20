@@ -111,17 +111,6 @@ class WatchGmail extends Command
                     'processed_at' => now(),
                 ]);
 
-                // Skip duplicate — same business, same subject, already received today
-                $alreadyExists = $business->correspondence()
-                    ->where('status', 'received')
-                    ->where('notes', $subject)
-                    ->whereDate('received_at', today())
-                    ->exists();
-
-                if ($alreadyExists) {
-                    continue;
-                }
-
                 $nextRound = ($business->correspondence()->max('round') ?? 0) + 1;
                 $openCorr = $business->correspondence()->create([
                     'round' => $nextRound,
