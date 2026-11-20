@@ -649,6 +649,7 @@ class DashboardController
         if ($type === 'photos') {
             return response()->json([
                 'running' => (bool) Cache::get('upload_photos_running', false),
+                'progress' => Cache::get('upload_photos_progress'),
             ]);
         }
 

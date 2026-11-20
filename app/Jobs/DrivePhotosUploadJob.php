@@ -264,6 +264,13 @@ class DrivePhotosUploadJob implements ShouldQueue
                         // Upload via OAuth into the correct (sub)folder
                         $drive->uploadFile($targetFolderId, $basename, $content, $mimeType);
                         $totalUploaded++;
+                        if ($totalUploaded % 10 === 0) {
+                            Cache::put('upload_photos_progress', [
+                                'uploaded' => $totalUploaded,
+                                'failed' => $totalFailed,
+                                'skipped' => $totalSkippedExists,
+                            ], 7200);
+                        }
                         $existingNamesCache[$targetFolderId][] = $basename; // keep cache fresh
                         $uploadedSubfolderIds[$photosFolderId] = true; // always track root ფოტოები
                         $touchedActFolderIds[$actFolderId] = true;
@@ -312,6 +319,12 @@ class DrivePhotosUploadJob implements ShouldQueue
                     "skipped_exists: {$totalSkippedExists}, skipped_no_act: {$totalSkippedNoAct}, failed: {$totalFailed}"
             );
 
+            Cache::put('upload_photos_progress', [
+                'uploaded' => $totalUploaded,
+                'failed' => $totalFailed,
+                'skipped' => $totalSkippedExists,
+            ], 7200);
+
             $telegram->sendToGroup(
                 "📸 ფოტოების ატვირთვა დასრულდა [⏭️ skip-if-exists]\n\n".
                     "✅ ატვირთულია: {$totalUploaded}\n".
@@ -330,6 +343,7 @@ class DrivePhotosUploadJob implements ShouldQueue
             );
         } finally {
             Cache::forget('upload_photos_running');
+            Cache::forget('upload_photos_progress');
         }
     }
 }

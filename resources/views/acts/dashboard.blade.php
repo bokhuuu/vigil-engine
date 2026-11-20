@@ -2188,7 +2188,10 @@
                             const box = document.getElementById('photos-upload-status');
                             if (!box) return;
                             if (data.running) {
-                                box.innerHTML = '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…</div>';
+                                const p = data.progress;
+                                const detail = p ? ` ✅ ${p.uploaded} ⏭️ ${p.skipped} ❌ ${p.failed}` : '';
+                                box.innerHTML = '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…' + detail +
+                                '</div>';
                                 setOtherUploadButtonsDisabled('photos', true);
                                 setTimeout(pollPhotosUploadStatus, 5000);
                             } else {
