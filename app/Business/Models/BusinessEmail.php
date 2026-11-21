@@ -13,6 +13,7 @@ class BusinessEmail extends Model
 
     protected $fillable = [
         'business_id',
+        'gmail_message_id',
         'email_from',
         'email_subject',
         'matched_by',

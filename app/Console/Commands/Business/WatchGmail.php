@@ -79,6 +79,7 @@ class WatchGmail extends Command
 
                         BusinessEmail::create([
                             'business_id' => $business->id,
+                            'gmail_message_id' => $msg->getId(),
                             'email_from' => $from,
                             'email_subject' => $subject,
                             'matched_by' => $matchedBy,
@@ -98,6 +99,11 @@ class WatchGmail extends Command
                     }
                 }
 
+                // Skip already-processed messages
+                if (BusinessEmail::where('gmail_message_id', $msg->getId())->exists()) {
+                    continue;
+                }
+
                 // Apply business label
                 $this->gmail->applyLabel($msg->getId(), $labelId);
                 $this->gmail->markAsRead($msg->getId());
@@ -105,6 +111,7 @@ class WatchGmail extends Command
                 // Log in DB
                 BusinessEmail::create([
                     'business_id' => $business->id,
+                    'gmail_message_id' => $msg->getId(),
                     'email_from' => $from,
                     'email_subject' => $subject,
                     'matched_by' => $matchedBy,
