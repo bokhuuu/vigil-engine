@@ -855,6 +855,11 @@
                     🛠️ Tools
                 </button>
             @endif
+            <button onclick="document.getElementById('help-modal').style.display='flex'"
+                style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#e2c97e;white-space:nowrap;cursor:pointer;">
+                ❓ დახმარება
+            </button>
+
             <form method="POST" action="{{ route('acts.logout') }}" style="display:inline;">
                 @csrf
                 <button type="submit"
@@ -2191,7 +2196,7 @@
                                 const p = data.progress;
                                 const detail = p ? ` ✅ ${p.uploaded} ⏭️ ${p.skipped} ❌ ${p.failed}` : '';
                                 box.innerHTML = '<div style="font-size:11px;color:#8892a4;">⏳ მიმდინარეობს…' + detail +
-                                '</div>';
+                                    '</div>';
                                 setOtherUploadButtonsDisabled('photos', true);
                                 setTimeout(pollPhotosUploadStatus, 5000);
                             } else {
@@ -2297,6 +2302,8 @@
                     setTimeout(() => toast.remove(), 4000);
                 }
             </script>
+
+            @include('acts.help_modal')
 
 </body>
 
