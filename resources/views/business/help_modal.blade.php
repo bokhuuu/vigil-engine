@@ -1,6 +1,6 @@
 {{-- Business Help Modal --}}
 <div id="help-modal"
-    style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;">
+    style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;overflow-x:hidden;">
     <div
         style="background:#fff;border-radius:12px;width:100%;max-width:580px;box-shadow:0 12px 48px rgba(0,0,0,.3);position:relative;margin:auto;overflow-x:hidden;">
 
@@ -33,7 +33,7 @@
                     <div style="font-size:11px;font-weight:600;color:#1a2332;margin-bottom:6px;">სტატუსები</div>
                     <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;">
                         <div class="bhelp-sub-row"><span>🔵</span>
-                            <div><strong>მიმდინარე</strong> — ACT-ი აქტიურ პროცესშია.</div>
+                            <div><strong>მიმდინარე</strong> — ბიზნესის შეფასება მიმდინარეობს.</div>
                         </div>
                         <div class="bhelp-sub-row"><span>🟡</span>
                             <div><strong>გასაგზავნი</strong> — წერილი ჯერ არ გაგზავნილა.</div>
@@ -170,10 +170,11 @@
                         <span>📁</span>
                         <div>ბიზნესის შექმნისას Drive-ში ავტომატურად იქმნება საქაღალდე ქვესაქაღალდეებით:
                             <strong>ფინანსური ანგარიშგება, ხელფასები, შემოსავლის ამონაწერი, თანამშრომლები, საბანკო
-                                ამონაწერი, იჯარის ხელშეკრულება, გამოთვლები, სხვა, მიმოწერა.</strong></div>
+                                ამონაწერი, იჯარის ხელშეკრულება, გამოთვლები, სხვა, მიმოწერა.</strong>
+                        </div>
                     </div>
 
-                    <div style="font-size:11px;font-weight:600;color:#1a2332;margin-bottom:6px;">შემოთავალი ფაილები →
+                    <div style="font-size:11px;font-weight:600;color:#1a2332;margin-bottom:6px;">შემომავალი ფაილები →
                         გადატანა</div>
                     <div class="bhelp-row" style="margin-bottom:4px;">
                         <span>1️⃣</span>
@@ -195,7 +196,7 @@
                     <div class="bhelp-row">
                         <span>✅</span>
                         <div>ფაილის გადატანის შემდეგ შესაბამისი საქაღალდე სტატუსში მწვანედ მოინიშნება. ეს გვაჩვენებს
-                            რომელი დოკუმენტები უკვე მიღებულია.</div>
+                            რომელი დოკუმენტებია უკვე მიღებული.</div>
                     </div>
                 </div>
             </div>
@@ -209,24 +210,27 @@
                 <div class="bhelp-body">
                     <div class="bhelp-row">
                         <span>⚠️</span>
-                        <div>ბიზნესს ⚠️ წერია სიაში → <strong>ელფოსტა არ არის მითითებული.</strong> გახსენი ბარათი,
-                            დააჭირე რედაქტირება და შეიყვანე ელფოსტა.</div>
+                        <div>ბიზნესს ⚠️ წერია სიაში → ელფოსტა არ არის მითითებული. გახსენი ბარათი, დააჭირე
+                            <strong>რედაქტირება</strong> და შეიყვანე ელფოსტა. სხვა არხებით დაკავშირება საჭიროა.
+                        </div>
                     </div>
                     <div class="bhelp-row">
                         <span>📥</span>
-                        <div>პასუხი მოვიდა მაგრამ შემოთავალი ფაილები ცარიელია → დააჭირე <strong>განახლება</strong>.
-                            სისტემა ხელახლა შეამოწმებს.</div>
+                        <div>📥 სიაში ნიშნავს რომ ბიზნესმა გამოგზავნა პასუხი. შემომავალი ფაილები ცარიელია → დააჭირე
+                            <strong>განახლება</strong>. სისტემა ხელახლა შეამოწმებს.
+                        </div>
                     </div>
                     <div class="bhelp-row">
-                        <span>📁</span>
-                        <div>ფაილი Drive-ში გადაიტანე მაგრამ საქაღალდეების სტატუსი არ განახლდა → დააჭირე
-                            <strong>განახლება</strong> გვერდზე.</div>
+                        <span>🕐</span>
+                        <div>ფაილი Drive-ში გადაიტანე მაგრამ სტატუსი არ განახლდა → <strong>დაელოდე</strong>. სისტემა
+                            ავტომატურად ამოწმებს — ამას ჩანს <strong>განახლდა 14:33</strong> ველში.</div>
                     </div>
                 </div>
             </div>
+        </div>
 
-        </div>{{-- /accordion --}}
-    </div>
+    </div>{{-- /accordion --}}
+</div>
 </div>
 
 {{-- Business Help modal styles --}}
