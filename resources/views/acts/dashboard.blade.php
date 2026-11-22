@@ -832,6 +832,10 @@
         <div class="header-left">
             <span class="header-title">Vigil 🛡️</span>
             <span class="header-badge">Dashboard</span>
+            <a href="https://vigil.45-32-154-101.nip.io/business/dashboard" target="_blank"
+                style="font-size:11px;color:#8892a4;text-decoration:none;white-space:nowrap;padding-left:12px;border-left:1px solid #3d4f7c;margin-left:4px;">
+                💼 ბიზნეს მოდული
+            </a>
         </div>
         <div class="header-right">
             <div class="timer">
