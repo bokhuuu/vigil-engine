@@ -26,8 +26,7 @@
             {{-- 1. Toolbar --}}
             <div class="help-section">
                 <button class="help-toggle" onclick="helpToggle(this)">
-                    <span>🟢 განახლდა / დრო &nbsp;·&nbsp; 📊 Airtable სტატისტიკა &nbsp;·&nbsp; 🔄 გადამოწმება
-                        &nbsp;·&nbsp; 🛠️ Tools</span>
+                    <span>🟢 განახლდა / დრო &nbsp;·&nbsp; 📊 Airtable სტატისტიკა &nbsp;·&nbsp; 🔄 გადამოწმება</span>
                     <span class="help-chevron">▼</span>
                 </button>
                 <div class="help-body">
@@ -47,50 +46,50 @@
                             Drive-ში ატვირთე მაგრამ დაფაზე ✗ წერია — დააჭირე გადამოწმება. სისტემა ყველა ACT-ს თავიდან
                             შეამოწმებს. <strong>30–60 წუთი სჭირდება.</strong> ნუ გამოიყენებ ზედმეტად.</div>
                     </div>
-                    <div class="help-row">
-                        <span class="help-icon">🛠️</span>
-                        <div>
-                            <strong>Tools</strong> — მალე დაემატება სხვა ინსტრუმენტებიც.
-                            <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
-                                <div
-                                    style="font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">
-                                    ⬇️ გადმოწერა</div>
-                                <div class="help-sub-row"><span>📦</span>
-                                    <div><strong>სკანების გადმოწერა</strong> — ჩამოტვირთე სკანები ZIP ფაილად. შეგიძლია
-                                        მიუთითო ACT-ების დიაპაზონი (მაგ. 1–100) ან გადმოწერო ყველა.</div>
-                                </div>
-                                <div class="help-sub-row"><span>📸</span>
-                                    <div><strong>ფოტოების გადმოწერა</strong> — ჩამოტვირთე ფოტოები ZIP ფაილად. დიაპაზონი
-                                        სავალდებულოა (მაგ. 1–100).</div>
-                                </div>
-                                <div
-                                    style="font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-top:4px;">
-                                    ⬆️ ატვირთვა</div>
-                                <div class="help-sub-row"><span>📦</span>
-                                    <div><strong>სკანების ატვირთვა</strong> — ატვირთე სკანები ZIP ფაილად. სისტემა თავად
-                                        დაალაგებს ACT-ების მიხედვით. <em>„არსებული ჩაანაცვლე"</em> — მონიშნე თუ გსურს
-                                        ძველი ფაილი შეიცვალოს ახლით, წინააღმდეგ შემთხვევაში ორივე შენახული იქნება.</div>
-                                </div>
-                                <div class="help-sub-row"><span>📸</span>
-                                    <div><strong>ფოტოების ატვირთვა</strong> — ატვირთე ფოტოები ZIP ფაილად. სისტემა თავად
-                                        დაალაგებს ACT-ების მიხედვით.</div>
-                                </div>
-                                <div class="help-sub-row"><span>📐</span>
-                                    <div><strong>ნახაზების ატვირთვა</strong> — ატვირთე ნახაზები ZIP ფაილად.
-                                        <em>„არსებული ჩაანაცვლე"</em> — მონიშნე თუ გსურს ძველი ნახაზი შეიცვალოს ახლით,
-                                        წინააღმდეგ შემთხვევაში ორივე შენახული იქნება.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                </div>
+            </div>
+
+            {{-- 2. Tools --}}
+            <div class="help-section">
+                <button class="help-toggle" onclick="helpToggle(this)">
+                    <span>🛠️ Tools — გადმოწერა და ატვირთვა</span>
+                    <span class="help-chevron">▼</span>
+                </button>
+                <div class="help-body">
+                    <div
+                        style="font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">
+                        ⬇️ გადმოწერა</div>
+                    <div class="help-sub-row" style="margin-bottom:6px;"><span>📦</span>
+                        <div><strong>სკანების გადმოწერა</strong> — ჩამოტვირთე სკანები ZIP ფაილად. შეგიძლია მიუთითო
+                            ACT-ების დიაპაზონი (მაგ. 1–100) ან გადმოწერო ყველა.</div>
+                    </div>
+                    <div class="help-sub-row" style="margin-bottom:12px;"><span>📸</span>
+                        <div><strong>ფოტოების გადმოწერა</strong> — ჩამოტვირთე ფოტოები ZIP ფაილად. დიაპაზონი სავალდებულოა
+                            (მაგ. 1–100).</div>
+                    </div>
+                    <div
+                        style="font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">
+                        ⬆️ ატვირთვა</div>
+                    <div class="help-sub-row" style="margin-bottom:6px;"><span>📦</span>
+                        <div><strong>სკანების ატვირთვა</strong> — ატვირთე სკანები ZIP ფაილად. სისტემა თავად დაალაგებს
+                            ACT-ების მიხედვით. <em>„არსებული ჩაანაცვლე"</em> — მონიშნე თუ გსურს ძველი ფაილი შეიცვალოს
+                            ახლით.</div>
+                    </div>
+                    <div class="help-sub-row" style="margin-bottom:6px;"><span>📸</span>
+                        <div><strong>ფოტოების ატვირთვა</strong> — ატვირთე ფოტოები ZIP ფაილად. სისტემა თავად დაალაგებს
+                            ACT-ების მიხედვით.</div>
+                    </div>
+                    <div class="help-sub-row"><span>📐</span>
+                        <div><strong>ნახაზების ატვირთვა</strong> — ატვირთე ნახაზები ZIP ფაილად. <em>„არსებული
+                                ჩაანაცვლე"</em> — მონიშნე თუ გსურს ძველი ნახაზი შეიცვალოს ახლით.</div>
                     </div>
                 </div>
             </div>
 
-            {{-- 2. დაფა --}}
+            {{-- 3. დაფა --}}
             <div class="help-section">
                 <button class="help-toggle" onclick="helpToggle(this)">
-                    <span>📋 დაფა — სტატუსი, ფილტრები, ლეგენდა, სვეტები</span>
+                    <span>📋 დაფა — სტატუსი, ფილტრები, სიმბოლოები</span>
                     <span class="help-chevron">▼</span>
                 </button>
                 <div class="help-body">
@@ -132,8 +131,8 @@
                         </div>
                     </div>
 
-                    <div style="font-size:11px;font-weight:600;color:#1a1f36;margin-bottom:6px;">ლეგენდა</div>
-                    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;">
+                    <div style="font-size:11px;font-weight:600;color:#1a1f36;margin-bottom:6px;">სიმბოლოები</div>
+                    <div style="display:flex;flex-direction:column;gap:4px;">
                         <div class="help-sub-row"><span>✅</span>
                             <div><strong>არის</strong> — საჭირო დოკუმენტი Drive-ში ატვირთულია.</div>
                         </div>
@@ -147,8 +146,16 @@
                             <div><strong>მიანახე მაუსი</strong> — დამატებითი ინფორმაცია გამოჩნდება.</div>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <div style="font-size:11px;font-weight:600;color:#1a1f36;margin-bottom:6px;">სვეტები</div>
+            {{-- 4. სვეტები --}}
+            <div class="help-section">
+                <button class="help-toggle" onclick="helpToggle(this)">
+                    <span>📊 სვეტები და პაგინაცია</span>
+                    <span class="help-chevron">▼</span>
+                </button>
+                <div class="help-body">
                     <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;">
                         <div class="help-sub-row"><span>🔢</span>
                             <div><strong>ნომერი</strong> — ACT-ის უნიკალური ნომერი. დააჭირე და Airtable-ში ACT-ის სრული
@@ -202,7 +209,7 @@
                 </div>
             </div>
 
-            {{-- 3. პრობლემები --}}
+            {{-- 5. პრობლემები --}}
             <div class="help-section">
                 <button class="help-toggle" onclick="helpToggle(this)">
                     <span>🚨 პრობლემები და გადაწყვეტა</span>
