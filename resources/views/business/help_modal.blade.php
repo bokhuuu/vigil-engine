@@ -11,7 +11,7 @@
                 <div style="font-size:15px;font-weight:600;color:#fff;">❓ დახმარება</div>
                 <div style="font-size:11px;color:#7a92a8;margin-top:2px;">ბიზნეს მოდულის სახელმძღვანელო</div>
             </div>
-            <button onclick="document.getElementById('help-modal').style.display='none'"
+            <button onclick="closeHelpModal()"
                 style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#7a92a8;line-height:1;padding:0;">✕</button>
         </div>
 
@@ -216,9 +216,8 @@
             </div>
         </div>
 
-    </div>{{-- /accordion --}}
-</div>
-</div>
+    </div>{{-- /card --}}
+</div>{{-- /overlay --}}
 
 {{-- Business Help modal styles --}}
 <style>
@@ -333,17 +332,20 @@
         }
     }
 
+    function closeHelpModal() {
+        document.getElementById('help-modal').style.display = 'none';
+        document.body.style.overflow = '';
+    }
     document.getElementById('help-modal').addEventListener('click', function(e) {
-        if (e.target === this) this.style.display = 'none';
+        if (e.target === this) closeHelpModal();
     });
 
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            document.getElementById('help-modal').style.display = 'none';
-        }
+        if (e.key === 'Escape') closeHelpModal();
     });
 
     function openHelpModal() {
         document.getElementById('help-modal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
     }
 </script>
