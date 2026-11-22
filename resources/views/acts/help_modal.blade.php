@@ -356,10 +356,8 @@
         }
     });
 
-    document.addEventListener('DOMContentLoaded', function() {
-        var helpBtn = document.querySelector('[data-open-help]');
-        if (helpBtn) helpBtn.addEventListener('click', function() {
-            document.getElementById('help-modal').style.display = 'flex';
-        });
+    var helpBtn = document.querySelector('[data-open-help]');
+    if (helpBtn) helpBtn.addEventListener('click', function() {
+        document.getElementById('help-modal').style.display = 'flex';
     });
 </script>

@@ -1255,7 +1255,7 @@
         }
 
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.filter-group')) {
+            if (!e.target.closest('.filter-group') || e.target.closest('.filter-opt')) {
                 document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('open'));
             }
         });
