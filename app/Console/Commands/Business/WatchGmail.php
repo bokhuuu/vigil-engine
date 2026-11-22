@@ -126,6 +126,7 @@ class WatchGmail extends Command
                     'notes' => $subject,
                 ]);
 
+                $driveFileIds = $this->gmail->getDriveLinksFromBody($body);
                 $count = count($attachments);
                 $roundFolder = 'მიმოწერა/'.$openCorr->round;
                 $incomingFolder = $roundFolder.'/შემომავალი ფაილები';
@@ -159,6 +160,25 @@ class WatchGmail extends Command
                             $attachment['data'],
                         );
                     }
+
+                    foreach ($driveFileIds as $fileId) {
+                        try {
+                            $userDrive = $this->drive->getUserDrive();
+                            $meta = $userDrive->files->get($fileId, ['fields' => 'name,mimeType']);
+                            $content = $userDrive->files->get($fileId, ['alt' => 'media']);
+                            $this->drive->uploadFileToSubfolder(
+                                $business->drive_folder_url,
+                                $incomingFolder,
+                                $meta->getName(),
+                                $meta->getMimeType(),
+                                $content->getBody()->getContents(),
+                            );
+                        } catch (\Throwable $e) {
+                            Log::warning("WatchGmail: failed to download Drive file {$fileId}", [
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+                    }
                 }
 
                 // Telegram alert
@@ -167,7 +187,7 @@ class WatchGmail extends Command
                         "📥 ახალი ელ-ფოსტა\n\n".
                             '<b>'.e($business->name).'</b>'."\n".
                             'საქაღალდე: '.e($roundFolder)."\n".
-                            'ფაილები: '.($count + 1)."\n".
+                            'ფაილები: '.($count + count($driveFileIds) + 1)."\n".
                             'From: '.str_replace(['<', '>'], ['', ''], $from)
                     );
                 } catch (\Throwable $e) {

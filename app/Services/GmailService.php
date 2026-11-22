@@ -172,6 +172,17 @@ class GmailService
         }
     }
 
+    public function getDriveLinksFromBody(string $body): array
+    {
+        preg_match_all(
+            '#drive\.google\.com/file/d/([A-Za-z0-9_-]{10,})#',
+            $body,
+            $matches
+        );
+
+        return array_unique($matches[1] ?? []);
+    }
+
     public function applyLabel(string $messageId, string $labelId): void
     {
         $this->connect();

@@ -67,6 +67,7 @@ class WatchGmailTest extends BusinessTestCase
         $gmail->shouldReceive('applyLabel')->once();
         $gmail->shouldReceive('markAsRead')->once();
         $gmail->shouldReceive('getAttachments')->once()->andReturn([]);
+        $gmail->shouldReceive('getDriveLinksFromBody')->once()->andReturn([]);
 
         $telegram = \Mockery::mock(TelegramService::class);
         $telegram->shouldReceive('sendToMe')->once();
@@ -74,6 +75,7 @@ class WatchGmailTest extends BusinessTestCase
         $drive = \Mockery::mock(GoogleDriveService::class);
         $drive->shouldReceive('ensureSubfolderPath')->once()->andReturn('fake-folder-id');
         $drive->shouldReceive('uploadFileToSubfolder')->once();
+
         $command = new WatchGmail($gmail, $telegram, $drive);
         $this->app['Illuminate\Contracts\Console\Kernel']->registerCommand($command);
 
@@ -105,6 +107,7 @@ class WatchGmailTest extends BusinessTestCase
         $telegram->shouldReceive('sendToMe')->never();
 
         $drive = \Mockery::mock(GoogleDriveService::class);
+
         $command = new WatchGmail($gmail, $telegram, $drive);
         $this->app['Illuminate\Contracts\Console\Kernel']->registerCommand($command);
 
@@ -134,14 +137,12 @@ class WatchGmailTest extends BusinessTestCase
         $gmail->shouldReceive('applyLabel')->once();
         $gmail->shouldReceive('markAsRead')->once();
         $gmail->shouldReceive('getAttachments')->once()->andReturn([]);
+        $gmail->shouldReceive('getDriveLinksFromBody')->never();
 
         $telegram = \Mockery::mock(TelegramService::class);
         $telegram->shouldReceive('sendToMe')->never();
 
         $drive = \Mockery::mock(GoogleDriveService::class);
-        $drive = \Mockery::mock(GoogleDriveService::class);
-
-        $command = new WatchGmail($gmail, $telegram, $drive);
 
         $command = new WatchGmail($gmail, $telegram, $drive);
         $this->app['Illuminate\Contracts\Console\Kernel']->registerCommand($command);
