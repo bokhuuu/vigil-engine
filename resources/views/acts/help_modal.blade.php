@@ -78,7 +78,8 @@
                                 <div class="help-sub-row"><span>📐</span>
                                     <div><strong>ნახაზების ატვირთვა</strong> — ატვირთე ნახაზები ZIP ფაილად.
                                         <em>„არსებული ჩაანაცვლე"</em> — მონიშნე თუ გსურს ძველი ნახაზი შეიცვალოს ახლით,
-                                        წინააღმდეგ შემთხვევაში ორივე შენახული იქნება.</div>
+                                        წინააღმდეგ შემთხვევაში ორივე შენახული იქნება.
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -353,5 +354,12 @@
         if (e.key === 'Escape') {
             document.getElementById('help-modal').style.display = 'none';
         }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var helpBtn = document.querySelector('[data-open-help]');
+        if (helpBtn) helpBtn.addEventListener('click', function() {
+            document.getElementById('help-modal').style.display = 'flex';
+        });
     });
 </script>

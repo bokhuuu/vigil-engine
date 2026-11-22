@@ -855,7 +855,8 @@
                     🛠️ Tools
                 </button>
             @endif
-            <button onclick="document.getElementById('help-modal').style.display='flex'"
+
+            <button data-open-help
                 style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#e2c97e;white-space:nowrap;cursor:pointer;">
                 ❓ დახმარება
             </button>
