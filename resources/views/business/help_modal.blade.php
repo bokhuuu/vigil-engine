@@ -49,12 +49,11 @@
                     <div style="font-size:11px;font-weight:600;color:#1a2332;margin-bottom:6px;">სიმბოლოები სიაში</div>
                     <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;">
                         <div class="bhelp-sub-row"><span>📥</span>
-                            <div><strong>შემოსული</strong> — ბიზნესმა გამოგზავნა პასუხი რომელიც ჯერ არ დამუშავებულა.
+                            <div><strong>შემოსული</strong> — ბიზნესმა გამოგზავნა პასუხი.
                             </div>
                         </div>
                         <div class="bhelp-sub-row"><span>⚠️</span>
-                            <div><strong>ელფოსტა არ არის</strong> — ბიზნესს ელფოსტა არ აქვს მითითებული, წერილის გაგზავნა
-                                ვერ მოხდება.</div>
+                            <div><strong>ელფოსტა არ არის</strong> — ბიზნესს ელფოსტა არ აქვს მითითებული.</div>
                         </div>
                     </div>
 
@@ -178,7 +177,7 @@
                         გადატანა</div>
                     <div class="bhelp-row" style="margin-bottom:4px;">
                         <span>1️⃣</span>
-                        <div>პასუხის შემოსვლის შემდეგ <strong>შემოთავალი ფაილები</strong> განყოფილებაში ჩანს ყველა
+                        <div>პასუხის შემოსვლის შემდეგ <strong>შემომავალი ფაილები</strong> განყოფილებაში ჩანს ყველა
                             მიღებული ფაილი.</div>
                     </div>
                     <div class="bhelp-row" style="margin-bottom:4px;">
@@ -209,21 +208,9 @@
                 </button>
                 <div class="bhelp-body">
                     <div class="bhelp-row">
-                        <span>⚠️</span>
-                        <div>ბიზნესს ⚠️ წერია სიაში → ელფოსტა არ არის მითითებული. გახსენი ბარათი, დააჭირე
-                            <strong>რედაქტირება</strong> და შეიყვანე ელფოსტა. სხვა არხებით დაკავშირება საჭიროა.
-                        </div>
-                    </div>
-                    <div class="bhelp-row">
-                        <span>📥</span>
-                        <div>📥 სიაში ნიშნავს რომ ბიზნესმა გამოგზავნა პასუხი. შემომავალი ფაილები ცარიელია → დააჭირე
-                            <strong>განახლება</strong>. სისტემა ხელახლა შეამოწმებს.
-                        </div>
-                    </div>
-                    <div class="bhelp-row">
                         <span>🕐</span>
                         <div>ფაილი Drive-ში გადაიტანე მაგრამ სტატუსი არ განახლდა → <strong>დაელოდე</strong>. სისტემა
-                            ავტომატურად ამოწმებს — ამას ჩანს <strong>განახლდა 14:33</strong> ველში.</div>
+                            ავტომატურად ამოწმებს — ეს ჩანს <strong>განახლდა 14:33</strong> ველში.</div>
                     </div>
                 </div>
             </div>

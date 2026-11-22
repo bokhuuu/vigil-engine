@@ -143,7 +143,7 @@
                             <div><strong>არ საჭიროება</strong> — ეს დოკუმენტი ამ ACT-ისთვის საჭირო არ არის.</div>
                         </div>
                         <div class="help-sub-row"><span>❗</span>
-                            <div><strong>მიანახე მაუსი</strong> — დამატებითი ინფორმაცია გამოჩნდება.</div>
+                            <div><strong>მიიტანე მაუსი</strong> — დამატებითი ინფორმაცია გამოჩნდება.</div>
                         </div>
                     </div>
                 </div>
@@ -165,7 +165,7 @@
                             <div><strong>სტატუსი</strong> — ACT-ის მიმდინარე მდგომარეობა.</div>
                         </div>
                         <div class="help-sub-row"><span>💬</span>
-                            <div><strong>შენ.</strong> — დამატებითი შენიშვნა ACT-ზე. მიანახე მაუსი და წაიკითხე.</div>
+                            <div><strong>შენ.</strong> — დამატებითი შენიშვნა ACT-იტანე მაუსი და წაიკითხე.</div>
                         </div>
                         <div class="help-sub-row"><span>📄</span>
                             <div><strong>სკანი</strong> — ACT-ის სკანი Drive-შია თუ არა.</div>
