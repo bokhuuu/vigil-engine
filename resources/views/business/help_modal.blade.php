@@ -345,7 +345,11 @@
     });
 
     function openHelpModal() {
-        document.getElementById('help-modal').style.display = 'flex';
+        const modal = document.getElementById('help-modal');
+        if (modal.parentElement !== document.body) {
+            document.body.appendChild(modal);
+        }
+        modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
     }
 </script>
