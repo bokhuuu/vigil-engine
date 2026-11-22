@@ -545,20 +545,19 @@
             <span class="header-icon">💼</span>
             <span class="header-title">ბიზნეს მოდული</span>
             <span class="header-sep"></span>
-            <span class="header-sub">Vigil · Colliers Georgia</span>
             <a href="https://vigil.45-32-154-101.nip.io/dashboard" target="_blank"
-                style="font-size:0.75rem;color:#7a92a8;text-decoration:none;white-space:nowrap;padding-left:12px;border-left:1px solid #2d4060;margin-left:4px;">
-                ACTs დაფა →
+                style="font-size:11px;color:#8892a4;text-decoration:none;white-space:nowrap;background:#1e2d4a;padding:3px 10px;border-radius:12px;border:1px solid #3d4f7c;">
+                Vigil 🛡️ Dashboard
             </a>
         </div>
         <div class="header-right">
             <span class="header-user">{{ auth('business')->user()->name }}</span>
+            <button onclick="openHelpModal()"
+                style="font-family:inherit;font-size:0.78rem;color:#7a92a8;background:transparent;border:1px solid #2d4060;padding:0.3rem 0.75rem;border-radius:6px;cursor:pointer;">
+                ❓ დახმარება
+            </button>
             <form method="POST" action="{{ route('business.logout') }}">
                 @csrf
-                <button onclick="openHelpModal()"
-                    style="font-family:inherit;font-size:0.78rem;color:#7a92a8;background:transparent;border:1px solid #2d4060;padding:0.3rem 0.75rem;border-radius:6px;cursor:pointer;">
-                    ❓ დახმარება
-                </button>
                 <button type="submit" class="btn-logout">გამოსვლა</button>
             </form>
         </div>
