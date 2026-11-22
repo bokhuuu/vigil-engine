@@ -706,7 +706,8 @@
             }
 
             #fg-missing .filter-dropdown,
-
+            #fg-has .filter-dropdown,
+            #fg-kvleva .filter-dropdown,
             #fg-excel .filter-dropdown {
                 left: auto !important;
                 right: 0 !important;
@@ -856,7 +857,7 @@
                 </button>
             @endif
 
-            <button data-open-help
+            <button onclick="openHelpModal()"
                 style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #3d4f7c;background:#2d3448;color:#e2c97e;white-space:nowrap;cursor:pointer;">
                 ❓ დახმარება
             </button>
@@ -2303,8 +2304,10 @@
                     setTimeout(() => toast.remove(), 4000);
                 }
             </script>
+        </div>
+    </div>
 
-            @include('acts.help_modal')
+    @include('acts.help_modal')
 
 </body>
 

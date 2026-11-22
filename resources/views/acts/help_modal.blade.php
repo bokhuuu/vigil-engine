@@ -2,7 +2,7 @@
 <div id="help-modal"
     style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;">
     <div
-        style="background:#fff;border-radius:12px;width:100%;max-width:580px;box-shadow:0 12px 48px rgba(0,0,0,.3);position:relative;margin:auto;">
+        style="background:#fff;border-radius:12px;width:100%;max-width:580px;box-shadow:0 12px 48px rgba(0,0,0,.3);position:relative;margin:auto;overflow-x:hidden;">
 
         {{-- Header --}}
         <div
@@ -356,8 +356,8 @@
         }
     });
 
-    var helpBtn = document.querySelector('[data-open-help]');
-    if (helpBtn) helpBtn.addEventListener('click', function() {
+    function openHelpModal() {
         document.getElementById('help-modal').style.display = 'flex';
-    });
+    }
+    document.querySelector('[data-open-help]')?.addEventListener('click', openHelpModal);
 </script>
