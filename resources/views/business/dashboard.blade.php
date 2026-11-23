@@ -50,15 +50,16 @@
         /* HEADER */
         .header {
             background: var(--navy);
-            height: 58px;
             display: flex;
             align-items: center;
-            padding: 0 1.5rem;
+            padding: 12px 24px;
             justify-content: space-between;
             position: sticky;
             top: 0;
             z-index: 50;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .header-brand {
