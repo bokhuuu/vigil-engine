@@ -732,95 +732,95 @@
                 </div>
             </div>
 
-        </div>
+            <script>
+                const search = document.getElementById('search');
+                const searchClear = document.getElementById('search-clear');
+                const filterStatus = document.getElementById('filter-status');
+                const filterType = document.getElementById('filter-type');
+                const filterLot = document.getElementById('filter-lot');
+                const btnClear = document.getElementById('btn-clear');
+                const countBar = document.getElementById('count-bar');
+                const rows = Array.from(document.querySelectorAll('#tbody tr[data-name]'));
+                const total = rows.length;
+                const noResults = document.createElement('tr');
+                noResults.id = 'no-results-row';
+                noResults.innerHTML =
+                    '<td colspan="6"><div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">ჩანაწერი არ მოიძებნა</div></div></td>';
+                noResults.style.display = 'none';
+                document.getElementById('tbody').appendChild(noResults);
 
-        <script>
-            const search = document.getElementById('search');
-            const searchClear = document.getElementById('search-clear');
-            const filterStatus = document.getElementById('filter-status');
-            const filterType = document.getElementById('filter-type');
-            const filterLot = document.getElementById('filter-lot');
-            const btnClear = document.getElementById('btn-clear');
-            const countBar = document.getElementById('count-bar');
-            const rows = Array.from(document.querySelectorAll('#tbody tr[data-name]'));
-            const total = rows.length;
-            const noResults = document.createElement('tr');
-            noResults.id = 'no-results-row';
-            noResults.innerHTML =
-                '<td colspan="6"><div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">ჩანაწერი არ მოიძებნა</div></div></td>';
-            noResults.style.display = 'none';
-            document.getElementById('tbody').appendChild(noResults);
+                function normalize(str) {
+                    return (str || '').toLowerCase().replace(/\s*-\s*/g, '-').trim();
+                }
 
-            function normalize(str) {
-                return (str || '').toLowerCase().replace(/\s*-\s*/g, '-').trim();
-            }
+                function applyFilters() {
+                    const q = normalize(search.value);
+                    const status = filterStatus.value;
+                    const type = filterType.value;
+                    const lot = filterLot.value;
 
-            function applyFilters() {
-                const q = normalize(search.value);
-                const status = filterStatus.value;
-                const type = filterType.value;
-                const lot = filterLot.value;
+                    let visible = 0;
 
-                let visible = 0;
+                    rows.forEach(row => {
+                        const name = normalize(row.dataset.name);
+                        const code = row.dataset.code || '';
+                        const act = normalize(row.dataset.act);
 
-                rows.forEach(row => {
-                    const name = normalize(row.dataset.name);
-                    const code = row.dataset.code || '';
-                    const act = normalize(row.dataset.act);
+                        const matchSearch = !q ||
+                            name.includes(q) ||
+                            code === q ||
+                            code.startsWith(q) ||
+                            act === q ||
+                            act.includes(q);
 
-                    const matchSearch = !q ||
-                        name.includes(q) ||
-                        code === q ||
-                        code.startsWith(q) ||
-                        act === q ||
-                        act.includes(q);
+                        const matchStatus = !status ||
+                            (status === 'overdue' ? row.dataset.overdue === 'true' :
+                                status === 'incoming' ? row.dataset.incoming === 'true' :
+                                row.dataset.status === status);
+                        const matchType = !type || row.dataset.type.split(',').includes(type);
+                        const matchLot = !lot || row.dataset.lot === lot;
+                        const show = matchSearch && matchStatus && matchType && matchLot;
+                        row.style.display = show ? '' : 'none';
+                        if (show) visible++;
+                    });
 
-                    const matchStatus = !status ||
-                        (status === 'overdue' ? row.dataset.overdue === 'true' :
-                            status === 'incoming' ? row.dataset.incoming === 'true' :
-                            row.dataset.status === status);
-                    const matchType = !type || row.dataset.type.split(',').includes(type);
-                    const matchLot = !lot || row.dataset.lot === lot;
-                    const show = matchSearch && matchStatus && matchType && matchLot;
-                    row.style.display = show ? '' : 'none';
-                    if (show) visible++;
+                    noResults.style.display = visible === 0 ? '' : 'none';
+
+                    countBar.textContent = visible < total ?
+                        `${visible} / ${total} ბიზნესი` :
+                        `${total} ბიზნესი`;
+
+                    searchClear.style.display = q ? 'block' : 'none';
+                    const hasFilter = status || type || lot;
+                    btnClear.style.display = hasFilter ? 'inline-flex' : 'none';
+
+                    filterStatus.classList.toggle('active', !!status);
+                    filterType.classList.toggle('active', !!type);
+                    filterLot.classList.toggle('active', !!lot);
+                }
+
+                searchClear.addEventListener('click', () => {
+                    search.value = '';
+                    applyFilters();
+                    search.focus();
                 });
 
-                noResults.style.display = visible === 0 ? '' : 'none';
+                btnClear.addEventListener('click', () => {
+                    filterStatus.value = '';
+                    filterType.value = '';
+                    filterLot.value = '';
+                    applyFilters();
+                });
 
-                countBar.textContent = visible < total ?
-                    `${visible} / ${total} ბიზნესი` :
-                    `${total} ბიზნესი`;
+                search.addEventListener('input', applyFilters);
+                filterStatus.addEventListener('change', applyFilters);
+                filterType.addEventListener('change', applyFilters);
+                filterLot.addEventListener('change', applyFilters);
 
-                searchClear.style.display = q ? 'block' : 'none';
-                const hasFilter = status || type || lot;
-                btnClear.style.display = hasFilter ? 'inline-flex' : 'none';
-
-                filterStatus.classList.toggle('active', !!status);
-                filterType.classList.toggle('active', !!type);
-                filterLot.classList.toggle('active', !!lot);
-            }
-
-            searchClear.addEventListener('click', () => {
-                search.value = '';
                 applyFilters();
-                search.focus();
-            });
+            </script>
 
-            btnClear.addEventListener('click', () => {
-                filterStatus.value = '';
-                filterType.value = '';
-                filterLot.value = '';
-                applyFilters();
-            });
-
-            search.addEventListener('input', applyFilters);
-            filterStatus.addEventListener('change', applyFilters);
-            filterType.addEventListener('change', applyFilters);
-            filterLot.addEventListener('change', applyFilters);
-
-            applyFilters();
-        </script>
+        </div>{{-- /page --}}
 
         @include('business.help_modal')
 
