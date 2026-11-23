@@ -1,6 +1,6 @@
 {{-- Business Help Modal --}}
 <div id="help-modal"
-    style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:10000;background:rgba(0,0,0,.6);flex-direction:column;align-items:center;justify-content:flex-start;padding:16px 12px;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;">
+    style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;overflow-x:hidden;">
     <div
         style="background:#fff;border-radius:12px;width:100%;max-width:580px;box-shadow:0 12px 48px rgba(0,0,0,.3);position:relative;margin:auto;overflow-x:hidden;box-sizing:border-box;">
 
@@ -345,11 +345,7 @@
     });
 
     function openHelpModal() {
-        const modal = document.getElementById('help-modal');
-        if (modal.parentElement !== document.body) {
-            document.body.appendChild(modal);
-        }
-        modal.style.display = 'flex';
+        document.getElementById('help-modal').style.display = 'flex';
         document.body.style.overflow = 'hidden';
     }
 </script>
