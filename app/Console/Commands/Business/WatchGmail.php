@@ -152,13 +152,27 @@ class WatchGmail extends Command
                     );
 
                     foreach ($attachments as $attachment) {
-                        $this->drive->uploadFileToSubfolder(
-                            $business->drive_folder_url,
-                            $incomingFolder,
-                            $attachment['filename'],
-                            $attachment['mimeType'],
-                            $attachment['data'],
-                        );
+                        $extracted = $this->extractArchive($attachment);
+
+                        if ($extracted !== null) {
+                            foreach ($extracted as $file) {
+                                $this->drive->uploadFileToSubfolder(
+                                    $business->drive_folder_url,
+                                    $incomingFolder,
+                                    $file['filename'],
+                                    $file['mimeType'],
+                                    $file['data'],
+                                );
+                            }
+                        } else {
+                            $this->drive->uploadFileToSubfolder(
+                                $business->drive_folder_url,
+                                $incomingFolder,
+                                $attachment['filename'],
+                                $attachment['mimeType'],
+                                $attachment['data'],
+                            );
+                        }
                     }
 
                     foreach ($driveFileIds as $fileId) {
@@ -201,6 +215,58 @@ class WatchGmail extends Command
                 '🔑 <b>business:watch-gmail</b> — OAuth token expired or invalid.'."\n".
                     'Fix: <code>php artisan vigil:drive-auth</code> then <code>php artisan vigil:drive-watch --seed</code>'
             );
+        }
+    }
+
+    private function extractArchive(array $attachment): ?array
+    {
+        $filename = $attachment['filename'];
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+        if (! in_array($ext, ['zip', 'rar'], true)) {
+            return null;
+        }
+
+        $tmpDir = sys_get_temp_dir().'/vigil_extract_'.uniqid();
+        mkdir($tmpDir, 0755, true);
+        $archivePath = $tmpDir.'/'.$filename;
+
+        try {
+            file_put_contents($archivePath, $attachment['data']);
+
+            $files = [];
+
+            if ($ext === 'zip') {
+                $zip = new \ZipArchive;
+                if ($zip->open($archivePath) !== true) {
+                    return null;
+                }
+                $zip->extractTo($tmpDir.'/out');
+                $zip->close();
+            } elseif ($ext === 'rar') {
+                $outDir = $tmpDir.'/out';
+                mkdir($outDir, 0755, true);
+                exec('unrar e -y '.escapeshellarg($archivePath).' '.escapeshellarg($outDir).' 2>/dev/null');
+            }
+
+            $outDir = $tmpDir.'/out';
+            $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($outDir));
+
+            foreach ($iterator as $file) {
+                if (! $file->isFile()) {
+                    continue;
+                }
+                $mime = mime_content_type($file->getPathname()) ?: 'application/octet-stream';
+                $files[] = [
+                    'filename' => $file->getFilename(),
+                    'mimeType' => $mime,
+                    'data' => file_get_contents($file->getPathname()),
+                ];
+            }
+
+            return empty($files) ? null : $files;
+        } finally {
+            exec('rm -rf '.escapeshellarg($tmpDir));
         }
     }
 }
