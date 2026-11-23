@@ -156,9 +156,14 @@ class WatchGmail extends Command
 
                         if ($extracted !== null) {
                             foreach ($extracted as $file) {
+                                $subdir = dirname($file['relativePath']);
+                                $targetFolder = $subdir === '.' || $subdir === ''
+                                    ? $incomingFolder
+                                    : $incomingFolder.'/'.$subdir;
+
                                 $this->drive->uploadFileToSubfolder(
                                     $business->drive_folder_url,
-                                    $incomingFolder,
+                                    $targetFolder,
                                     $file['filename'],
                                     $file['mimeType'],
                                     $file['data'],
@@ -236,29 +241,31 @@ class WatchGmail extends Command
 
             $files = [];
 
+            $outDir = $tmpDir.'/out';
+            mkdir($outDir, 0755, true);
+
             if ($ext === 'zip') {
                 $zip = new \ZipArchive;
                 if ($zip->open($archivePath) !== true) {
                     return null;
                 }
-                $zip->extractTo($tmpDir.'/out');
+                $zip->extractTo($outDir);
                 $zip->close();
             } elseif ($ext === 'rar') {
-                $outDir = $tmpDir.'/out';
-                mkdir($outDir, 0755, true);
-                exec('unrar e -y '.escapeshellarg($archivePath).' '.escapeshellarg($outDir).' 2>/dev/null');
+                exec('unrar x -y '.escapeshellarg($archivePath).' '.escapeshellarg($outDir).'/ 2>/dev/null');
             }
 
-            $outDir = $tmpDir.'/out';
             $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($outDir));
 
             foreach ($iterator as $file) {
                 if (! $file->isFile()) {
                     continue;
                 }
+                $relativePath = ltrim(str_replace($outDir, '', $file->getPathname()), '/');
                 $mime = mime_content_type($file->getPathname()) ?: 'application/octet-stream';
                 $files[] = [
                     'filename' => $file->getFilename(),
+                    'relativePath' => $relativePath,
                     'mimeType' => $mime,
                     'data' => file_get_contents($file->getPathname()),
                 ];
