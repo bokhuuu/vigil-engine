@@ -118,7 +118,7 @@ class BusinessDriveService
             }
             $incomingSubfolderId = $this->drive->findChildFolderAsUser('შემომავალი ფაილები', $roundId);
             $scanFolderId = $incomingSubfolderId ?? $roundId;
-            foreach ($this->drive->listFilesInFolder($scanFolderId) as $file) {
+            foreach ($this->drive->listAllInFolder($scanFolderId) as $file) {
                 $files[] = array_merge($file, ['round' => $roundName]);
             }
         }
