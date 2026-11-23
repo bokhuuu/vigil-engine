@@ -354,7 +354,6 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 0.875rem;
-            min-width: 600px;
         }
 
         thead th {
