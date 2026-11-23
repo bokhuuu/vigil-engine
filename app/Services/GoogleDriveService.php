@@ -630,17 +630,17 @@ class GoogleDriveService
                 'id' => $file['id'],
                 'name' => $file['name'],
                 'mimeType' => $file['mimeType'],
+                'webViewLink' => $file['webViewLink'] ?? null,
                 'path' => $path,
             ];
         }
 
-        // Recurse into subfolders
-        $subfolders = $this->listChildFolders($folderId);
+        // Recurse into subfolders using OAuth account (same as file owner)
+        $subfolders = $this->listChildFoldersAsUser($folderId);
 
         foreach ($subfolders as $name => $subId) {
             $subPrefix = $pathPrefix !== '' ? "{$pathPrefix}/{$name}" : $name;
-            $nested = $this->listAllInFolder($subId, $subPrefix);
-            $results = array_merge($results, $nested);
+            $results = array_merge($results, $this->listAllInFolder($subId, $subPrefix));
         }
 
         return $results;
