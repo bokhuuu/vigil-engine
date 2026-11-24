@@ -40,7 +40,7 @@ class DriveAuthCommand extends Command
 
         $authUrl = $this->client->createAuthUrl();
 
-        $this->info('Open this URL in your browser, logged in as zura.colliers.bypass@gmail.com:');
+        $this->info('Open this URL in your browser, logged in as your-google-account@gmail.com:');
         $this->line('');
         $this->line($authUrl);
         $this->line('');

@@ -56,6 +56,7 @@ class WatchGmail extends Command
                 preg_match('/<([^>]+)>/', $from, $matches);
                 $fromEmail = strtolower($matches[1] ?? $from);
 
+                // Replace with your organisation's email domain
                 $isColliers = str_ends_with($fromEmail, '@colliers.ge');
 
                 $business = $matcher->match($subject, $body);
