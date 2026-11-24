@@ -26,4 +26,10 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 storage/backups/*
-!storage/backups/.gitkeepphpunit.xml
+!storage/backups/.gitkeep
+phpunit.xml
+
+/storage/app/google/drive-watcher-state.json
+/storage/app/google/test-rescan-state.json
+/storage/app/google/drive-credentials.json
+/storage/app/google/oauth-token.json
