@@ -5,9 +5,9 @@
 // ============================================================
 
 // ---------- Settings ----------
-const ENGINE_URL = "https://vigil.45-32-154-101.nip.io";
+const ENGINE_URL = "https://your-engine-url.example.com";
 const WEBHOOK_SECRET = "PASTE_CURRENT_SECRET_HERE";
-const ROOT_FOLDER_ID = "1UzSEitUL8gzCoLVZtmPXKh8wczDz1ggM";
+const ROOT_FOLDER_ID = "your_root_act_folder_id";
 
 const TRACKED_SUBFOLDERS = [
     "სკანი",
