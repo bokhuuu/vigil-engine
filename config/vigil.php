@@ -45,7 +45,7 @@ return [
     */
     'airtable' => [
         'token' => env('AIRTABLE_TOKEN'),
-        'base_id' => env('AIRTABLE_BASE_ID', 'appuF9IUa53xy31el'),
+        'base_id' => env('AIRTABLE_BASE_ID'),
         'base_url' => 'https://api.airtable.com/v0',
         'retry_times' => 3,        // total attempts on 5xx / 429 / timeout
         'retry_sleep_ms' => 500,   // pause between attempts
@@ -260,7 +260,7 @@ return [
         'viewer_user' => env('DASHBOARD_VIEWER_USER', 'viewer'),
         'viewer_password' => env('DASHBOARD_VIEWER_PASSWORD'),
         'cache_minutes' => 5,
-        'airtable_stats_url' => 'https://airtable.com/appuF9IUa53xy31el/pagQSR870y97XR5PC',
+        'airtable_stats_url' => env('AIRTABLE_STATS_URL', ''),
     ],
 
     /*
