@@ -1,12 +1,8 @@
-# 🛡️ Vigil Engine — Colliers Georgia
+# 🛡️ Vigil Engine
 
-**Laravel automation engine for the Colliers Georgia property field inspection project — tracking 1,500+ ACTs, coordinating field teams, and automating document routing end-to-end.**
+**A Laravel automation engine for large-scale field inspection workflows — tracking property inventory forms, coordinating field teams, and automating document routing end-to-end.**
 
 Vigil tracks 1,500+ property ACTs (inventory forms), coordinates field teams, automates Google Drive file detection, routes incoming client documents from email directly to Drive, and ensures no document passes to the master Excel incomplete. It combines an Airtable database, a Laravel automation engine, Telegram notifications, a Google Drive watcher, a Gmail automation engine, and a business web portal into one cohesive platform.
-
-**Production:** `https://vigil.45-32-154-101.nip.io`  
-**Private repo:** `github.com/bokhuuu/vigil` (production)  
-**Public portfolio repo:** `github.com/bokhuuu/vigil-engine` (sanitised, CI only)
 
 ---
 
@@ -19,7 +15,7 @@ Vigil tracks 1,500+ property ACTs (inventory forms), coordinates field teams, au
 - **Monitors correspondence** — government letters tracked with 5-day response deadlines; overdue items flagged daily
 - **Handles form submissions** — when a team submits an update form, they receive a Telegram link to their full submission history 15 minutes later
 - **Alerts managers** — daily summaries of ACT progress and correspondence status sent to management
-- **Automates incoming email** — watches Gmail for client emails (@colliers.ge filtered), extracts ZIP/RAR attachments (preserving folder structure), uploads files to the correct Drive subfolder, and fires a Telegram alert
+- **Automates incoming email** — watches Gmail for client emails, extracts ZIP/RAR attachments (preserving folder structure), uploads files to the correct Drive subfolder, and fires a Telegram alert
 - **Business portal** — separate web UI for business records linked to ACTs; supports Drive file uploads and full correspondence round management
 - **Excel exports** — styled `.xlsx` exports for ACTs and business records
 
@@ -42,10 +38,9 @@ Gmail (unread) → Engine           → extract attachments → Drive → Telegr
 ```
 
 **Stack:** Laravel 13, PHP 8.4, Airtable API, Telegram Bot API, Google Drive API, Gmail API  
-**Auth:** Webhook secret (HMAC), session auth (dashboard — manager/uploader/viewer roles), `auth('business')` guard (business portal)  
-**Server:** Vultr VPS `45.32.154.101` (Ubuntu 24.04), Caddy + PHP-FPM, shared with Atlas  
-**CI/CD:** GitHub Actions — test + lint + deploy on push to `main` (private repo); test + lint only (public repo)  
-**Redis:** DB1 (isolated from Atlas on DB0)
+**Auth:** Webhook secret (HMAC), session auth (dashboard), `auth('business')` guard (business portal)  
+**Server:** Vultr VPS (Ubuntu 24.04), Caddy + PHP-FPM  
+**CI/CD:** GitHub Actions — test + lint on push to `main`
 
 ---
 
@@ -62,9 +57,6 @@ Gmail (unread) → Engine           → extract attachments → Drive → Telegr
 | `vigil:sector-deadline`                 | Mon–Fri 11:00 | Sector completion deadline warnings                      |
 | `vigil:act-alert`                       | Mon–Fri 20:00 | Incomplete ACT alerts to all teams and managers          |
 | `business:watch-gmail`                  | Every minute  | Watch Gmail for incoming client emails, route to Drive   |
-| `business:gmail-check`                  | Every 5 min   | Alert Zura if watch-gmail hasn't run in 5 min            |
-| `vigil:horizon-check`                   | Every 5 min   | Alert Zura if Horizon is down                            |
-| `business:sync-drive-states`            | Every 15 min  | Sync Drive subfolder file-presence to DB                 |
 | `vigil:backup`                          | Sunday 11:00  | JSON backup to Backblaze B2                              |
 
 ---
@@ -87,17 +79,8 @@ POST /webhook/airtable        Airtable form submission webhook
 POST /webhook/drive           Apps Script file detection webhook
 GET  /webhook/act-statuses    Bulk signature status for Apps Script
 POST /webhook/act-complete    ACT marked complete trigger
-GET  /dashboard/login         Login form (manager/uploader/viewer)
-POST /dashboard/login         Login submit
-POST /dashboard/logout        Logout
 GET  /dashboard               Dashboard (session auth)
-POST /dashboard/rescan        Trigger DriveRescanJob (manager only)
-POST /dashboard/acts/{id}/folder  Create Drive folder immediately (manager only)
-POST /dashboard/acts/{id}/excel-entered  Mark cost estimate entered (manager only)
-POST /dashboard/download      Download scan ZIPs (manager only)
-POST /dashboard/download/photos  Download photo ZIPs (manager only)
-POST /dashboard/upload/scans  Upload scan ZIPs to Drive (manager only)
-POST /dashboard/upload/photos Upload photo ZIPs to Drive (manager only)
+POST /dashboard/acts/{id}/folder  Create Drive folder immediately
 GET  /acts/export             Download ACT Excel export
 
 GET  /business/login          Business login form
@@ -113,7 +96,6 @@ POST /business/{id}/correspondence        Add correspondence round (auth:busines
 DELETE /business/{id}/correspondence/{c} Delete correspondence round (auth:business)
 GET  /business/upload/folders List Drive subfolders for upload modal (auth:business)
 POST /business/upload         Upload files to Drive subfolder (auth:business)
-POST /business/files/move     Move incoming file to named subfolder (auth:business)
 GET  /business/export         Download Business Excel export (auth:business)
 ```
 
@@ -133,7 +115,7 @@ GET  /business/export         Download Business Excel export (auth:business)
 - **ActRequirements** — config-driven single source of truth for required doc fields and subfolders per ACT
 - **ActCompletionService** — verifies a completed ACT against Airtable + Drive; notifies on success, warns on mismatch
 - **ManagerNotifier** — sends one message to all managers with Telegram IDs
-- **BusinessEmailMatcher** — matches incoming emails to a registered business by subject/body; skips @colliers.ge outgoing
+- **BusinessEmailMatcher** — matches incoming emails to a registered business by subject and body patterns
 - **BusinessDriveService** — creates and manages Drive folder structure for business correspondence rounds; lists incoming files recursively
 
 ---
@@ -142,16 +124,14 @@ GET  /business/export         Download Business Excel export (auth:business)
 
 | Controller                  | Routes                                                  | Purpose                                   |
 | --------------------------- | ------------------------------------------------------- | ----------------------------------------- |
-| `ActsLoginController`       | `GET/POST /dashboard/login`, `POST /dashboard/logout`   | Session auth (no base Controller class)   |
 | `WebhookController`         | `POST /webhook/airtable`                                | Update reminder scheduling                |
 | `DriveWebhookController`    | `POST /webhook/drive`, `GET /webhook/act-statuses`      | Drive file events                         |
 | `ActCompleteController`     | `POST /webhook/act-complete`                            | ACT completion verification               |
-| `DashboardController`       | `GET /dashboard`, downloads, uploads                    | Dashboard + all tool modal actions        |
-| `DashboardFolderController` | `POST /dashboard/acts/{id}/folder`                      | Instant folder creation (manager only)    |
+| `DashboardController`       | `GET /dashboard`                                        | Dashboard                                 |
+| `DashboardFolderController` | `POST /dashboard/acts/{id}/folder`                      | Instant folder creation                   |
 | `ActExportController`       | `GET /acts/export`                                      | Styled ACT Excel export                   |
 | `BusinessController`        | `/business/*`                                           | Business CRUD (auth:business)             |
 | `BusinessUploadController`  | `GET /business/upload/folders`, `POST /business/upload` | Drive file upload from business show page |
-| `BusinessMoveController`    | `POST /business/files/move`                             | Move incoming file to named subfolder     |
 | `BusinessExportController`  | `GET /business/export`                                  | Styled Business Excel export              |
 
 ---
@@ -161,18 +141,15 @@ GET  /business/export         Download Business Excel export (auth:business)
 The `business:watch-gmail` command runs every minute and processes incoming client emails end-to-end:
 
 1. Fetches unread Gmail messages
-2. Skips emails from @colliers.ge (internal team); detects forwarded client replies via quoted-body regex
-3. Matches each email to a registered business (by registration code or name pattern)
+2. Matches each email to a registered business (by subject code or body pattern)
+3. Skips outgoing internal team emails; detects forwarded client replies via quoted-body regex
 4. Extracts ZIP and RAR attachments — preserving internal folder structure
 5. Uploads all files to the correct Drive subfolder (`მიმოწერა/{round}/შემომავალი ფაილები/{subfolder}`)
 6. Creates a correspondence round record in the DB
 7. Fires a Telegram alert with file count and business name
 8. Marks the email as read and applies the `ბიზნეს მოდული` Gmail label
-9. Sets `Cache::put('business_gmail_last_run', now(), 300)` heartbeat — monitored by `business:gmail-check`
 
 **Archive extraction:** uses PHP `ZipArchive` for ZIP and `unrar x` for RAR. Internal subfolder structure is mirrored exactly to Drive.
-
-**Health monitoring:** `business:gmail-check` runs every 5 min; fires Telegram alert to Zura if heartbeat is stale (≥5 min). Same alert/recover/dedup pattern as `vigil:horizon-check`.
 
 ---
 
@@ -185,8 +162,6 @@ The `business:watch-gmail` command runs every minute and processes incoming clie
 | Apps Script    | **Active** — real work  | Runs in Google's cloud every 5 min |
 | Engine watcher | **Dry-run** — logs only | Runs every minute, no writes       |
 
-Apps Script runs every 5 minutes (change-only). Engine watcher runs every minute and logs what it _would_ do — no Airtable changes, no color writes. When logs match, Apps Script trigger is deleted and `--dry-run` flag is removed.
-
 **Folder colors:**
 
 - Subfolder has files → 🟢
@@ -198,7 +173,7 @@ Apps Script runs every 5 minutes (change-only). Engine watcher runs every minute
 
 **`📥 ხელმოწერები`** — manual only (physical signature, no Drive folder).
 
-> ⚠️ **Known issue:** If files are deleted from an already-green subfolder, Apps Script does not revert the color or untick the checkbox. Auto-fixed once engine watcher goes fully live (its 5-min grace + `fileRemoved` path handles this).
+> ⚠️ **Known issue:** If files are deleted from an already-green subfolder, Apps Script does not revert the color or untick the checkbox. Auto-fixed once engine watcher goes fully live.
 
 ---
 
@@ -209,8 +184,7 @@ A separate web UI (`/business/`) for businesses linked to ACTs.
 - **Guard:** `auth('business')` — independent from dashboard session auth
 - **Show page:** inline editing, correspondence rounds card, Drive link, upload button, Excel export
 - **Upload modal:** loads Drive subfolders via AJAX; multi-file picker; uploads via `fetch()` + `FormData`; auto-closes after success; `Cache::lock` per business+filename prevents duplicate uploads
-- **Incoming files:** lists all files from Drive correspondence folders recursively — files inside extracted archive subfolders are shown with their path and are directly clickable
-- **File move:** `POST /business/files/move` — moves a file from `མிமოწერა/{round}/შემომავალი ფაილები/` to a named subfolder; validates subfolder against config whitelist + file ownership
+- **Incoming files:** lists all files from Drive correspondence folders recursively
 
 ### Business Status Badges
 
@@ -221,25 +195,10 @@ A separate web UI (`/business/`) for businesses linked to ACTs.
 | 🟢 დასრულებული | `complete`   | Process complete                           |
 | ⚠️ ვადაგადაც.  | `overdue`    | Correspondence round past its deadline     |
 
-**Dashboard icons in name column:** 📥 = incoming reply received · ⚠️ = no email address on record · 📧 = letter sent, awaiting reply
-
-### Business Card Fields
-
-Each business record stores: name, registration code, ACT number, lot, cadastral code, type, Drive folder link, owner name/phone/email, accountant name/phone/email, notes.
-
-### Correspondence
-
-- A draft round is auto-created when the business record is created
-- Incoming @colliers.ge emails filtered; external client replies auto-detected and attached as round #1, #2, …
-- Each round shows the Drive folder link and its round number
-- Outgoing letters set status → `pending`; incoming replies set status → `active`
-
 ### Drive Folder Structure
 
-When a business record is created, the following subfolder structure is auto-created under the business Drive folder:
-
 ```
-📁 Business Name (registration_code)/
+📁 Business Name/
 ├── ფინანსური ანგარიშგება
 ├── ხელფასები
 ├── შემოსავლის ამონაწერი
@@ -253,16 +212,6 @@ When a business record is created, the following subfolder structure is auto-cre
         └── შემომავალი ფაილები/
 ```
 
-Subfolder list lives in `config('vigil.business.drive_subfolders')` — config-driven, whitelist for file move security.
-
-### File Upload Workflow (3 steps)
-
-1. Open the upload modal on the business show page
-2. Select the target subfolder from the dropdown (loads live from Drive)
-3. Pick files and confirm — files upload to `Business/subfolder/` and the row turns green
-
-> ⚠️ **Known issue:** Drive sync can lag. If a file doesn't appear immediately, wait for the auto-update shown as "განახლდა HH:MM" in the portal header.
-
 ---
 
 ## Excel Exports
@@ -273,72 +222,6 @@ Both exports use `maatwebsite/excel` — styled with bold header row (dark blue 
 | --------------- | ---------------------- | ------------- | ------------------------ |
 | ACT Export      | `GET /acts/export`     | session auth  | `acts-{date}.xlsx`       |
 | Business Export | `GET /business/export` | auth:business | `businesses-{date}.xlsx` |
-
-**ACT columns:** ACT №, სტატუსი, პასუხისმგებელი, გუნდი, სექტორი, რა აკლია, property flags (✅/❌), doc checkboxes (✅/❌), კვლევა, Drive საქაღალდე
-
-**Business columns:** სახელი, სარეგ. კოდი, ტიპი, სტატუსი, ACT, ლოტი, მეპატრონე, ტელ., ელ-ფოსტა, ბუღალტერი, ტელ., ელ-ფოსტა, Drive, შენიშვნები
-
----
-
-## Dashboard
-
-**Auth:** Session-based login — manager / uploader / viewer roles  
-**Credentials:** `config('vigil.dashboard.user')` / `config('vigil.dashboard.password')` etc.
-
-Features: ACT stats cards, instant JS search (normalises spaces around hyphens), filters (status / missing doc / კვლევა / ბიზნესი / Excel entered), paginated table (100/page), ⚠️ badge when status=done but doc checkboxes incomplete, `+ შექმნა` button for instant folder creation, last-good fallback with stale banner on Airtable failure. Tools modal: download scans/photos as ZIP, upload scans/photos as ZIP (5GB limit).
-
-### Toolbar
-
-| Element           | Meaning                                                             |
-| ----------------- | ------------------------------------------------------------------- |
-| 🟢 განახლდა HH:MM | Last successful Airtable data fetch time                            |
-| 📊 stat cards     | Total / complete / incomplete ACT counts from Airtable              |
-| 🔄 Rescan button  | Triggers full Drive rescan (manager only) — takes **30–60 minutes** |
-
-### Column Reference
-
-| Column | Description                                                                 |
-| ------ | --------------------------------------------------------------------------- |
-| ნომ.   | ACT number — links directly to the Airtable record                          |
-| სტატ.  | Airtable status (⏳ in-progress / ✅ done / ⚠️ done-with-missing)           |
-| შენ.   | Notes field                                                                 |
-| სკანი  | Physical scan PDF — ✅ present / ❌ missing / · not required                |
-| ფოტო   | Photos — ✅ / ❌ / ·                                                        |
-| ხელმ.  | Signatures (physical, manual only) — ✅ / ❌ / ·                            |
-| ნახ.   | Drawings — ✅ / ❌ / ·                                                      |
-| გამ.   | Boundary plan — ✅ / ❌ / ·                                                 |
-| ხარჯ.  | Cost estimate — ✅ / ❌ / · (Excel entered button appears here for manager) |
-| ტოპო   | Topo survey — ✅ / ❌ / ·                                                   |
-| ბიზ.   | Business record count linked to this ACT                                    |
-| კვლ.   | Research (კვლევა) field value                                               |
-| Drive  | Google Drive folder link; `+ შექმნა` button appears when folder is missing  |
-
-**Symbol legend:** ✅ document present · ❌ document missing but required · `·` not required for this ACT · ❗ ACT marked done but required docs are missing
-
-### Filters
-
-| Filter  | What it shows                                                          |
-| ------- | ---------------------------------------------------------------------- |
-| Search  | Instant JS search by ACT number (starts-with, normalises hyphens)      |
-| სტატუსი | Filter by Airtable status (incomplete / done-with-missing / closed)    |
-| აკლია   | Show ACTs missing a specific doc type (scan, photos, signatures, etc.) |
-| has     | Show ACTs that have a specific doc type present                        |
-| კვლევა  | Filter by research field value                                         |
-| ბიზნესი | Show only ACTs with linked business records                            |
-| Excel   | Show ACTs where cost estimate arrived but hasn't been entered yet      |
-
----
-
-## Infrastructure
-
-**Server:** `45.32.154.101` (Vultr VPS, Ubuntu 24.04) — Vigil and Atlas coexist  
-**Vigil path:** `/var/www/vigil-engine`  
-**Caddy:** reverse proxy + TLS  
-**PHP-FPM:** 8.4, `upload_max_filesize = 5120M`, `max_execution_time = 7200`  
-**Redis:** Vigil on DB1 (`REDIS_DB=1`), Atlas on DB0 — isolated to prevent job stealing  
-**Horizon:** managed by systemd (`vigil-horizon.service`) — always `systemctl restart vigil-horizon`, never `nohup php artisan horizon &`  
-**Scheduler cron:** `* * * * * cd /var/www/vigil-engine && php artisan schedule:run`  
-**Cache:** `CACHE_STORE=file`
 
 ---
 
@@ -360,29 +243,20 @@ TELEGRAM_MY_CHAT_ID=
 TELEGRAM_GROUP_CHAT_ID=
 TELEGRAM_NOTIFICATIONS_ENABLED=true
 WEBHOOK_SECRET=
-GOOGLE_DRIVE_CREDENTIALS=/var/www/vigil-engine/storage/app/google/service-account.json
+GOOGLE_DRIVE_CREDENTIALS=path/to/service-account.json
 GOOGLE_DRIVE_ACT_FOLDER_ID=
 GOOGLE_DRIVE_BUSINESS_FOLDER_ID=
-GOOGLE_DRIVE_OAUTH_CLIENT=/var/www/vigil-engine/storage/app/google/oauth-client.json
-GOOGLE_DRIVE_OAUTH_TOKEN=/var/www/vigil-engine/storage/app/google/oauth-token.json
+GOOGLE_DRIVE_OAUTH_CLIENT=path/to/oauth-client.json
+GOOGLE_DRIVE_OAUTH_TOKEN=path/to/oauth-token.json
 DASHBOARD_USER=
 DASHBOARD_PASSWORD=
-VIGIL_BUSINESS_INTERNAL_DOMAIN=colliers.ge
+VIGIL_BUSINESS_INTERNAL_DOMAIN=your-domain.com
 SENTRY_LARAVEL_DSN=
 B2_KEY_ID=
 B2_APPLICATION_KEY=
 B2_BUCKET=
 B2_REGION=
 B2_ENDPOINT=
-REDIS_DB=1
-```
-
-**Server permissions (after deploy):**
-
-```bash
-chown -R www-data:www-data /var/www/vigil-engine/storage
-chmod -R 775 /var/www/vigil-engine/storage
-chmod -R 777 /var/www/vigil-engine/storage/framework/cache/data
 ```
 
 **OAuth setup (one-time):**
@@ -408,39 +282,14 @@ php artisan test
 # Fix code style
 ./vendor/bin/pint
 
-# Cache config (always after .env changes)
-php artisan config:cache
-
-# Restart Horizon after any job code change
-systemctl restart vigil-horizon
-
 # Then push
 git push
 ```
-
-Tests cover all commands, webhook controllers, Airtable client, Telegram service, and Drive services. Every push triggers CI — Pint + tests + deploy.
-
----
-
-## Critical Gotchas
-
-- **No base Controller class** — Vigil has no `App\Http\Controllers\Controller`. Never add `extends Controller`.
-- **No application DB** — main app has zero migrations. Everything is Airtable + JSON state file. Business module is the only DB user.
-- **Redis isolation** — `REDIS_DB=1`. After any infra change: `redis-cli -n 1 keys "vigil_horizon:*"` must return results.
-- **Horizon restart** — always `systemctl restart vigil-horizon`. Never start manually.
-- **config() not env()** — when config is cached, `env()` returns null everywhere.
-- **Boolean strings** — `config('vigil.telegram.notifications_enabled')` is a bool. Use `! config(...)` not `!== 'true'`.
-- **uploadFile arg order** — `uploadFile($parentFolderId, $filename, $content, $mimeType)` — parent is first.
-- **Telegram HTML escaping** — always `e($value)` on dynamic strings. HTML parse mode breaks silently.
-- **Upload lock ownership** — job owns the cache lock entirely. Controller must never set it.
-- **Run tests on host** — never inside Docker.
 
 ---
 
 ## Project Context
 
-Vigil was built for Colliers Georgia's large-scale property field inspection project. Field inspectors physically survey 1,500+ properties, produce inventory ACTs, and coordinate with surveyors, agronomists, and cost estimators. Vigil is the quality gate — nothing reaches Giga's master Excel without passing through it. The business portal and Gmail engine handle the legal and financial document flow with property-owning businesses throughout the process.
+Vigil was built for a large-scale property field inspection project. Field inspectors physically survey 1,500+ properties, produce inventory ACTs, and coordinate with surveyors, agronomists, and cost estimators. Vigil is the quality gate — nothing reaches the final Excel without passing through it. The business portal and Gmail engine handle the legal and financial document flow with property-owning businesses throughout the process.
 
-The system runs entirely in Georgian (`ქართული`) for all user-facing content — Telegram messages, Airtable field names, Drive folder paths, and UI labels.
-
-**Key contacts:** Levan (PM), Giga (Excel manager), Zura (developer/sysadmin).
+The system runs entirely in Georgian (`ქართული`) for all user-facing content — Telegram messages, Airtable field names, Drive folder paths, and UI labels — reflecting its real-world production deployment.
