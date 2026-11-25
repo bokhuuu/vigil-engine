@@ -1,9 +1,6 @@
-# CI/CD pipeline for Vigil Engine.
+# CI pipeline for Vigil Engine.
 # On every push/PR to main: runs Pint formatting check + full test suite.
-# On push to main only: deploys to production.
-#
-# Required secrets: SSH_PRIVATE_KEY, SERVER_IP
-name: CI/CD
+name: CI
 
 on:
   push:
@@ -55,7 +52,6 @@ jobs:
           echo "DASHBOARD_PASSWORD=fake" >> .env
           echo "GOOGLE_DRIVE_OAUTH_CLIENT=/tmp/fake-oauth-client.json" >> .env
           echo "GOOGLE_DRIVE_OAUTH_TOKEN=/tmp/fake-oauth-token.json" >> .env
-
           echo "BUSINESS_DB_HOST=127.0.0.1" >> .env
           echo "BUSINESS_DB_PORT=5432" >> .env
           echo "BUSINESS_DB_DATABASE=vigil_business_test" >> .env
@@ -81,33 +77,3 @@ jobs:
           BUSINESS_DB_USERNAME: vigil_business
           BUSINESS_DB_PASSWORD: test_password
         run: php artisan test
-
-  deploy:
-    needs: ci
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-    steps:
-      - name: Copy SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
-
-      - name: Deploy to production
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script_stop: true
-          script: |
-            cd /var/www/vigil-engine && GIT_SSH_COMMAND="ssh -i /home/deploy/.ssh/vigil_ed25519" git pull --ff-only origin main
-            cd /var/www/vigil-engine && composer install --no-interaction --prefer-dist --optimize-autoloader
-            cd /var/www/vigil-engine && php artisan config:clear
-            cd /var/www/vigil-engine && php artisan config:cache
-            cd /var/www/vigil-engine && php artisan route:cache
-            cd /var/www/vigil-engine && php artisan horizon:terminate
-            docker builder prune -f
-            journalctl --vacuum-size=500M
