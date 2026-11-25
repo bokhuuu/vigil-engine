@@ -119,8 +119,11 @@ class DashboardController
 
                 $subState = $subfolderStates[$subfolderId] ?? 'empty';
 
+                // cooldown means files are confirmed present — treat as full for display
+                $displayState = str_starts_with($subState, 'cooldown:') ? 'full' : $subState;
+
                 if (! isset($map[$recordId][$name]) || $map[$recordId][$name] !== 'full') {
-                    $map[$recordId][$name] = $subState;
+                    $map[$recordId][$name] = $displayState;
                 }
             }
 

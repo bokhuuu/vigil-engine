@@ -11,6 +11,8 @@ class DriveWatcherService
 {
     private const GRACE_MS = 300_000;
 
+    private const COOLDOWN_MS = 180_000; // 3 min — blocks re-entry into grace after a Drive view event
+
     private const COLOR_GREEN = '#00843D';
 
     private const COLOR_YELLOW = '#F6C026';
@@ -168,9 +170,9 @@ class DriveWatcherService
 
             if ($hasFiles) {
                 if (! $dryRun) {
-                    $this->state->setSubfolderState($subfolderId, 'full');
+                    $this->state->setSubfolderState($subfolderId, 'cooldown:'.$nowMs);
                 }
-                Log::info("DriveWatcherService: grace cancelled for [{$subfolder['name']}] — files returned");
+                Log::info("DriveWatcherService: grace cancelled for [{$subfolder['name']}] — files returned, cooldown started");
                 $dirty[$subfolder['act_folder_id']] = true;
 
                 continue;
@@ -282,6 +284,13 @@ class DriveWatcherService
                 // Stuck in grace — re-verify
             }
 
+            if ($prevState !== null && str_starts_with($prevState, 'cooldown:')) {
+                $since = (int) explode(':', $prevState)[1];
+                if ($nowMs - $since < self::COOLDOWN_MS) {
+                    continue; // cooldown active — files confirmed present, skip rescan
+                }
+            }
+
             $actInfo = $this->state->getActByFolderId($subfolder['act_folder_id']);
             if ($actInfo === null) {
                 continue;
@@ -385,6 +394,24 @@ class DriveWatcherService
         int $nowMs,
         bool $dryRun,
     ): string {
+        // Cooldown: treat as full; block grace re-entry after a Drive view event
+        if ($prev !== null && str_starts_with($prev, 'cooldown:')) {
+            $since = (int) explode(':', $prev)[1];
+
+            if ($nowMs - $since < self::COOLDOWN_MS) {
+                return $prev; // still in cooldown — ignore noise
+            }
+
+            // Cooldown expired — real check
+            if ($hasFiles) {
+                return 'full';
+            }
+
+            Log::info("DriveWatcherService: [{$name}] went empty after cooldown on ACT [{$actNumber}] — grace started".($dryRun ? ' [DRY RUN]' : ''));
+
+            return 'grace:'.$nowMs;
+        }
+
         if ($hasFiles) {
             if ($prev === 'full') {
                 return 'full'; // no change
@@ -464,7 +491,7 @@ class DriveWatcherService
             }
             $totalTracked++;
             $state = $this->state->getSubfolderState($subId);
-            if ($state === 'full') {
+            if ($state === 'full' || ($state !== null && str_starts_with($state, 'cooldown:'))) {
                 $fullCount++;
             }
         }
